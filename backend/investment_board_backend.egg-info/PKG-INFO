@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: investment-board-backend
+Version: 0.1.0
+Summary: Backend data-layer foundation for Investment Board
+Requires-Python: >=3.12
+Requires-Dist: fastapi<0.116,>=0.115
+Requires-Dist: sqlmodel<0.1.0,>=0.0.24
+Requires-Dist: uvicorn<0.35,>=0.34
+Provides-Extra: dev
+Requires-Dist: httpx<0.29,>=0.28; extra == "dev"
+Requires-Dist: pytest<9.0,>=8.0; extra == "dev"

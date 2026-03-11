@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "investment-board-backend"
+version = "0.1.0"
+description = "Backend data-layer foundation for Investment Board"
+requires-python = ">=3.12"
+dependencies = [
+  "beautifulsoup4>=4.12,<5.0",
+  "fastapi>=0.115,<0.116",
+  "httpx>=0.28,<0.29",
+  "sqlmodel>=0.0.24,<0.1.0",
+  "uvicorn>=0.34,<0.35",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0,<9.0",
+]
+
+[project.scripts]
+seed-watchlist-demo = "app.db.services.seed_demo_data_cli:main"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
