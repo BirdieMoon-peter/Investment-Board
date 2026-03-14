@@ -3,17 +3,32 @@ from datetime import datetime
 
 from app.api.stocks import (
     get_aggregate_announcement_provider,
+    get_aggregate_company_profile_provider,
+    get_aggregate_financial_metrics_provider,
     get_aggregate_news_provider,
+    get_aggregate_price_history_provider,
     get_stock_sync_service,
 )
 from app.services import StockSyncResult
+from app.db.repositories import (
+    AnnouncementRepository,
+    CompanyProfileRepository,
+    FinancialMetricsRepository,
+    NewsRepository,
+    PriceHistoryRepository,
+)
 from app.services.providers import (
     AggregateAnnouncementProvider,
+    AggregateCompanyProfileProvider,
+    AggregateFinancialMetricsProvider,
     AggregateNewsProvider,
+    AggregatePriceHistoryProvider,
     EastmoneyAnnouncementSource,
-    EastmoneyNewsSource,
+    EastmoneyCompanyProfileSource,
+    EastmoneyFinancialMetricsSource,
+    EastmoneyPriceHistorySource,
+    IfengNewsSource,
     SinaAnnouncementSource,
-    SinaNewsSource,
 )
 
 
@@ -44,10 +59,21 @@ def test_get_stock_sync_service_builds_real_aggregate_providers(session) -> None
         session=session,
         aggregate_announcement_provider=get_aggregate_announcement_provider(),
         aggregate_news_provider=get_aggregate_news_provider(),
+        aggregate_price_history_provider=get_aggregate_price_history_provider(),
+        aggregate_financial_metrics_provider=get_aggregate_financial_metrics_provider(),
+        aggregate_company_profile_provider=get_aggregate_company_profile_provider(),
     )
 
     assert isinstance(service.announcement_provider, AggregateAnnouncementProvider)
     assert isinstance(service.news_provider, AggregateNewsProvider)
+    assert isinstance(service.price_history_provider, AggregatePriceHistoryProvider)
+    assert isinstance(service.financial_metrics_provider, AggregateFinancialMetricsProvider)
+    assert isinstance(service.company_profile_provider, AggregateCompanyProfileProvider)
+    assert isinstance(service.announcement_repository, AnnouncementRepository)
+    assert isinstance(service.news_repository, NewsRepository)
+    assert isinstance(service.price_history_repository, PriceHistoryRepository)
+    assert isinstance(service.financial_metrics_repository, FinancialMetricsRepository)
+    assert isinstance(service.company_profile_repository, CompanyProfileRepository)
     assert service.announcement_provider.sources == []
     assert [adapter.name for adapter in service.announcement_provider.raw_sources] == [
         "eastmoney",
@@ -63,11 +89,30 @@ def test_get_stock_sync_service_builds_real_aggregate_providers(session) -> None
     )
     assert service.news_provider.sources == []
     assert [adapter.name for adapter in service.news_provider.raw_sources] == [
-        "eastmoney",
-        "sina",
+        "ifeng",
     ]
-    assert isinstance(service.news_provider.raw_sources[0].provider, EastmoneyNewsSource)
-    assert isinstance(service.news_provider.raw_sources[1].provider, SinaNewsSource)
+    assert isinstance(service.news_provider.raw_sources[0].provider, IfengNewsSource)
+    assert [adapter.name for adapter in service.price_history_provider.raw_sources] == [
+        "eastmoney",
+    ]
+    assert isinstance(
+        service.price_history_provider.raw_sources[0].provider,
+        EastmoneyPriceHistorySource,
+    )
+    assert [adapter.name for adapter in service.financial_metrics_provider.raw_sources] == [
+        "eastmoney",
+    ]
+    assert isinstance(
+        service.financial_metrics_provider.raw_sources[0].provider,
+        EastmoneyFinancialMetricsSource,
+    )
+    assert [adapter.name for adapter in service.company_profile_provider.raw_sources] == [
+        "eastmoney",
+    ]
+    assert isinstance(
+        service.company_profile_provider.raw_sources[0].provider,
+        EastmoneyCompanyProfileSource,
+    )
 
 
 def test_post_stock_sync_returns_sync_summary(
@@ -86,6 +131,9 @@ def test_post_stock_sync_returns_sync_summary(
                 synced=True,
                 announcements_upserted=2,
                 news_items_upserted=3,
+                price_bars_upserted=10,
+                financial_metrics_upserted=4,
+                company_profile_updated=True,
                 warnings=[],
                 synced_at=datetime(2026, 3, 11, 13, 0, 0),
             ),
@@ -104,6 +152,9 @@ def test_post_stock_sync_returns_sync_summary(
         "synced": True,
         "announcements_upserted": 2,
         "news_items_upserted": 3,
+        "price_bars_upserted": 10,
+        "financial_metrics_upserted": 4,
+        "company_profile_updated": True,
         "warnings": [],
         "synced_at": "2026-03-11T13:00:00",
     }
@@ -130,6 +181,9 @@ def test_post_stock_sync_returns_warning_aware_summary(
                 synced=True,
                 announcements_upserted=2,
                 news_items_upserted=3,
+                price_bars_upserted=8,
+                financial_metrics_upserted=2,
+                company_profile_updated=False,
                 warnings=["announcement source B failed", "news source A timeout"],
                 synced_at=datetime(2026, 3, 11, 14, 0, 0),
             ),
@@ -148,6 +202,9 @@ def test_post_stock_sync_returns_warning_aware_summary(
         "synced": True,
         "announcements_upserted": 2,
         "news_items_upserted": 3,
+        "price_bars_upserted": 8,
+        "financial_metrics_upserted": 2,
+        "company_profile_updated": False,
         "warnings": ["announcement source B failed", "news source A timeout"],
         "synced_at": "2026-03-11T14:00:00",
     }

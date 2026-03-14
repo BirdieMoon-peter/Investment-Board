@@ -23,6 +23,7 @@ def test_list_watchlist_items_returns_joined_security_and_latest_quote_fields(cl
     assert response.json() == [
         {
             "security_id": seeded_security.id,
+            "market": "SZ",
             "code": "000001",
             "name": "Ping An Bank",
             "industry": "Banking",
@@ -42,6 +43,7 @@ def test_list_watchlist_items_keeps_security_when_quote_snapshot_is_missing(clie
     assert response.json() == [
         {
             "security_id": seeded_security.id,
+            "market": "SZ",
             "code": "000001",
             "name": "Ping An Bank",
             "industry": "Banking",

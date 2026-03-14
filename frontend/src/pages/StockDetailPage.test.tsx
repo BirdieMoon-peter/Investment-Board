@@ -29,6 +29,36 @@ const detailData: StockDetailPageData = {
       volume: '1234567.0000',
     },
   ],
+  price_history: [
+    {
+      trade_date: '2026-03-09',
+      open_price: '9.9000',
+      high_price: '10.2000',
+      low_price: '9.7000',
+      close_price: '10.1000',
+      volume: '1111111.0000',
+      amount: '2222222.0000',
+    },
+  ],
+  financial_metrics: [
+    {
+      report_period: '2025-12-31',
+      revenue: '100000000.00',
+      net_profit: '25000000.00',
+      eps: '1.23',
+      roe: '12.5%',
+      debt_to_asset_ratio: null,
+    },
+  ],
+  company_profile: {
+    full_name: 'Ping An Bank Co., Ltd.',
+    english_name: 'Ping An Bank Co., Ltd.',
+    registered_capital: '19405918198',
+    establishment_date: '1987-12-22',
+    website: 'https://bank.example.com',
+    main_business: 'Commercial banking services',
+    employees: 12345,
+  },
   announcements: [
     {
       title: '2025 annual results released',
@@ -138,6 +168,18 @@ describe('StockDetailPage', () => {
     )
     expect(screen.getByRole('region', { name: /quote summary/i })).toHaveTextContent('10.3000')
     expect(screen.getByRole('region', { name: /quote summary/i })).toHaveTextContent('1234567.0000')
+    expect(screen.getByRole('table', { name: /price history/i })).toHaveTextContent('2026-03-09')
+    expect(screen.getByRole('table', { name: /price history/i })).toHaveTextContent('2222222.0000')
+    expect(screen.getByRole('table', { name: /financial metrics/i })).toHaveTextContent('2025-12-31')
+    expect(screen.getByRole('table', { name: /financial metrics/i })).toHaveTextContent('100000000.00')
+    expect(screen.getByRole('list', { name: /company profile/i })).toHaveTextContent(
+      'Ping An Bank Co., Ltd.',
+    )
+    expect(screen.getByRole('link', { name: 'https://bank.example.com' })).toHaveAttribute(
+      'href',
+      'https://bank.example.com',
+    )
+    expect(screen.getByText('12345')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /2025 annual results released/i })).toHaveAttribute(
       'href',
       'https://example.com/announcements/1',
@@ -149,8 +191,27 @@ describe('StockDetailPage', () => {
     )
     expect(screen.getByText('Analyst cited improving fundamentals.')).toBeInTheDocument()
     expect(screen.queryByText('No price context is available yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No price history is available yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No financial metrics are available yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No company profile is available yet.')).not.toBeInTheDocument()
     expect(screen.queryByText('No announcements are available yet.')).not.toBeInTheDocument()
     expect(screen.queryByText('No news is available yet.')).not.toBeInTheDocument()
+  })
+
+  it('renders a stronger stock identity header with market, code, industry, and status', () => {
+    render(
+      <StockDetailPage
+        detail={detailData}
+        viewState="ready"
+        onBack={vi.fn()}
+      />,
+    )
+
+    const securitySummary = screen.getByRole('region', { name: /selected security summary/i })
+
+    expect(screen.getByText('SZ:000001')).toBeInTheDocument()
+    expect(securitySummary).toHaveTextContent('Banking')
+    expect(securitySummary).toHaveTextContent('active')
   })
 
   it('shows sync controls and refreshes detail after a successful sync', async () => {
@@ -159,6 +220,9 @@ describe('StockDetailPage', () => {
       synced: true,
       announcements_upserted: 2,
       news_items_upserted: 3,
+      price_bars_upserted: 5,
+      financial_metrics_upserted: 4,
+      company_profile_updated: true,
       warnings: ['announcement source B failed', 'news source A timeout'],
       synced_at: '2026-03-11T14:00:00',
     })
@@ -188,7 +252,7 @@ describe('StockDetailPage', () => {
     })
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      'Information sync partially completed. Added 2 announcements and 3 news items with 2 warnings.',
+      'Information sync partially completed. Announcements: 2, news items: 3, price bars: 5, financial metric sets: 4, company profile: updated.',
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Warnings: announcement source B failed; news source A timeout')
     expect(await screen.findByRole('link', { name: /fresh filing available/i })).toHaveAttribute(

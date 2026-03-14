@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { fetchStockDetail } from './api/stocks'
 import {
+  addCustomWatchlistItem,
   addWatchlistItem,
   fetchWatchlist,
   removeWatchlistItem,
@@ -59,6 +60,17 @@ export default function App() {
     }
   }
 
+  async function handleAddCustom(market: string, code: string) {
+    setActionError(null)
+
+    try {
+      await addCustomWatchlistItem(market, code)
+      await loadWatchlist()
+    } catch {
+      setActionError('Unable to add that custom stock right now.')
+    }
+  }
+
   async function handleRemove(securityId: number) {
     setActionError(null)
 
@@ -106,7 +118,10 @@ export default function App() {
             </p>
           </header>
 
-          <SearchBox onAdd={(securityId) => void handleAdd(securityId)} />
+          <SearchBox
+            onAdd={(securityId) => void handleAdd(securityId)}
+            onAddCustom={(market, code) => void handleAddCustom(market, code)}
+          />
 
           {watchlistError ? <StatusMessage tone="error" message={watchlistError} /> : null}
           {!watchlistError && actionError ? <StatusMessage tone="error" message={actionError} /> : null}

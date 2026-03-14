@@ -232,7 +232,8 @@ def test_aggregate_news_provider_collects_source_errors_as_warnings():
     assert len(result.items) == 1
     assert result.items[0].security_id == security_id
     assert result.items[0].title == "Midday recap"
-    assert result.warnings == ["upstream news source unavailable"]
+    assert len(result.warnings) == 1
+    assert "wire failed (stock=sz:000001): RuntimeError: upstream news source unavailable" == result.warnings[0]
 
 
 def test_provider_modules_export_real_source_primitives():
@@ -283,7 +284,7 @@ def test_provider_modules_export_real_source_primitives():
         name="eastmoney",
         provider=announcement_source,
     )
-    news_adapter = RawNewsSourceAdapter(name="sina", provider=news_source)
+    news_adapter = RawNewsSourceAdapter(name="ifeng", provider=news_source)
 
     assert announcement_adapter.provider.fetch("600519", "sh", since=published_at) == [
         RawAnnouncement(
@@ -312,3 +313,26 @@ def test_provider_modules_export_real_source_primitives():
         assert client.timeout.pool == pytest.approx(10.0)
     finally:
         client.close()
+
+
+def test_aggregate_announcement_provider_includes_context_in_warnings():
+    security_id = 7
+    stock_code = "600519"
+    market = "sh"
+
+    class FailingSource:
+        def fetch(self, stock_code: str, market: str, *, since=None):
+            raise ValueError("upstream unavailable")
+
+    provider = AggregateAnnouncementProvider(
+        raw_sources=[RawAnnouncementSourceAdapter("test-source", FailingSource())]
+    )
+
+    result = provider.fetch_for_security(
+        security_id, stock_code=stock_code, market=market
+    )
+
+    assert len(result.warnings) == 1
+    assert "test-source" in result.warnings[0]
+    assert "sh:600519" in result.warnings[0]
+    assert "ValueError" in result.warnings[0]

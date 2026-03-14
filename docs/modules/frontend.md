@@ -39,38 +39,52 @@ Excluded:
 - `frontend/src/App.tsx`
 - `frontend/src/styles.css`
 - `frontend/src/api/watchlist.ts`
+- `frontend/src/api/stocks.ts`
 - `frontend/src/types/watchlist.ts`
 - `frontend/src/components/SearchBox.tsx`
 - `frontend/src/components/WatchlistTable.tsx`
 - `frontend/src/components/StatusMessage.tsx`
+- `frontend/src/components/StockHeader.tsx`
+- `frontend/src/components/QuoteSummary.tsx`
+- `frontend/src/components/PriceContextPanel.tsx`
+- `frontend/src/components/PriceHistoryChart.tsx`
+- `frontend/src/components/FinancialMetricsPanel.tsx`
+- `frontend/src/components/CompanyProfilePanel.tsx`
+- `frontend/src/components/AnnouncementList.tsx`
+- `frontend/src/components/NewsList.tsx`
+- `frontend/src/pages/StockDetailPage.tsx`
 - `frontend/src/App.test.tsx`
+- `frontend/src/types/watchlist.test.ts`
 - `frontend/src/components/SearchBox.test.tsx`
 - `frontend/src/components/WatchlistTable.test.tsx`
+- `frontend/src/components/PriceHistoryChart.test.tsx`
+- `frontend/src/components/FinancialMetricsPanel.test.tsx`
+- `frontend/src/components/CompanyProfilePanel.test.tsx`
+- `frontend/src/pages/StockDetailPage.test.tsx`
 - `frontend/src/test/setup.ts`
 
 ## Consumers
-- The current page consumes backend endpoints at `/api/watchlist/securities/search`, `POST /api/watchlist/items`, `DELETE /api/watchlist/items/{security_id}`, and `GET /api/watchlist/items`.
-- The frontend depends on the completed backend module for all search, add/remove, and watchlist list interactions.
+- The current UI consumes backend endpoints at `/api/watchlist/securities/search`, `POST /api/watchlist/items`, `POST /api/watchlist/items/custom`, `DELETE /api/watchlist/items/{security_id}`, and `GET /api/watchlist/items` for watchlist flows.
+- The stock detail page consumes `GET /api/stocks/{security_id}` and `POST /api/stocks/{security_id}/sync` from the completed backend module.
 
 ## Current Milestone
-Stock detail v1 frontend navigation and page shell
+Stock data detail sections and sync summary for the stock detail page
 
 ## Milestone Scope
-Planned for the frontend module after backend planning:
-- watchlist list navigation into a stock detail page
-- minimal page-level navigation state in `App`
-- stock detail page shell with loading, error, not-found, and empty-section states
-- focused frontend verification for the new detail shell flow
+Implemented in this milestone:
+- stock-detail frontend types aligned to the backend detail contract for `price_history`, `financial_metrics`, and `company_profile`
+- dedicated stock detail sections for price history, financial metrics, and company profile
+- integration of those sections into `StockDetailPage` alongside existing quote, announcement, and news sections
+- sync success messaging that now surfaces announcement/news counts plus price-history, financial-metrics, and company-profile sync results from the backend contract
+- regression fixes for stale stock-detail fixtures in `App.test.tsx` and stale backend watchlist fixtures during full verification
 
 Deferred in this milestone:
-- stock detail API client wiring beyond the shell
-- stock detail charts, announcements, news, and AI explanation subcomponents
-- grouped watchlists
-- event/news real-data panels
-- AI explanation UI
+- browser-level manual acceptance when local servers are running in a clean state
+- copy polish for descriptive text that still mentions only the pre-stock-data detail sections
+- broader visual redesign beyond the current accessible detail-page sections
 
 ## Current Status
-doing
+done
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -80,26 +94,33 @@ doing
 - `superpowers:verification-before-completion` before setting status to `done`
 
 ## Verification
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
-- search UI verified for result rendering, add action availability, empty-result handling, and error fallback behavior
-- watchlist list UI verified for joined backend data, remove behavior, and missing-quote fallback
-- top-level app flow verified for initial load, refresh after add/remove, visible empty/error states, and visible add/remove failure handling
+- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/types/watchlist.test.ts src/components/PriceHistoryChart.test.tsx src/components/FinancialMetricsPanel.test.tsx src/components/CompanyProfilePanel.test.tsx src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run`
+- `npm run build --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+- focused stock-data slice verification covers type defaults, the new detail panels, stock-detail integration, and the app-level stale-fixture regression path
+- full frontend verification covers existing search/watchlist flows plus the expanded stock-detail contract
+- production build verification confirms the current frontend compiles cleanly after the stock-data integration and sync-summary update
 
 ## Review Evidence
-- Date: 2026-03-11
+- Date: 2026-03-13
 - Verification commands:
-  - `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+  - `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/types/watchlist.test.ts src/components/PriceHistoryChart.test.tsx src/components/FinancialMetricsPanel.test.tsx src/components/CompanyProfilePanel.test.tsx src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+  - `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run`
+  - `npm run build --prefix "/Users/peter/Desktop/Investment Board/frontend"`
 - Result summary:
-  - `3 test files passed, 9 tests passed`
-  - Frontend watchlist MVP behavior is implemented and verified for search interaction, add/remove actions, initial watchlist loading, empty/error states, and missing-quote handling.
+  - focused frontend stock-data slice passed with `22` tests
+  - full frontend suite passed with `8` files and `30` tests
+  - frontend production build passed
+  - code review found the expanded backend sync summary fields were not surfaced in the UI; `frontend/src/api/stocks.ts` and `frontend/src/pages/StockDetailPage.tsx` were updated to consume and display those fields, then reverified with focused and full frontend checks
 - Remaining follow-up items:
-  - Broader cross-module integration checks may still be useful if a scripts/integration module is introduced later.
+  - Browser-level manual acceptance remains useful when the user returns.
 
 ## Open Questions
-- None for the current watchlist MVP frontend scope.
+- None for the current frontend stock-data scope.
 
 ## Implementation Notes
-- The frontend module now includes a React watchlist page with search, add, list, and remove flows wired to the completed backend APIs.
-- `SearchBox` covers successful search results plus explicit empty-result and request-error states.
-- `App` now handles initial watchlist loading, visible watchlist load errors, visible add/remove action failures, and table refresh after successful mutations.
-- `WatchlistTable` renders code, name, industry, last price, change percent, and `Pending sync` fallback values when quote data is missing.
+- `toStockDetailPageData()` now returns safe defaults for the expanded stock-detail contract so watchlist-to-detail navigation works before a fresh detail fetch completes.
+- `PriceHistoryChart`, `FinancialMetricsPanel`, and `CompanyProfilePanel` intentionally render accessible table/list presentations without adding a charting dependency.
+- `CompanyProfilePanel` renders `website` as a link and intentionally omits the stale plan-only fields `listing_date` and `business_scope` because the final backend contract does not expose them.
+- `StockDetailPage` now refreshes detail after sync and surfaces the backend sync summary for announcements, news items, price bars, financial metric sets, and company-profile update state.
+- `App.test.tsx` was updated to keep mocked stock-detail fixtures aligned with the expanded backend contract, preventing `undefined` child-prop regressions during full-suite verification.

@@ -42,6 +42,23 @@ export async function addWatchlistItem(securityId: number): Promise<{ security_i
   return (await response.json()) as { security_id: number }
 }
 
+export async function addCustomWatchlistItem(
+  market: string,
+  code: string,
+): Promise<{ security_id: number; security: SecuritySearchResult }> {
+  const response = await fetch('/api/watchlist/items/custom', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ market, code }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Unable to add that custom stock right now.')
+  }
+
+  return (await response.json()) as { security_id: number; security: SecuritySearchResult }
+}
+
 export async function removeWatchlistItem(
   securityId: number,
 ): Promise<{ removed: boolean; security_id: number }> {

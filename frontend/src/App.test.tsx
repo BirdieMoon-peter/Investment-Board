@@ -37,6 +37,7 @@ describe('App', () => {
         json: async () => [
           {
             security_id: 7,
+            market: 'SZ',
             code: '000001',
             name: 'Ping An Bank',
             industry: 'Banking',
@@ -73,6 +74,7 @@ describe('App', () => {
 
     await screen.findByRole('table', { name: /watchlist holdings/i })
     expect(screen.getAllByText('Ping An Bank')).toHaveLength(2)
+    expect(screen.getAllByText('SZ:000001')).toHaveLength(2)
     expect(screen.getByText('10.2000')).toBeInTheDocument()
     expect(screen.getByText('2.0000%')).toBeInTheDocument()
 
@@ -107,6 +109,7 @@ describe('App', () => {
         json: async () => [
           {
             security_id: 7,
+            market: 'SZ',
             code: '000001',
             name: 'Ping An Bank',
             industry: 'Banking',
@@ -129,6 +132,9 @@ describe('App', () => {
             status: 'active',
           },
           price_context: [],
+          price_history: [],
+          financial_metrics: [],
+          company_profile: null,
           announcements: [],
           news: [],
         }),
@@ -139,6 +145,7 @@ describe('App', () => {
     render(<App />)
 
     await screen.findByRole('table', { name: /watchlist holdings/i })
+    expect(screen.getByText('SZ:000001')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /view details for ping an bank/i }))
 
@@ -152,6 +159,72 @@ describe('App', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/watchlist/items')
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/stocks/7')
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('adds a custom stock after an empty search fallback and refreshes the watchlist', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          security_id: 11,
+          security: {
+            security_id: 11,
+            market: 'SZ',
+            code: '002594',
+            name: 'BYD',
+            industry: 'Auto',
+            status: 'active',
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            security_id: 11,
+            market: 'SZ',
+            code: '002594',
+            name: 'BYD',
+            industry: 'Auto',
+            last_price: null,
+            change_percent: null,
+            snapshot_time: null,
+          },
+        ],
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+
+    await screen.findByText(/your watchlist is empty/i)
+
+    fireEvent.change(screen.getByLabelText(/search securities/i), {
+      target: { value: '002594' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /search/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /add sz:002594/i }))
+
+    expect(await screen.findByRole('table', { name: /watchlist holdings/i })).toBeInTheDocument()
+    expect(screen.getByText('BYD')).toBeInTheDocument()
+    expect(screen.getByText('SZ:002594')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/watchlist/items')
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/watchlist/securities/search?query=002594')
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/watchlist/items/custom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ market: 'SZ', code: '002594' }),
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/watchlist/items')
   })
 
   it('renders the watchlist empty state after an empty initial load', async () => {
@@ -233,6 +306,7 @@ describe('App', () => {
         json: async () => [
           {
             security_id: 7,
+            market: 'SZ',
             code: '000001',
             name: 'Ping An Bank',
             industry: 'Banking',

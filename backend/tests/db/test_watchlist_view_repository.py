@@ -72,6 +72,7 @@ def test_list_rows_returns_latest_snapshot_for_each_security(session):
     assert rows == [
         WatchlistRow(
             security_id=alpha.id,
+            market="SH",
             code="600001",
             name="Alpha Co",
             industry="Utilities",
@@ -81,6 +82,7 @@ def test_list_rows_returns_latest_snapshot_for_each_security(session):
         ),
         WatchlistRow(
             security_id=beta.id,
+            market="SZ",
             code="000001",
             name="Beta Co",
             industry="Banking",
@@ -126,6 +128,7 @@ def test_list_rows_returns_single_deterministic_row_when_latest_snapshot_time_ti
     assert rows == [
         WatchlistRow(
             security_id=seeded_security.id,
+            market="SZ",
             code="000001",
             name="Ping An Bank",
             industry="Banking",
@@ -148,6 +151,7 @@ def test_list_rows_keeps_security_when_quote_is_missing(session, seeded_security
     assert rows == [
         WatchlistRow(
             security_id=seeded_security.id,
+            market="SZ",
             code="000001",
             name="Ping An Bank",
             industry="Banking",

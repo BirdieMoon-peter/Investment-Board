@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from urllib.parse import urljoin
+import logging
+import time
 
 import httpx
 
@@ -9,6 +11,8 @@ from app.services.providers.raw_types import RawNewsItem
 SINA_NEWS_ENDPOINT = "https://finance.sina.com.cn/stock/api/jsonp.php/var%20news=/StockNewsService.getNewsList"
 SINA_NEWS_BASE_URL = "https://finance.sina.com.cn"
 SINA_NEWS_SOURCE = "Sina"
+
+logger = logging.getLogger(__name__)
 
 
 class SinaNewsSource:
@@ -21,26 +25,89 @@ class SinaNewsSource:
         market: str,
         *,
         since: datetime | None = None,
+        max_pages: int = 3,
     ) -> list[RawNewsItem]:
-        with build_provider_client(transport=self._transport) as client:
-            response = client.get(
-                SINA_NEWS_ENDPOINT,
-                params={
-                    "symbol": f"{market}{stock_code}",
-                    "page": 1,
-                    "num": 20,
-                },
-            )
-            response.raise_for_status()
-            payload = response.json()
+        start_time = time.time()
 
-        rows = _extract_rows(payload)
-        items: list[RawNewsItem] = []
-        for index, row in enumerate(rows):
-            item = _parse_row(row, index=index)
-            if since is None or item.published_at >= since:
-                items.append(item)
-        return items
+        try:
+            all_items: list[RawNewsItem] = []
+            raw_count = 0
+
+            for page in range(1, max_pages + 1):
+                for attempt in range(2):
+                    try:
+                        with build_provider_client(transport=self._transport) as client:
+                            response = client.get(
+                                SINA_NEWS_ENDPOINT,
+                                params={
+                                    "symbol": f"{market}{stock_code}",
+                                    "page": page,
+                                    "num": 20,
+                                },
+                            )
+                            response.raise_for_status()
+                            payload = response.json()
+
+                        rows = _extract_rows(payload)
+                        if not rows:
+                            break
+
+                        raw_count += len(rows)
+
+                        for index, row in enumerate(rows):
+                            item = _parse_row(row, index=index)
+                            if since is None or item.published_at >= since:
+                                all_items.append(item)
+
+                        break
+
+                    except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                        if attempt == 0:
+                            time.sleep(1)
+                            continue
+                        raise
+
+                if not rows:
+                    break
+
+            elapsed = time.time() - start_time
+            logger.info(
+                "Provider fetch completed: source=%s stock=%s:%s elapsed=%.2fs raw_count=%d filtered_count=%d",
+                self.__class__.__name__,
+                market,
+                stock_code,
+                elapsed,
+                raw_count,
+                len(all_items),
+            )
+
+            return all_items
+
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code < 500:
+                elapsed = time.time() - start_time
+                logger.warning(
+                    "Provider fetch degraded to empty results: source=%s stock=%s:%s elapsed=%.2fs status=%d error=%s",
+                    self.__class__.__name__,
+                    market,
+                    stock_code,
+                    elapsed,
+                    exc.response.status_code,
+                    exc,
+                )
+                return []
+            raise
+        except Exception as exc:
+            elapsed = time.time() - start_time
+            logger.warning(
+                "Provider fetch failed: source=%s stock=%s:%s elapsed=%.2fs error=%s",
+                self.__class__.__name__,
+                market,
+                stock_code,
+                elapsed,
+                exc,
+            )
+            raise
 
 
 def _extract_rows(payload: object) -> list[dict[str, object]]:
@@ -52,6 +119,8 @@ def _extract_rows(payload: object) -> list[dict[str, object]]:
         data = payload.get("data")
         if isinstance(data, list):
             return data
+    if not payload:
+        return []
     raise ValueError("Sina news payload missing data rows")
 
 

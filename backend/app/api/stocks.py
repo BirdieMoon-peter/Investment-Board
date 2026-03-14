@@ -9,18 +9,29 @@ from app.db.models import Announcement, NewsItem
 from app.db.models.timestamps import utc_now
 from app.db.repositories import SecurityRepository, StockDetailRepository
 from app.db.repositories.announcement_repository import AnnouncementRepository
+from app.db.repositories.company_profile_repository import CompanyProfileRepository
+from app.db.repositories.financial_metrics_repository import FinancialMetricsRepository
 from app.db.repositories.news_repository import NewsRepository
+from app.db.repositories.price_history_repository import PriceHistoryRepository
 from app.schemas import StockDetailResponse, StockSyncResponse
 from app.services import StockSyncService
 from app.services.providers import (
     AggregateAnnouncementProvider,
+    AggregateCompanyProfileProvider,
+    AggregateFinancialMetricsProvider,
     AggregateNewsProvider,
+    AggregatePriceHistoryProvider,
     EastmoneyAnnouncementSource,
-    EastmoneyNewsSource,
+    EastmoneyCompanyProfileSource,
+    EastmoneyFinancialMetricsSource,
+    EastmoneyPriceHistorySource,
+    IfengNewsSource,
     RawAnnouncementSourceAdapter,
+    RawCompanyProfileSourceAdapter,
+    RawFinancialMetricsSourceAdapter,
     RawNewsSourceAdapter,
+    RawPriceHistorySourceAdapter,
     SinaAnnouncementSource,
-    SinaNewsSource,
 )
 
 router = APIRouter()
@@ -42,7 +53,8 @@ class EmptyNewsProvider:
 def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
     return AggregateAnnouncementProvider(
         raw_sources=[
-            RawAnnouncementSourceAdapter("eastmoney", EastmoneyAnnouncementSource()),
+            # Eastmoney announcement API returns fund/trust announcements, not stock announcements
+            # RawAnnouncementSourceAdapter("eastmoney", EastmoneyAnnouncementSource()),
             RawAnnouncementSourceAdapter("sina", SinaAnnouncementSource()),
         ]
     )
@@ -52,8 +64,40 @@ def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
 def get_aggregate_news_provider() -> AggregateNewsProvider:
     return AggregateNewsProvider(
         raw_sources=[
-            RawNewsSourceAdapter("eastmoney", EastmoneyNewsSource()),
-            RawNewsSourceAdapter("sina", SinaNewsSource()),
+            # Ifeng news API returns 404 - endpoint may have changed
+            # RawNewsSourceAdapter("ifeng", IfengNewsSource()),
+        ]
+    )
+
+
+
+def get_aggregate_price_history_provider() -> AggregatePriceHistoryProvider:
+    return AggregatePriceHistoryProvider(
+        raw_sources=[
+            RawPriceHistorySourceAdapter("eastmoney", EastmoneyPriceHistorySource()),
+        ]
+    )
+
+
+
+def get_aggregate_financial_metrics_provider() -> AggregateFinancialMetricsProvider:
+    return AggregateFinancialMetricsProvider(
+        raw_sources=[
+            # Eastmoney financial metrics API endpoint has changed and no longer works
+            # RawFinancialMetricsSourceAdapter(
+            #     "eastmoney",
+            #     EastmoneyFinancialMetricsSource(),
+            # ),
+        ]
+    )
+
+
+
+def get_aggregate_company_profile_provider() -> AggregateCompanyProfileProvider:
+    return AggregateCompanyProfileProvider(
+        raw_sources=[
+            # Eastmoney company profile API endpoint has changed and no longer works
+            # RawCompanyProfileSourceAdapter("eastmoney", EastmoneyCompanyProfileSource()),
         ]
     )
 
@@ -65,12 +109,27 @@ def get_stock_sync_service(
         get_aggregate_announcement_provider
     ),
     aggregate_news_provider: AggregateNewsProvider = Depends(get_aggregate_news_provider),
+    aggregate_price_history_provider: AggregatePriceHistoryProvider = Depends(
+        get_aggregate_price_history_provider
+    ),
+    aggregate_financial_metrics_provider: AggregateFinancialMetricsProvider = Depends(
+        get_aggregate_financial_metrics_provider
+    ),
+    aggregate_company_profile_provider: AggregateCompanyProfileProvider = Depends(
+        get_aggregate_company_profile_provider
+    ),
 ) -> StockSyncService:
     return StockSyncService(
         announcement_provider=aggregate_announcement_provider,
         news_provider=aggregate_news_provider,
         announcement_repository=AnnouncementRepository(session),
         news_repository=NewsRepository(session),
+        price_history_provider=aggregate_price_history_provider,
+        financial_metrics_provider=aggregate_financial_metrics_provider,
+        company_profile_provider=aggregate_company_profile_provider,
+        price_history_repository=PriceHistoryRepository(session),
+        financial_metrics_repository=FinancialMetricsRepository(session),
+        company_profile_repository=CompanyProfileRepository(session),
     )
 
 
@@ -109,6 +168,9 @@ def sync_stock(
         synced=result.synced,
         announcements_upserted=result.announcements_upserted,
         news_items_upserted=result.news_items_upserted,
+        price_bars_upserted=result.price_bars_upserted,
+        financial_metrics_upserted=result.financial_metrics_upserted,
+        company_profile_updated=result.company_profile_updated,
         warnings=result.warnings,
         synced_at=result.synced_at,
     )

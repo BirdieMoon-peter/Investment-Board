@@ -70,7 +70,7 @@ class AggregateAnnouncementProvider:
                             for raw_item in raw_items
                         )
                     except Exception as exc:
-                        warnings.append(_warning_message(source.name, exc))
+                        warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
 
         return AnnouncementFetchResult(
             items=_deduplicate_announcements(items),
@@ -117,7 +117,7 @@ class AggregateNewsProvider:
                         raw_items = source.provider.fetch(stock_code, market, since=since)
                         items.extend(_news_from_raw(security_id, raw_item) for raw_item in raw_items)
                     except Exception as exc:
-                        warnings.append(_warning_message(source.name, exc))
+                        warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
 
         return NewsFetchResult(items=_deduplicate_news(items), warnings=warnings)
 
@@ -142,8 +142,17 @@ class NewsItemsProvider:
         return self.aggregate_provider.fetch_for_security(security_id, since=since).items
 
 
-def _warning_message(source_name: str, exc: Exception) -> str:
-    return str(exc) or f"{source_name} failed"
+def _warning_message(
+    source_name: str,
+    exc: Exception,
+    *,
+    stock_code: str | None = None,
+    market: str | None = None,
+) -> str:
+    context = f" (stock={market}:{stock_code})" if stock_code and market else ""
+    exc_type = type(exc).__name__
+    exc_msg = str(exc) or "unknown error"
+    return f"{source_name} failed{context}: {exc_type}: {exc_msg}"
 
 
 def _announcement_from_raw(security_id: int, item: RawAnnouncement) -> Announcement:

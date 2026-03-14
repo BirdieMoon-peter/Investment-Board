@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.db.models import Announcement, NewsItem
 from app.services.providers.aggregate_providers import AnnouncementFetchResult, NewsFetchResult
@@ -90,6 +90,48 @@ class StubAggregateNewsProvider:
         return self.result
 
 
+@dataclass
+class ComparingAnnouncementProvider:
+    items: list[Announcement]
+    expected_stock_code: str
+    expected_market: str
+
+    def fetch_for_security(
+        self,
+        security_id: int,
+        *,
+        stock_code: str,
+        market: str,
+        since: datetime | None = None,
+    ) -> list[Announcement]:
+        assert stock_code == self.expected_stock_code
+        assert market == self.expected_market
+        assert since is not None
+
+        return [item for item in self.items if item.published_at >= since]
+
+
+@dataclass
+class ComparingNewsProvider:
+    items: list[NewsItem]
+    expected_stock_code: str
+    expected_market: str
+
+    def fetch_for_security(
+        self,
+        security_id: int,
+        *,
+        stock_code: str,
+        market: str,
+        since: datetime | None = None,
+    ) -> list[NewsItem]:
+        assert stock_code == self.expected_stock_code
+        assert market == self.expected_market
+        assert since is not None
+
+        return [item for item in self.items if item.published_at >= since]
+
+
 class RecordingAnnouncementRepository:
     def __init__(self, latest_published_at: datetime | None = None):
         self.latest_published_at = latest_published_at
@@ -114,6 +156,53 @@ class RecordingNewsRepository:
     def upsert_many(self, items: list[NewsItem]) -> list[NewsItem]:
         self.upsert_calls.append(items)
         return items
+
+
+def test_sync_security_normalizes_naive_repository_cutoffs_to_aware_utc_for_provider_comparisons():
+    security_id = 31
+    stock_code = "600519"
+    market = "sh"
+    naive_cutoff = datetime(2026, 3, 10, 9, 0)
+    aware_announcement = Announcement(
+        security_id=security_id,
+        title="After close filing",
+        source="Exchange",
+        url="https://example.com/announcements/31",
+        summary="Cutoff-safe announcement",
+        published_at=datetime(2026, 3, 10, 9, 30, tzinfo=UTC),
+    )
+    aware_news = NewsItem(
+        security_id=security_id,
+        title="Market close wrap",
+        source="Newswire",
+        url="https://example.com/news/31",
+        summary="Cutoff-safe news",
+        published_at=datetime(2026, 3, 10, 9, 45, tzinfo=UTC),
+    )
+    announcement_repository = RecordingAnnouncementRepository(latest_published_at=naive_cutoff)
+    news_repository = RecordingNewsRepository(latest_published_at=naive_cutoff)
+    service = StockSyncService(
+        announcement_provider=ComparingAnnouncementProvider(
+            [aware_announcement],
+            stock_code,
+            market,
+        ),
+        news_provider=ComparingNewsProvider(
+            [aware_news],
+            stock_code,
+            market,
+        ),
+        announcement_repository=announcement_repository,
+        news_repository=news_repository,
+    )
+
+    result = service.sync_security(security_id, stock_code=stock_code, market=market)
+
+    assert announcement_repository.upsert_calls == [[aware_announcement]]
+    assert news_repository.upsert_calls == [[aware_news]]
+    assert result.announcements_upserted == 1
+    assert result.news_items_upserted == 1
+
 
 
 def test_sync_security_uses_incremental_cutoffs_and_persists_provider_rows():
@@ -143,13 +232,13 @@ def test_sync_security_uses_incremental_cutoffs_and_persists_provider_rows():
     service = StockSyncService(
         announcement_provider=StubAnnouncementProvider(
             [announcement],
-            datetime(2026, 3, 10, 9, 0),
+            datetime(2026, 3, 10, 9, 0, tzinfo=UTC),
             stock_code,
             market,
         ),
         news_provider=StubNewsProvider(
             [news_item],
-            datetime(2026, 3, 10, 9, 0),
+            datetime(2026, 3, 10, 9, 0, tzinfo=UTC),
             stock_code,
             market,
         ),

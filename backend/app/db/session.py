@@ -5,9 +5,29 @@ from sqlalchemy.engine import Engine
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.settings import Settings
-from app.db.models import Announcement, NewsItem, PriceBarDaily, QuoteSnapshot, Security, WatchlistItem
+from app.db.models import (
+    Announcement,
+    CompanyProfile,
+    FinancialMetrics,
+    NewsItem,
+    PriceBarDaily,
+    PriceHistory,
+    QuoteSnapshot,
+    Security,
+    WatchlistItem,
+)
 
-_ = (Security, WatchlistItem, QuoteSnapshot, PriceBarDaily, Announcement, NewsItem)
+_ = (
+    Security,
+    WatchlistItem,
+    QuoteSnapshot,
+    PriceBarDaily,
+    PriceHistory,
+    FinancialMetrics,
+    CompanyProfile,
+    Announcement,
+    NewsItem,
+)
 
 
 @event.listens_for(Engine, "connect")

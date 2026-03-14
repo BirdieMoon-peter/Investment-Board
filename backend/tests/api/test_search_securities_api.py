@@ -72,3 +72,13 @@ def test_search_securities_rejects_whitespace_only_query(client) -> None:
     assert response.status_code == 422
 
 
+
+def test_search_securities_returns_empty_list_and_preserves_custom_add_path(client, session) -> None:
+    session.connection()
+
+    response = client.get("/api/watchlist/securities/search", params={"query": "002594"})
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+

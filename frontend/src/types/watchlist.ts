@@ -9,6 +9,7 @@ export interface SecuritySearchResult {
 
 export interface WatchlistItem {
   security_id: number
+  market: string
   code: string
   name: string
   industry: string | null
@@ -35,6 +36,35 @@ export interface StockDetailPriceBar {
   volume: string
 }
 
+export interface StockDetailPriceHistoryBar {
+  trade_date: string
+  open_price: string
+  high_price: string
+  low_price: string
+  close_price: string
+  volume: string
+  amount: string
+}
+
+export interface StockDetailFinancialMetric {
+  report_period: string
+  revenue: string | null
+  net_profit: string | null
+  eps: string | null
+  roe: string | null
+  debt_to_asset_ratio: string | null
+}
+
+export interface StockDetailCompanyProfile {
+  full_name: string | null
+  english_name: string | null
+  registered_capital: string | null
+  establishment_date: string | null
+  website: string | null
+  main_business: string | null
+  employees: number | null
+}
+
 export interface StockDetailAnnouncement {
   title: string
   source: string | null
@@ -54,6 +84,9 @@ export interface StockDetailNewsItem {
 export interface StockDetailPageData {
   security: StockDetailPageSecurity
   price_context: StockDetailPriceBar[]
+  price_history: StockDetailPriceHistoryBar[]
+  financial_metrics: StockDetailFinancialMetric[]
+  company_profile: StockDetailCompanyProfile | null
   announcements: StockDetailAnnouncement[]
   news: StockDetailNewsItem[]
 }
@@ -64,13 +97,16 @@ export function toStockDetailPageData(item: WatchlistItem): StockDetailPageData 
   return {
     security: {
       security_id: item.security_id,
-      market: 'Unknown market',
+      market: item.market,
       code: item.code,
       name: item.name,
       industry: item.industry,
       status: 'active',
     },
     price_context: [],
+    price_history: [],
+    financial_metrics: [],
+    company_profile: null,
     announcements: [],
     news: [],
   }

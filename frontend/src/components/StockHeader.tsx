@@ -9,8 +9,7 @@ export function StockHeader({ security }: StockHeaderProps) {
     <section className="stock-detail-section" aria-label="Selected security summary">
       <h2>{security.name}</h2>
       <div className="stock-detail-meta" aria-label="Stock identity and status">
-        <span>{security.market}</span>
-        <span>{security.code}</span>
+        <span>{`${security.market}:${security.code}`}</span>
         <span>{security.status}</span>
       </div>
       {security.industry ? <p className="stock-detail-subtle">{security.industry}</p> : null}

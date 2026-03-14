@@ -19,7 +19,7 @@ export function WatchlistTable({ items, onOpenDetail, onRemove }: WatchlistTable
     <table aria-label="Watchlist holdings">
       <thead>
         <tr>
-          <th scope="col">Code</th>
+          <th scope="col">Market / Code</th>
           <th scope="col">Name</th>
           <th scope="col">Industry</th>
           <th scope="col">Last price</th>
@@ -30,7 +30,7 @@ export function WatchlistTable({ items, onOpenDetail, onRemove }: WatchlistTable
       <tbody>
         {items.map((item) => (
           <tr key={item.security_id}>
-            <td>{item.code}</td>
+            <td>{`${item.market}:${item.code}`}</td>
             <td>{item.name}</td>
             <td>{item.industry ?? '—'}</td>
             <td>{formatLastPrice(item.last_price)}</td>

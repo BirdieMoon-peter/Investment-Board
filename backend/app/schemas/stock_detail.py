@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlmodel import SQLModel
 
-from app.db.models import Announcement, NewsItem, PriceBarDaily
+from app.db.models import Announcement, CompanyProfile, FinancialMetrics, NewsItem, PriceBarDaily, PriceHistory
 from app.db.repositories import StockDetail, StockDetailSecurity
 
 
@@ -64,11 +64,55 @@ class StockDetailNewsItemResponse(SQLModel):
         return cls.model_validate(news_item)
 
 
+class StockDetailPriceHistoryResponse(SQLModel):
+    trade_date: date
+    open_price: Decimal
+    high_price: Decimal
+    low_price: Decimal
+    close_price: Decimal
+    volume: Decimal
+    amount: Decimal
+
+    @classmethod
+    def from_model(cls, price_history: PriceHistory) -> "StockDetailPriceHistoryResponse":
+        return cls.model_validate(price_history)
+
+
+class StockDetailFinancialMetricsResponse(SQLModel):
+    report_period: str
+    revenue: Decimal | None = None
+    net_profit: Decimal | None = None
+    eps: Decimal | None = None
+    roe: Decimal | None = None
+    debt_to_asset_ratio: Decimal | None = None
+
+    @classmethod
+    def from_model(cls, financial_metrics: FinancialMetrics) -> "StockDetailFinancialMetricsResponse":
+        return cls.model_validate(financial_metrics)
+
+
+class StockDetailCompanyProfileResponse(SQLModel):
+    full_name: str | None = None
+    english_name: str | None = None
+    registered_capital: Decimal | None = None
+    establishment_date: date | None = None
+    website: str | None = None
+    main_business: str | None = None
+    employees: int | None = None
+
+    @classmethod
+    def from_model(cls, company_profile: CompanyProfile) -> "StockDetailCompanyProfileResponse":
+        return cls.model_validate(company_profile)
+
+
 class StockDetailResponse(SQLModel):
     security: StockDetailSecurityResponse
     price_context: list[StockDetailPriceBarResponse]
     announcements: list[StockDetailAnnouncementResponse]
     news: list[StockDetailNewsItemResponse]
+    price_history: list[StockDetailPriceHistoryResponse]
+    financial_metrics: list[StockDetailFinancialMetricsResponse]
+    company_profile: StockDetailCompanyProfileResponse | None = None
 
     @classmethod
     def from_repository_model(cls, detail: StockDetail) -> "StockDetailResponse":
@@ -82,6 +126,19 @@ class StockDetailResponse(SQLModel):
                 for announcement in detail.announcements
             ],
             news=[StockDetailNewsItemResponse.from_model(news_item) for news_item in detail.news],
+            price_history=[
+                StockDetailPriceHistoryResponse.from_model(price_history)
+                for price_history in detail.price_history
+            ],
+            financial_metrics=[
+                StockDetailFinancialMetricsResponse.from_model(financial_metrics)
+                for financial_metrics in detail.financial_metrics
+            ],
+            company_profile=(
+                StockDetailCompanyProfileResponse.from_model(detail.company_profile)
+                if detail.company_profile is not None
+                else None
+            ),
         )
 
 
@@ -90,6 +147,9 @@ class StockSyncResponse(SQLModel):
     synced: bool
     announcements_upserted: int
     news_items_upserted: int
+    price_bars_upserted: int = 0
+    financial_metrics_upserted: int = 0
+    company_profile_updated: bool = False
     warnings: list[str]
     synced_at: datetime
 
@@ -101,6 +161,9 @@ class StockSyncResponse(SQLModel):
         synced: bool,
         announcements_upserted: int,
         news_items_upserted: int,
+        price_bars_upserted: int = 0,
+        financial_metrics_upserted: int = 0,
+        company_profile_updated: bool = False,
         warnings: list[str],
         synced_at: datetime,
     ) -> "StockSyncResponse":
@@ -109,6 +172,9 @@ class StockSyncResponse(SQLModel):
             synced=synced,
             announcements_upserted=announcements_upserted,
             news_items_upserted=news_items_upserted,
+            price_bars_upserted=price_bars_upserted,
+            financial_metrics_upserted=financial_metrics_upserted,
+            company_profile_updated=company_profile_updated,
             warnings=warnings,
             synced_at=synced_at,
         )

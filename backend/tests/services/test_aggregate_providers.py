@@ -102,7 +102,7 @@ def test_aggregate_announcement_provider_returns_warnings_for_failed_sources():
     result = provider.fetch_for_security(security_id)
 
     assert result.items == [surviving_item]
-    assert result.warnings == ["upstream announcement source unavailable"]
+    assert result.warnings == ["exchange failed: RuntimeError: upstream announcement source unavailable"]
 
 
 
@@ -161,4 +161,4 @@ def test_aggregate_news_provider_returns_warnings_for_failed_sources():
     result = provider.fetch_for_security(security_id)
 
     assert result.items == [surviving_item]
-    assert result.warnings == ["upstream news source unavailable"]
+    assert result.warnings == ["wire failed: RuntimeError: upstream news source unavailable"]

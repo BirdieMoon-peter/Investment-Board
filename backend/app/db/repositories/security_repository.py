@@ -13,6 +13,15 @@ class SecurityRepository:
     def get_by_id(self, security_id: int) -> Security | None:
         return self.session.get(Security, security_id)
 
+    def get_by_market_code(self, market: str, code: str) -> Security | None:
+        normalized_market = market.strip().upper()
+        normalized_code = code.strip()
+        statement = select(Security).where(
+            Security.market == normalized_market,
+            Security.code == normalized_code,
+        )
+        return self.session.exec(statement).first()
+
     def list_by_market_code(self, keys: Sequence[tuple[str, str]]) -> list[Security]:
         if not keys:
             return []

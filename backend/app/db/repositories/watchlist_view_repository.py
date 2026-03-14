@@ -12,6 +12,7 @@ from app.db.models import QuoteSnapshot, Security, WatchlistItem
 @dataclass(frozen=True)
 class WatchlistRow:
     security_id: int
+    market: str
     code: str
     name: str
     industry: Optional[str]
@@ -54,6 +55,7 @@ class WatchlistViewRepository:
         statement = (
             select(
                 Security.id,
+                Security.market,
                 Security.code,
                 Security.name,
                 Security.industry,
@@ -71,6 +73,7 @@ class WatchlistViewRepository:
         return [
             WatchlistRow(
                 security_id=security_id,
+                market=market,
                 code=code,
                 name=name,
                 industry=industry,
@@ -78,7 +81,7 @@ class WatchlistViewRepository:
                 change_percent=change_percent,
                 snapshot_time=snapshot_time,
             )
-            for security_id, code, name, industry, last_price, change_percent, snapshot_time in self.session.exec(
+            for security_id, market, code, name, industry, last_price, change_percent, snapshot_time in self.session.exec(
                 statement
             ).all()
         ]

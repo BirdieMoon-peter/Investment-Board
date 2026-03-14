@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 
 import { fetchStockDetail, syncStock } from '../api/stocks'
 import { AnnouncementList } from '../components/AnnouncementList'
+import { CompanyProfilePanel } from '../components/CompanyProfilePanel'
+import { FinancialMetricsPanel } from '../components/FinancialMetricsPanel'
 import { NewsList } from '../components/NewsList'
 import { PriceContextPanel } from '../components/PriceContextPanel'
+import { PriceHistoryChart } from '../components/PriceHistoryChart'
 import { QuoteSummary } from '../components/QuoteSummary'
 import { StatusMessage } from '../components/StatusMessage'
 import { StockHeader } from '../components/StockHeader'
@@ -49,8 +52,8 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
       const warningCount = result.warnings.length
       setSyncMessage(
         warningCount > 0
-          ? `Information sync partially completed. Added ${result.announcements_upserted} announcements and ${result.news_items_upserted} news items with ${warningCount} warnings.`
-          : `Information sync complete. Added ${result.announcements_upserted} announcements and ${result.news_items_upserted} news items.`,
+          ? `Information sync partially completed. Announcements: ${result.announcements_upserted}, news items: ${result.news_items_upserted}, price bars: ${result.price_bars_upserted}, financial metric sets: ${result.financial_metrics_upserted}, company profile: ${result.company_profile_updated ? 'updated' : 'unchanged'}.`
+          : `Information sync complete. Announcements: ${result.announcements_upserted}, news items: ${result.news_items_upserted}, price bars: ${result.price_bars_upserted}, financial metric sets: ${result.financial_metrics_upserted}, company profile: ${result.company_profile_updated ? 'updated' : 'unchanged'}.`,
       )
       setSyncWarningMessage(
         warningCount > 0 ? `Warnings: ${result.warnings.join('; ')}` : null,
@@ -72,7 +75,7 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
         <p className="watchlist-shell__eyebrow">Investment Board</p>
         <h1>Stock detail</h1>
         <p className="watchlist-shell__description">
-          Review the selected security before richer detail modules are connected.
+          Review synced price context, announcements, and news for this tracked stock.
         </p>
       </header>
 
@@ -117,6 +120,9 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
         <>
           <QuoteSummary latestBar={currentDetail.price_context[0] ?? null} />
           <PriceContextPanel priceContext={currentDetail.price_context} />
+          <PriceHistoryChart priceHistory={currentDetail.price_history} />
+          <FinancialMetricsPanel financialMetrics={currentDetail.financial_metrics} />
+          <CompanyProfilePanel companyProfile={currentDetail.company_profile} />
           <AnnouncementList announcements={currentDetail.announcements} />
           <NewsList news={currentDetail.news} />
         </>

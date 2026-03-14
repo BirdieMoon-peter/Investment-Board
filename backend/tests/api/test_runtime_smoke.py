@@ -34,6 +34,7 @@ def test_runtime_app_serves_seeded_watchlist_items_from_configured_database(tmp_
     assert watchlist_response.json() == [
         {
             "security_id": 1,
+            "market": "SH",
             "code": "600519",
             "name": "Kweichow Moutai",
             "industry": "Beverages",
@@ -43,6 +44,7 @@ def test_runtime_app_serves_seeded_watchlist_items_from_configured_database(tmp_
         },
         {
             "security_id": 2,
+            "market": "SZ",
             "code": "000001",
             "name": "Ping An Bank",
             "industry": "Banking",

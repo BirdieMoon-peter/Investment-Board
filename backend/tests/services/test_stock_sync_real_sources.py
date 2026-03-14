@@ -144,7 +144,7 @@ def test_sync_security_keeps_warning_aware_partial_success_with_real_aggregate_r
             [],
         ),
         news_provider=RecordingAggregateNewsProvider(
-            NewsFetchResult(items=[], warnings=["news source A timeout"]),
+            NewsFetchResult(items=[], warnings=["ifeng timeout"]),
             [],
         ),
         announcement_repository=announcement_repository,
@@ -160,7 +160,7 @@ def test_sync_security_keeps_warning_aware_partial_success_with_real_aggregate_r
 
     assert result.synced is True
     assert result.synced_at == synced_at
-    assert result.warnings == ["announcement source B failed", "news source A timeout"]
+    assert result.warnings == ["announcement source B failed", "ifeng timeout"]
     assert result.announcements_upserted == 1
     assert result.news_items_upserted == 0
     assert announcement_repository.upsert_calls == [[announcement]]

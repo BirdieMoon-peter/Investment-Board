@@ -30,34 +30,51 @@ Excluded:
 - `backend/app/main.py`
 - `backend/app/api/dependencies.py`
 - `backend/app/api/watchlist.py`
+- `backend/app/api/stocks.py`
 - `backend/app/schemas/security.py`
 - `backend/app/schemas/watchlist.py`
+- `backend/app/schemas/stock_detail.py`
+- `backend/app/services/stock_sync.py`
+- `backend/app/services/providers/stock_data_providers.py`
+- `backend/app/db/models/price_history.py`
+- `backend/app/db/models/financial_metrics.py`
+- `backend/app/db/models/company_profile.py`
+- `backend/app/db/repositories/price_history_repository.py`
+- `backend/app/db/repositories/financial_metrics_repository.py`
+- `backend/app/db/repositories/company_profile_repository.py`
+- `backend/app/db/repositories/watchlist_view_repository.py`
 - `backend/tests/api/conftest.py`
 - `backend/tests/api/test_search_securities_api.py`
 - `backend/tests/api/test_watchlist_mutation_api.py`
 - `backend/tests/api/test_watchlist_list_api.py`
+- `backend/tests/api/test_stock_detail_api.py`
+- `backend/tests/api/test_stock_sync_api.py`
+- `backend/tests/api/test_runtime_smoke.py`
+- `backend/tests/db/test_watchlist_view_repository.py`
+- `backend/tests/services/test_stock_sync_with_data.py`
+- `backend/tests/services/test_stock_data_aggregate_providers.py`
 
 ## Consumers
-- The future frontend module will call `/api/watchlist/securities/search` for security lookup.
-- The future frontend module will call `POST /api/watchlist/items` and `DELETE /api/watchlist/items/{security_id}` for watchlist mutations.
-- The future frontend module will call `GET /api/watchlist/items` for the watchlist list view.
+- The frontend module calls `/api/watchlist/securities/search`, `POST /api/watchlist/items`, `POST /api/watchlist/items/custom`, `DELETE /api/watchlist/items/{security_id}`, and `GET /api/watchlist/items` for watchlist flows.
+- The frontend module calls `GET /api/stocks/{security_id}` for the stock detail page.
+- The frontend module calls `POST /api/stocks/{security_id}/sync` to refresh announcements, news, and stock-data detail sections.
 - The backend module depends on the completed data-layer repositories and schemas in `backend/app/db/`.
 
 ## Current Milestone
-Watchlist MVP backend handoff target
+Stock data detail and sync contract on top of the watchlist APIs
 
 ## Milestone Scope
-Planned for the backend module after data-layer planning:
-- search securities by code or name
-- add watchlist item
-- remove watchlist item by `security_id`
-- fetch watchlist list view joined with latest quote snapshot
+Implemented in this milestone:
+- market-aware watchlist list responses backed by `WatchlistViewRepository` and reflected in runtime smoke coverage
+- stock detail API responses that return `security`, `price_context`, `price_history`, `financial_metrics`, `company_profile`, `announcements`, and `news`
+- stock sync service wiring for aggregate announcement, news, price history, financial metrics, and company profile providers
+- sync response counts/flags for `price_bars_upserted`, `financial_metrics_upserted`, and `company_profile_updated`
+- aggregate provider deduplication for price history and financial metrics plus warning collection across stock-data sources
 
 Deferred in this milestone:
-- stock detail APIs
-- AI analysis APIs
-- positions and portfolio APIs
-- event/news/announcement real-data APIs
+- broader portfolio or AI-analysis backend APIs
+- additional stock-data sources beyond the current aggregate adapters
+- browser-level acceptance, which belongs to the frontend module
 
 ## Current Status
 done
@@ -70,22 +87,29 @@ done
 - `superpowers:verification-before-completion` before setting status to `done`
 
 ## Verification
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api" -q`
-- search endpoint verified for ordered active-only matches, empty results, and blank-query rejection
-- add/remove endpoints verified for idempotent add, explicit `404` handling for unknown securities and missing watchlist rows, and successful delete responses
-- watchlist list endpoint verified for joined security + latest quote output and missing-quote behavior
-- backend integration uses the completed data-layer repositories without duplicating persistence logic in route handlers
+- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
+- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests" -q`
+- watchlist API/runtime coverage verified the market-aware contract and deterministic latest-quote selection
+- stock detail and sync coverage verified the expanded stock-data detail response and sync summary contract
+- full backend verification passed after the market-aware watchlist regression tests were updated to the current contract
 
 ## Review Evidence
-- Date: 2026-03-10
+- Date: 2026-03-13
 - Verification commands:
-  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api" -q`
+  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
+  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests" -q`
 - Result summary:
-  - `9 passed in 0.06s`
-  - Backend foundations for watchlist MVP are implemented and verified for search, mutation, and watchlist list responses on top of the completed data-layer module.
+  - focused backend watchlist regression coverage passed with `4` tests
+  - full backend suite passed with `157` tests
+  - stock-data review found the frontend had not surfaced the expanded sync summary yet; backend contract coverage was already present in `backend/tests/api/test_stock_sync_api.py`
 - Remaining follow-up items:
-  - Frontend module still needs UI integration for search, add/remove actions, and list rendering.
+  - None for the current backend stock-data slice.
 
 ## Open Questions
-- What backend runtime and framework will this project use?
-- Which backend capability should be delivered first?
+- None for the current backend stock-data scope.
+
+## Implementation Notes
+- The watchlist row contract now includes `market`, and backend runtime/repository verification has been updated to lock that contract.
+- `StockSyncResult` and `StockSyncResponse` now expose `price_bars_upserted`, `financial_metrics_upserted`, and `company_profile_updated` so consumers can report stock-data sync outcomes instead of only announcement/news counts.
+- The final company-profile contract intentionally follows the implemented backend schema: `full_name`, `english_name`, `registered_capital`, `establishment_date`, `website`, `main_business`, and `employees`. Earlier plan examples mentioning `listing_date` and `business_scope` were stale and were not part of the shipped backend contract.
+- Aggregate stock-data providers deduplicate price history and financial metrics by natural keys before persistence and include market-qualified source warnings for debugging.

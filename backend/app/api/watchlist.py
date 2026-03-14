@@ -8,12 +8,27 @@ from app.db.repositories.watchlist_view_repository import WatchlistViewRepositor
 from app.schemas import (
     SecuritySearchResult,
     WatchlistAddRequest,
+    WatchlistCustomAddRequest,
+    WatchlistCustomAddResponse,
     WatchlistItemResponse,
     WatchlistListRow,
     WatchlistRemoveResponse,
 )
+from app.services import SecurityLookupService
+from app.services.security_lookup import SecurityLookupNotFoundError, SecurityLookupProviderError
+from app.services.providers import EastmoneySecurityLookupSource
 
 router = APIRouter()
+
+
+
+def get_security_lookup_service(
+    session: Session = Depends(get_session),
+) -> SecurityLookupService:
+    return SecurityLookupService(
+        repository=SecurityRepository(session),
+        source=EastmoneySecurityLookupSource(),
+    )
 
 
 @router.get("/securities/search", response_model=list[SecuritySearchResult])
@@ -49,6 +64,33 @@ def add_watchlist_item(
     watchlist_repository = WatchlistRepository(session)
     item = watchlist_repository.add(payload.security_id)
     return WatchlistItemResponse(security_id=item.security_id)
+
+
+@router.post("/items/custom", response_model=WatchlistCustomAddResponse)
+def add_watchlist_item_by_market_code(
+    payload: WatchlistCustomAddRequest,
+    session: Session = Depends(get_session),
+    security_lookup_service: SecurityLookupService = Depends(get_security_lookup_service),
+) -> WatchlistCustomAddResponse:
+    if payload.market.strip().upper() not in {"SH", "SZ"}:
+        raise HTTPException(status_code=422, detail="market must be SH or SZ")
+
+    if not payload.code.strip():
+        raise HTTPException(status_code=422, detail="code must not be blank")
+
+    try:
+        security = security_lookup_service.lookup_or_create(payload.market, payload.code)
+    except SecurityLookupNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="security not found") from exc
+    except SecurityLookupProviderError as exc:
+        raise HTTPException(status_code=502, detail="security lookup unavailable") from exc
+
+    watchlist_repository = WatchlistRepository(session)
+    watchlist_repository.add(security.id)
+    return WatchlistCustomAddResponse(
+        security_id=security.id,
+        security=SecuritySearchResult.from_model(security),
+    )
 
 
 @router.delete("/items/{security_id}", response_model=WatchlistRemoveResponse)

@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 from urllib.parse import urljoin
+import logging
+import time
 
 import httpx
 
@@ -10,6 +12,8 @@ from app.services.providers.raw_types import RawAnnouncement
 _SINA_BASE_URL = "https://vip.stock.finance.sina.com.cn/corp/go.php/vCB_AllBulletin/stockid/{stock_code}.phtml"
 _SINA_ORIGIN = "https://vip.stock.finance.sina.com.cn"
 _SOURCE_NAME = "Sina"
+
+logger = logging.getLogger(__name__)
 
 
 class SinaAnnouncementSource:
@@ -28,39 +32,74 @@ class SinaAnnouncementSource:
         *,
         since: datetime | None = None,
     ) -> list[RawAnnouncement]:
-        response = self._client.get(
-            _SINA_BASE_URL.format(stock_code=stock_code),
-            params={"market": market},
-        )
-        response.raise_for_status()
+        start_time = time.time()
 
-        parser = _SinaAnnouncementHTMLParser()
-        parser.feed(response.text)
-        rows = parser.rows
-        if not rows:
-            raise ValueError("Sina announcement markup missing div.datelist ul li rows")
+        try:
+            for attempt in range(2):
+                try:
+                    response = self._client.get(
+                        _SINA_BASE_URL.format(stock_code=stock_code),
+                        params={"market": market},
+                    )
+                    response.raise_for_status()
 
-        items: list[RawAnnouncement] = []
-        for row in rows:
-            if not row.title:
-                raise ValueError("Sina announcement row missing link")
-            if not row.date_text:
-                raise ValueError("Sina announcement row missing date")
+                    parser = _SinaAnnouncementHTMLParser()
+                    parser.feed(response.text)
+                    rows = parser.rows
+                    if not rows:
+                        raise ValueError("Sina announcement markup missing div.datelist ul li rows")
 
-            published_at = _parse_published_at(row.date_text)
-            if since is not None and published_at < since:
-                continue
+                    raw_count = len(rows)
+                    items: list[RawAnnouncement] = []
+                    for row_index, row in enumerate(rows):
+                        if not row.title:
+                            raise ValueError(f"Sina announcement row {row_index} missing link")
+                        if not row.date_text:
+                            raise ValueError(f"Sina announcement row {row_index} missing date")
 
-            items.append(
-                RawAnnouncement(
-                    title=row.title,
-                    published_at=published_at,
-                    source=_SOURCE_NAME,
-                    url=urljoin(_SINA_ORIGIN, row.href) if row.href else None,
-                )
+                        published_at = _parse_published_at(row.date_text)
+                        if since is not None and published_at < since:
+                            continue
+
+                        items.append(
+                            RawAnnouncement(
+                                title=row.title,
+                                published_at=published_at,
+                                source=_SOURCE_NAME,
+                                url=urljoin(_SINA_ORIGIN, row.href) if row.href else None,
+                            )
+                        )
+
+                    elapsed = time.time() - start_time
+                    logger.info(
+                        "Provider fetch completed: source=%s stock=%s:%s elapsed=%.2fs raw_count=%d filtered_count=%d",
+                        self.__class__.__name__,
+                        market,
+                        stock_code,
+                        elapsed,
+                        raw_count,
+                        len(items),
+                    )
+
+                    return items
+
+                except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                    if attempt == 0:
+                        time.sleep(1)
+                        continue
+                    raise
+
+        except Exception as exc:
+            elapsed = time.time() - start_time
+            logger.warning(
+                "Provider fetch failed: source=%s stock=%s:%s elapsed=%.2fs error=%s",
+                self.__class__.__name__,
+                market,
+                stock_code,
+                elapsed,
+                exc,
             )
-
-        return items
+            raise
 
 
 class _AnnouncementRow:
@@ -80,6 +119,7 @@ class _SinaAnnouncementHTMLParser(HTMLParser):
         self._in_anchor = False
         self._in_date_span = False
         self._current_row: _AnnouncementRow | None = None
+        self._pending_date_text = ""
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]):
         attr_map = dict(attrs)
@@ -101,13 +141,19 @@ class _SinaAnnouncementHTMLParser(HTMLParser):
             self._current_row = _AnnouncementRow()
             return
 
-        if not self._in_li or self._current_row is None:
-            return
-
         if tag == "a":
+            if self._current_row is None:
+                self._current_row = _AnnouncementRow()
+                self._current_row.date_text = self._pending_date_text.strip()
+                self._pending_date_text = ""
             self._in_anchor = True
             self._current_row.href = attr_map.get("href")
-        elif tag == "span" and "date" in class_names:
+            return
+
+        if self._current_row is None:
+            return
+
+        if tag == "span" and "date" in class_names:
             self._in_date_span = True
 
     def handle_endtag(self, tag: str):
@@ -122,6 +168,9 @@ class _SinaAnnouncementHTMLParser(HTMLParser):
 
         if tag == "a":
             self._in_anchor = False
+            if not self._in_li and self._current_row is not None:
+                self.rows.append(self._current_row)
+                self._current_row = None
         elif tag == "span":
             self._in_date_span = False
         elif tag == "li" and self._current_row is not None:
@@ -130,17 +179,19 @@ class _SinaAnnouncementHTMLParser(HTMLParser):
             self._in_li = False
 
     def handle_data(self, data: str):
-        if self._current_row is None:
+        if not self._in_datelist_div:
             return
 
         stripped = data.strip()
         if not stripped:
             return
 
-        if self._in_anchor:
+        if self._in_anchor and self._current_row is not None:
             self._current_row.title = f"{self._current_row.title} {stripped}".strip()
-        elif self._in_date_span:
+        elif self._in_date_span and self._current_row is not None:
             self._current_row.date_text = f"{self._current_row.date_text} {stripped}".strip()
+        elif not self._in_li:
+            self._pending_date_text = f"{self._pending_date_text} {stripped}".strip()
 
 
 def _parse_published_at(raw_value: str) -> datetime:

@@ -5,6 +5,9 @@ export interface StockSyncResponse {
   synced: boolean
   announcements_upserted: number
   news_items_upserted: number
+  price_bars_upserted: number
+  financial_metrics_upserted: number
+  company_profile_updated: boolean
   warnings: string[]
   synced_at: string
 }

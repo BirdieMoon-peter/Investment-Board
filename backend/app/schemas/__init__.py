@@ -9,6 +9,8 @@ from app.schemas.stock_detail import (
 )
 from app.schemas.watchlist import (
     WatchlistAddRequest,
+    WatchlistCustomAddRequest,
+    WatchlistCustomAddResponse,
     WatchlistItemResponse,
     WatchlistListRow,
     WatchlistRemoveResponse,
@@ -23,6 +25,8 @@ __all__ = [
     "StockDetailSecurityResponse",
     "StockSyncResponse",
     "WatchlistAddRequest",
+    "WatchlistCustomAddRequest",
+    "WatchlistCustomAddResponse",
     "WatchlistItemResponse",
     "WatchlistListRow",
     "WatchlistRemoveResponse",
