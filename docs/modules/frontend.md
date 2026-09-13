@@ -69,10 +69,12 @@ Excluded:
 - The AI advice UI consumes `POST /api/ai/stocks/{security_id}/advice`, `POST /api/ai/holdings/{holding_id}/advice`, and `GET /api/ai/history`.
 
 ## Current Milestone
-AI investment advice frontend slice
+Professional investment workspace redesign (2026-09-13)
 
-## Milestone Scope
-Implemented in this milestone:
+Current scope and acceptance are recorded in the dated redesign section below. Earlier milestone notes remain historical evidence.
+
+## Earlier AI Advice Milestone Scope
+Implemented in the earlier milestone:
 - holdings frontend contracts aligned to the backend holdings schema
 - AI advice frontend contracts aligned to the backend structured recommendation schema
 - holdings save/update/remove UI on `frontend/src/pages/StockDetailPage.tsx`
@@ -81,7 +83,7 @@ Implemented in this milestone:
 - bilingual copy and dashboard styling support for the new holdings/advice panels
 - regression fixes in `frontend/src/pages/StockDetailPage.test.tsx` and `frontend/src/App.test.tsx` for detail-page hydration and new API calls
 
-Deferred in this milestone:
+Originally deferred (browser acceptance has since passed; see dated evidence below):
 - browser-level manual acceptance for the AI/holdings stock-detail slice
 - portfolio-level AI workflows beyond single stock / single holding detail
 - autonomous actions or background advice generation
@@ -94,7 +96,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-doing
+done
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -223,3 +225,31 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Frontend is briefly paused for the requested DeepSeek compatibility increment. Detail groups/chart themes/loading optimization remain Task3 and frontend is not yet done.
 
 - Task2b backend compatibility increment passed both reviews and actual synthetic-only provider acceptance. Frontend Task3 now resumes: detail groups, themed charts and loading optimization.
+
+### Detail workspace entering review
+- Three mounted research groups, shared mobile selector, themed charts, accessible wide tables and preserved holding/advice state implemented.
+- Fresh verification: 202 frontend tests across 18 files and production build passed. Initial JavaScript is approximately 669.55 kB versus 913.7 kB before lazy loading; warnings remain enabled.
+- Pending/rejected lazy imports retain cancel/back actions and a reload recovery path. Local favicon resolves the observed missing resource.
+- Root preliminary browser evidence: 11 detail workflows, 3 independent failure/empty/recovery cases, and 24 theme/width/group layouts passed. Final production verification and independent reviews are active.
+
+### Detail specification review correction
+- The initial specification review found a lazy-settings fallback focus/Escape gap. Pending/error states now use the official modal drawer shell.
+- Independent specification delta review PASS with16 focused tests; root actual browser7 pending/error/transition checks PASS, including Close/Escape/backdrop restoration.
+- Fresh final suite203 tests across19 files and production build PASS. Initial static JavaScript681,522 bytes; quality review is active.
+
+### Detail quality review passed; final loading-layout follow-up
+- Independent quality review PASS with77 tests across8 focused files plus build. No actionable Task3 code findings remain.
+- Final Lighthouse exposed a large initial layout shift (desktop0.293/mobile0.452), principally the workspace columns moving when loading completes. Task4 includes a bounded loading-placeholder/layout correction and regression/browser recheck before completion.
+
+
+### Final loading stability review
+- Structural placeholders now match the market strip, watchlist, spotlight and macro fields; deferred AI labels do not duplicate the loading table. Business request ownership is unchanged.
+- Controlled desktop/mobile loading CLS is approximately0.0012/0.0010. Production Lighthouse desktop100/96/100 and mobile92/96/100, with CLS below0.002 in both runs.
+- Final independent specification/quality delta reviews and publication are in progress. Full evidence is in `docs/verification/professional-workspace-redesign.md`.
+
+
+### Final redesign gate passed — 2026-09-13
+- Final suite204/204 across20 files and production build passed. Task4 specification and quality reviews independently passed, each rerunning23 tests across4 files and inspecting the README/screenshots.
+- Actual desktop/mobile responsive, interaction and loading checks passed; details and limitations are in the consolidated verification document. No actionable review findings remain.
+- Environment, authorized web configuration and user watchlist/holdings are preserved. Only the four owned QA services were stopped; main8000/5173 remain available.
+- Frontend module is done. Repository publication and hosted CI are tracked in `memory/progress.md`.

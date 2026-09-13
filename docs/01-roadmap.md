@@ -22,12 +22,13 @@
 - [x] AI advice availability validation and usability improvements
 
 ## Current Target
-- Professional frontend workspace redesign: current visual/interaction audit complete; specification approved; frontend implementation active.
-- [x] Web-editable AI settings: protected persistence, connection test, bilingual form, independent reviews and isolated browser acceptance complete.
-- Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
-- Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
-- Backend regression verification passes. User-selected DeepSeek Flash compatibility repair passed386 backend tests, independent reviews and7 actual synthetic-only generation/cache/persistence checks. Backend is complete; frontend detail redesign remains active.
-- Current feature evidence: `docs/verification/web-ai-settings.md`; earlier packaging evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.
+- [x] Web-editable AI settings: protected persistence, connection test, bilingual form, independent reviews and isolated browser acceptance.
+- [x] Professional workspace implementation: themes, watchlist filters/sorting, guarded settings, grouped stock research and stable initial loading.
+- [x] DeepSeek Flash compatibility: 386 backend tests, independent reviews and seven actual synthetic-only generation/cache/persistence checks.
+- [x] Final frontend quality gate: 204 frontend tests/build, production browser checks and independent specification/quality reviews passed.
+- [ ] Refined README/screenshots publication and exact-commit hosted CI verification are active; repository About and topics are updated.
+- Data-layer and scripts remain complete; launcher verification includes 15 tests and a cold isolated smoke check.
+- Current evidence: `docs/verification/professional-workspace-redesign.md` and `docs/verification/web-ai-settings.md`. Historical packaging evidence is retained separately in `docs/verification/release-readiness.md`.
 
 ## Done
 - Workflow scaffold created on 2026-03-10

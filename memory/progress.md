@@ -1,30 +1,20 @@
 # Current Progress
 
 ## Current Focus
-Frontend Task3: grouped stock research, themed charts and loading optimization. Theme/homepage/search/settings increments passed independent reviews. Requested DeepSeek Flash compatibility repair is complete, reviewed and verified with synthetic-only real-provider requests.
+Professional workspace redesign implementation and production browser acceptance are complete. Independent specification and quality delta reviews passed, including the loading-layout correction and refined README. All modules are done; authorized GitHub publication and hosted CI verification are active.
 
-## Prior release baseline
-- Backend: 382 tests passed; new configuration scope reviewed and complete. Fresh external AI analysis acceptance remains blocked by provider authentication.
-- Frontend: 163 tests and production build passed; independent specification and quality reviews passed.
-- Scripts: 15 tests and actual isolated watchlist smoke passed.
-- Isolated runtime: 19 HTTP/persistence checks and 18 browser acceptance checks passed, using only invented credentials and a local mock provider.
-- Desktop/mobile screenshots inspected; no document overflow at 320/390/768/1440px.
-- Original configuration hashes, five watchlist rows and zero holdings match the pre-test baseline. Temporary services stopped; the user app remains running.
-- Frontend was complete at the prior release and is now queued for the requested redesign. Data-layer and scripts remain done; backend remains blocked only on live external analysis acceptance.
-
-## Current redesign progress
-- Theme foundation implemented:14 focused theme tests,177 full frontend tests and build passed; independent specification and quality reviews passed.
-- Dependency refresh verified with clean npm ci and0 audit vulnerabilities.
-- User requested DeepSeek official Flash. Real local web configuration saved as `deepseek-flash` at `https://api.deepseek.com`; fixed-message connection test passed (461.72ms). No real investment context was transmitted. Synthetic-only fresh analysis/cache/history probe passed after a temporary prompt clarification and4096-token budget. The production prompt repair passed both reviews,386 backend tests and7 actual route/persistence checks without the temporary monkeypatch.
-- Homepage/search/settings complete:193 tests/build, independent specification and quality PASS. Root browser17 interaction/state checks plus8 homepage theme/width cases and4 settings widths passed. Nested-modal focus,320px selector specificity and filtered-out spotlight return focus are fixed.
-- Isolated demo services use8011/5175/8321 and production preview5177, with invented credentials and local mock analysis.
+## Verified Work
+- Theme, homepage/search/settings and detail groups passed independent specification and quality reviews. Detail code is committed at `c26ea3a`.
+- Final loading placeholders eliminate the measured initial jump: production Lighthouse desktop100/96/100 and mobile92/96/100; CLS below0.002. Responsive and interactive evidence is recorded in the verification document.
+- Web AI settings and DeepSeek Flash compatibility are complete.386 backend tests and7 actual synthetic-only generation/cache/persistence checks passed; no real watchlist or holding context was sent to the model.
+-15 launcher tests and a standalone isolated smoke check passed. Original user configuration/data are preserved except the explicitly authorized local AI configuration update.
+- Refined README, two current interface screenshots and a settings capture passed review. Repository About/topics are updated. Private credentials and runtime artifacts remain outside Git.
 
 ## Next Work
-Implement frontend detail groups, chart themes and loading optimization, complete independent reviews, final responsive/interaction/Lighthouse acceptance, screenshots/README and authorized repository publication. The existing web AI settings release is complete; fresh external investment-analysis acceptance remains unverified; the newly configured provider passed the fixed-message connection check.
+Commit and normally push to origin main, verify exact remote commit and hosted CI, and check the published README render. Owned acceptance services have been stopped; user services on8000/5173 still respond successfully.
 
 ## Evidence
-- docs/verification/web-ai-settings.md
-- docs/verification/release-readiness.md (earlier packaging milestone)
-- Raw local logs, databases and session-specific notes stay outside version control.
-
-- Full new AI settings UI acceptance:10 browser checks passed (draft/auth errors, save, advanced values, protocol/key boundary, clear/reset, Chinese draft retention and no secret storage). Isolated configuration reset to mock baseline afterwards.
+- `docs/verification/professional-workspace-redesign.md`
+- `docs/verification/web-ai-settings.md`
+- Historical packaging evidence: `docs/verification/release-readiness.md`
+- Raw reports, temporary databases and private baselines remain in ignored local artifacts.

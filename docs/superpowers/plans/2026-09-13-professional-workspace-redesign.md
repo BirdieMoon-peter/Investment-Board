@@ -86,17 +86,17 @@ User steering2026-09-13 explicitly selects DeepSeek official Flash. Official cur
 - [x] Repeat actual fresh stock/holding generation, cache reuse and persisted-history checks using only the separate invented-company/invented-position database; remove temporary monkeypatch so final acceptance exercises product code.
 - [x] Independent specification then quality review; update backend state only after fresh verification. Commit this bounded increment, then resume frontend Task3.
 
-Diagnostic evidence: original prompt twice produced `position_notes` as a string. Explicit list-field names corrected its type; the original1400-token cap then returned finish_reason=length. With the clarified prompt and4096-token cap,7 actual route/persistence checks passed,2 provider calls (stock9.09s,holding10.81s), and cache reads made no provider calls. Probe changes existed only in the temporary harness; product fix remains pending.
+Diagnostic evidence: original prompt twice produced `position_notes` as a string. Explicit list-field names corrected its type; the original1400-token cap then returned finish_reason=length. With the clarified prompt and4096-token cap,7 actual route/persistence checks passed,2 provider calls (stock9.09s,holding10.81s), and cache reads made no provider calls. These diagnostic changes existed only in the temporary harness. The subsequent product fix and final unpatched acceptance passed; see the verification document.
 
 ## Task 3: Detail workspace and themed charts
 
 Files: App.tsx and vite.config.ts if needed for measured loading optimization; StockDetailPage.tsx/tests, StockHeader.tsx, QuoteSummary.tsx, PriceHistoryChart.tsx/tests, CandlestickChart.tsx/tests, PriceContextPanel.tsx, FinancialMetricsPanel.tsx, CompanyProfilePanel.tsx, AnnouncementList.tsx, NewsList.tsx, styles.css/i18n.tsx. Create `components/DetailWorkspaceTabs.tsx` and extracted holding/advice presentation components if needed; keep state and requests in StockDetailPage.
 
-- [ ] Add failing tests: default market tab; switching tabs preserves holding draft/selected advice and causes no AI generation; unavailable panels fail independently; mobile selector shares active state; price data disclosure keeps pagination; charts change theme without recreation/range loss.
-- [ ] Implement three official tabs: market/fundamentals, news/announcements, holdings/AI. On mobile use an identically controlled labeled Select. Keep all tab content mounted but hidden using semantic tabpanels so existing drafts/charts persist. Hidden controls must not be focusable. ResizeObserver redraws a shown chart at nonzero width.
-- [ ] Top detail header stays compact with back/identity/latest price/change/time and actual sync action. Retain source precision and sign. Render main chart wide, quote summary alongside, fundamentals/profile below; news/announcements remain linked and dated. Holdings and AI retain existing target scope, history/cache/fresh generation behavior.
-- [ ] Replace form buttons/selects/inputs with Fluent controls without changing field names/order and business handlers. Keep parent ownership/version guards for advice hydration.
-- [ ] Theme chart using separate effect, preserving mount/data effect dependencies:
+- [x] Add failing tests: default market tab; switching tabs preserves holding draft/selected advice and causes no AI generation; unavailable panels fail independently; mobile selector shares active state; price data disclosure keeps pagination; charts change theme without recreation/range loss.
+- [x] Implement three official tabs: market/fundamentals, news/announcements, holdings/AI. On mobile use an identically controlled labeled Select. Keep all tab content mounted but hidden using semantic tabpanels so existing drafts/charts persist. Hidden controls must not be focusable. ResizeObserver redraws a shown chart at nonzero width.
+- [x] Top detail header stays compact with back/identity/latest price/change/time and actual sync action. Retain source precision and sign. Render main chart wide, quote summary alongside, fundamentals/profile below; news/announcements remain linked and dated. Holdings and AI retain existing target scope, history/cache/fresh generation behavior.
+- [x] Replace form buttons/selects/inputs with Fluent controls without changing field names/order and business handlers. Keep parent ownership/version guards for advice hydration.
+- [x] Theme chart using separate effect, preserving mount/data effect dependencies:
 
 ```tsx
 const { resolvedTheme } = useAppTheme()
@@ -111,21 +111,21 @@ useEffect(() => {
 // The theme effect must not call fitContent, setData or createChart.
 ```
 
-- [ ] Keep existing green-up/red-down semantics consistent across charts/table; numerical missing values use localized text. Price history raw rows are expandable and preserve pagination.
-- [ ] Reduce the measured913.7kB main bundle by lazy-loading detail/settings with accessible Suspense feedback; preserve request ownership and all dialog state guards. Use chunk grouping only if needed after measuring; do not suppress the size warning.
-- [ ] Check charts/tables at320/390/768/1440; no document overflow. Run new and existing detail/chart tests, full frontend suite and build. Independent spec and quality reviews, fixes and commit.
+- [x] Keep existing green-up/red-down semantics consistent across charts/table; numerical missing values use localized text. Price history raw rows are expandable and preserve pagination.
+- [x] Reduce the measured913.7kB main bundle by lazy-loading detail/settings with accessible Suspense feedback; preserve request ownership and all dialog state guards. Use chunk grouping only if needed after measuring; do not suppress the size warning. Add a local favicon and index.html link to resolve the measured404 without changing the existing wordmark or inventing a new logo.
+- [x] Check charts/tables at320/390/768/1440; no document overflow. Run new and existing detail/chart tests, full frontend suite and build. Independent spec and quality reviews, fixes and commit.
 
 ## Task 4: Acceptance, design review and publication
 
-Files: docs/verification/professional-workspace-redesign.md, README.md, docs/images/*, module/registry/roadmap/progress. Private runtime artifacts under ignored artifacts/professional-redesign/.
+Files: docs/verification/professional-workspace-redesign.md, README.md, docs/images/*, module/registry/roadmap/progress. Bounded frontend loading-layout repairs are included when final Lighthouse/browser evidence identifies a defect. Private runtime artifacts under ignored artifacts/professional-redesign/.
 
-- [ ] Record original environment/web settings hashes and read-only watchlist/holdings snapshots. Start only isolated demo backend/database/configuration, frontend proxy and local mock provider. Do not change real user data or send real context to AI.
-- [ ] Run actual browser feature matrix: search/add/duplicate/remove-cancel/remove, filters/sorts/back restoration, sync/read failure, data groups, pagination, holdings CRUD and state retention, mock AI/cache/history, theme persistence, dirty-close/busy-close/all dismissal routes, settings save/test/clear/reset.
-- [ ] Inspect both themes at320/390/768/1440; check button labels, contrast, focus order, no page overflow,5-row first viewport, error/loading/empty states, numeric accuracy. Copy self-audit and contextual taste pre-flight; mark marketing-specific rules N/A.
-- [ ] Run Lighthouse on an isolated production preview with stable demo fixtures. Record performance/accessibility/category results as laboratory evidence and inspect actionable findings, not field CWV guarantees.
-- [ ] Run fresh complete frontend tests/build and related backend/scripts checks; independent final specification and quality review. Verify fixes with focused regressions and rerun full checks only when changes justify it.
-- [ ] Capture two actual demonstration screenshots (homepage/detail) after visual inspection; refresh existing settings screenshot if now outdated. Update README/provenance and verification docs with accurate feature/information hierarchy, dependency and privacy bounds.
-- [ ] Confirm private configuration and watchlist/holdings unchanged, clean up only owned temporary services, keep user main app running. Complete module review state.
+- [x] Record original environment/web settings hashes and read-only watchlist/holdings snapshots. Start only isolated demo backend/database/configuration, frontend proxy and local mock provider. Do not change real user data or send real context to AI.
+- [x] Run actual browser feature matrix: search/add/duplicate/remove-cancel/remove, filters/sorts/back restoration, sync/read failure, data groups, pagination, holdings CRUD and state retention, mock AI/cache/history, theme persistence, dirty-close/busy-close/all dismissal routes, settings save/test/clear/reset.
+- [x] Inspect both themes at320/390/768/1440; check button labels, contrast, focus order, no page overflow,5-row first viewport, error/loading/empty states, numeric accuracy. Copy self-audit and contextual taste pre-flight; mark marketing-specific rules N/A.
+- [x] Run Lighthouse on an isolated production preview with stable demo fixtures. Record performance/accessibility/category results as laboratory evidence and inspect actionable findings, not field CWV guarantees.
+- [x] Run fresh complete frontend tests/build and related backend/scripts checks; independent final specification and quality review. Verify fixes with focused regressions and rerun full checks only when changes justify it.
+- [x] Capture two actual demonstration screenshots (homepage/detail) after visual inspection; refresh existing settings screenshot if now outdated. Update README/provenance and verification docs with accurate feature/information hierarchy, dependency and privacy bounds.
+- [x] Confirm private configuration and watchlist/holdings unchanged, clean up only owned temporary services, keep user main app running. Complete module review state.
 - [ ] Commit reviewed changes, normally push HEAD to authorized origin main without force, verify exact remote SHA and hosted CI. Record completed publication in docs/progress and leave a clean worktree.
 
 ## Review checklist

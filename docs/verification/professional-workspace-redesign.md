@@ -1,141 +1,214 @@
 # Professional workspace redesign verification
 
 Date: 2026-09-13
-Status: implementation in progress; no completion claim.
+Status: implementation, independent reviews and final verification passed; repository publication in progress.
 
-## Baseline and scope
+## Scope and baseline
 
 The approved [design](../superpowers/specs/2026-09-13-professional-workspace-redesign-design.md)
 and [plan](../superpowers/plans/2026-09-13-professional-workspace-redesign.md)
-cover frontend theme, homepage/settings interactions and grouped stock research.
-The pre-change frontend baseline passed163 tests across14 files.
+cover the frontend theme, watchlist/settings interactions and grouped stock research.
+The original frontend baseline passed 163 tests across 14 files.
 
-The audit measured the watchlist heading below the first viewport at approximately
-y1137px in a1440x960 browser, with some provider requests still loading. Opening
-settings inserted approximately1058px of content above the workspace. The existing
-chart used a white canvas in the dark page. These are the specific layout issues
-the redesign addresses.
+The original watchlist heading was below the first viewport at approximately
+1137px in a 1440x960 browser while some requests were still loading. Opening
+settings inserted approximately 1058px of content above the workspace. Charts
+had white canvases in the dark page. The redesign targets these measured issues.
 
 ## Acceptance matrix
 
-| Area | Required evidence | State |
+| Area | Evidence | State |
 | --- | --- | --- |
-| Theme | System/light/dark, persistence, system change, portal/chart parity | Pending |
-| First viewport | Watchlist header and5 demo rows at1440x900 | Pending |
-| Watchlist | Filter, market selection, numeric sort/null-last, counts | Pending |
-| Detail return | Restore filter,sort,scroll and correct focus | Pending |
-| Search | Explicit submit,add,already-added feedback,stale response and custom code | Pending |
-| Removal | Correct name,confirm,cancel,controlled failure | Pending |
-| Research groups | Correct panels,draft/history retention,no automatic generation | Pending |
-| Chart | Theme without range reset,resize,raw-row disclosure/pagination | Pending |
-| Holdings and advice | Isolated CRUD,mock fresh advice,persistence/cache/history | Pending |
-| Settings | Tab switch retention,dirty/busy close guards,focus return | Pending |
-| AI configuration | Existing save,test,clear,restore and secret handling | Pending |
-| Responsive | Both themes at320/390/768/1440,no document overflow | Pending |
-| Accessibility | Contrast,keyboard,labels,button fit,screen-reader state | Pending |
-| Lighthouse | Production preview with stable isolated fixtures; lab results only | Pending |
-| Regression/review | Full frontend/build,related checks,independent spec then quality | Pending |
-| Delivery | Current screenshots,README,clean Git push and hosted CI | Pending |
+| Theme | 14 theme tests; browser reload, explicit preference and live system change | Passed |
+| First viewport | Five demo rows visible at 1440x900; 64px header | Passed |
+| Watchlist | Keyword/market filters, numeric sorting, null-last in both directions | Passed |
+| Detail return | Filters/sort retained; origin focus including filtered-out spotlight | Passed |
+| Search | Explicit submit, add, duplicate feedback, custom code; stale-request regressions | Passed |
+| Removal | Object-specific confirmation, cancellation and controlled failure | Passed |
+| Research groups | Retained drafts/advice, shared mobile state and zero automatic generation | Passed |
+| Chart | Lifecycle regressions; actual canvas retained on theme/group changes, resize and pagination | Passed |
+| Holdings and advice | Actual isolated CRUD, two explicit mock calls, cache with no new calls and history selection | Passed |
+| Settings | Lazy AI load, retained drafts, all dirty/busy dismissal routes, focus return | Passed |
+| AI configuration | Draft auth failure/test/save, protocol/key boundary, clear/reset, bilingual state | Passed |
+| Responsive | Homepage both themes at 320/390/768/1440; drawer at all four widths | Passed |
+| Accessibility | Home/drawer keyboard trapping and focus return; Axe findings below | Passed; reviewed |
+| Lighthouse | Production desktop 100/96/100; mobile 92/96/100; CLS below 0.002 | Passed; lab evidence |
+| Regression/review | 204 frontend tests/build; 386 backend tests; 15 launcher tests and standalone smoke | Independent specification and quality passed |
+| Delivery | README, two current screenshots, authorized normal push and hosted CI | Pending |
 
-## Isolation
+## Isolation and credentials
 
-Runtime acceptance uses a new copy of the previously isolated public demo database,
-never the user's database. Public historical detail data for the two original demo
-securities is retained. Three additional fixed quote fixtures exercise a five-row
-watchlist. External homepage/search/sync providers are replaced only in a temporary
-acceptance app; production backend source is unchanged. A loopback mock model emits
-clearly identified demonstration analysis and logs no credentials or user context.
+Acceptance runs in a copy of the previous isolated public demo database, never
+the user's database. Public historical detail data for two demo securities is
+retained. Three fixed quote fixtures exercise five watchlist rows. Homepage,
+search and sync overrides exist only in a temporary acceptance app. A loopback
+mock model returns visibly identified demonstration analysis. Logs omit keys.
 
-Before acceptance, actual user configuration file hashes and watchlist/holdings
-rows were saved privately for comparison. The user then explicitly authorized replacing the real web AI configuration with
-DeepSeek official Flash (`deepseek-flash`, `https://api.deepseek.com`). The existing
-protected settings API saved it successfully; its fixed-message connection test
-passed in461.72ms without reading investment context. A new private hash baseline
-records this authorized configuration change. The environment file and user
-watchlist/holdings remain subject to the original unchanged-data check.
-The real app remains on8000/5173; owned
-acceptance services use8011/5175/8321. Temporary scripts/logs/data live outside the
-tracked source tree.
+The real app remains on 8000/5173. Owned acceptance services use 8011/5175/5177/8321.
+Scripts, logs, configuration and test databases are outside tracked source files.
+Original environment hashes and watchlist/holdings snapshots are saved privately.
 
-## Design pre-flight interpretation
+The user separately authorized DeepSeek official Flash configuration. The protected
+web API saved `deepseek-flash` at `https://api.deepseek.com`, with a 4096-token output
+budget. A fixed-message connection test passed in 461.72ms. An updated private hash
+baseline records this authorized configuration change. The original environment
+file, five watchlist rows and zero holdings remain unchanged. Private settings are
+ignored by Git; a value-based scan finds no credential in tracked files or diffs.
+
+## Actual DeepSeek acceptance
+
+Synthetic-only actual requests exposed an ambiguous list-field prompt and truncation
+at the old output cap. The shared prompt now names all five array fields explicitly;
+the strict response parser and provider contracts are unchanged. Independent
+specification and quality reviews passed, as did 41 provider tests and 386 backend
+tests. A temporary diagnostic patch was removed before the final acceptance.
+
+Final product code passed seven route/persistence checks: two fresh actual calls
+(stock 7.69s, holding 10.65s), cache reuse with no additional provider call, history
+and persisted reads through new application/database sessions. Only an invented
+company, quote and position were transmitted. This resolves the account's earlier
+integration blocker; it verifies functionality, not investment accuracy or future
+provider availability.
+
+## Completed frontend increments
+
+Theme foundations use official Fluent v9, TanStack v8, Phosphor and self-hosted
+IBM Plex fonts with React 19. Existing toolchain advisories were addressed using
+compatible Vite 7.3.6/Vitest 4.1.11 and patched transitive dependencies. A clean
+`npm ci` succeeded and `npm audit` reported zero vulnerabilities. Fourteen theme
+tests, the 177-test intermediate suite and its build passed both independent reviews.
+
+The watchlist/search/settings increment passed 193 tests, its production build,
+and independent specification and quality reviews. Two RED/GREEN regressions
+cover returning from a filtered-out spotlight and an origin hidden by settings.
+Actual browser evidence includes:
+
+- Six drawer checks: lazy mounting, tab draft retention, Escape/continue,
+  discard/unmount/reopen, and close button/Escape/backdrop during a pending test.
+- Six watchlist flows: numeric sorting, preserved filter/focus, explicit search,
+  duplicate feedback, missing quote order, removal and custom-code fallback.
+- Five state checks: manual sync, offline cache, online recovery, failed removal
+  and empty watchlist.
+- Ten AI settings checks: invented-key failures and success, advanced values,
+  protocol/key boundary, clear/reset, Chinese draft retention and secret storage.
+- Four keyboard/theme checks: preference persistence, system changes, search
+  focus trapping/restoration and drawer focus trapping/restoration.
+
+## Accessibility and performance notes
+
+Axe identifies Fluent/Tabster's own `data-tabster-dummy` focus sentinels under
+`aria-hidden-focus`. Raw findings are retained and app-owned elements remain subject
+to the same rule. The pattern is tracked in
+[Fluent issue 27517](https://github.com/microsoft/fluentui/issues/27517). No sentinel
+or audit rule is removed to inflate the score. Manual keyboard trapping and origin
+restoration pass. A real nested-dialog restoration defect was fixed and retested.
+
+Immediate theme-change captures initially caught Fluent's short color transition.
+Final screenshots wait for active transitions to finish; fresh dark loads render
+correct foreground colors.
+
+The initial production desktop Lighthouse result was Performance 100,
+Accessibility 96, Best Practices 96: FCP 645ms, LCP 689ms, TBT 0ms, CLS 0.0156.
+A missing favicon caused a console error and the main bundle measured 913.7kB.
+Task 3 addresses these findings. All reported Lighthouse results are local lab
+measurements with fixed fixtures, not field Core Web Vitals guarantees.
+
+## Applicable design pre-flight
 
 The requested taste skill explicitly excludes dashboards; the approved design
-uses official Fluent product components. Applicable checks cover hierarchy,
-typography,theme,color/shape consistency,contrast,states,keyboard,mobile and copy.
-Marketing hero,photography,bento,brand walls,scroll narratives and testimonial
-rules are N/A. No decorative or AI-generated images are needed in the working
-investment interface; published images must be actual browser captures.
+uses official Fluent product components. Applicable checks are hierarchy, source
+precision, theme/color/shape consistency, typography, contrast, copy, interaction
+states, keyboard navigation and mobile layouts. Marketing hero, photography,
+bento, brand walls, scroll narratives and testimonial rules are N/A. Published
+images are actual browser captures, with no generated or composited interface.
 
-## Theme foundation increment
+## Final production browser pass
 
-- Official Fluent v9, TanStack v8, Phosphor and self-hosted IBM Plex dependencies installed with compatible React19 peers.
-- Dependency audit exposed existing toolchain advisories. Compatible Vite7.3.6 and Vitest4.1.11 plus patched transitive packages were verified with a clean npm ci; npm audit reports0 vulnerabilities.
-- Theme tests:14 passed; frontend suite177 passed; production build passed. RED evidence records8 behavior failures before implementation.
-- Actual Edge browser theme switch produced no page errors; both light/dark captures inspected. Charts and final layouts are verified in subsequent increments.
-- Independent specification and quality review PASS; both reviewers independently reran14 theme tests. No unresolved findings.
+- Eleven detail workflows passed against the production preview, including
+  raw-price page retention, source links, unsaved holding drafts, mobile/desktop
+  state, holding create/update/delete, two explicit mock analyses and cache/history.
+- Three independent error/empty/recovery cases passed; available market/news
+  content remains usable when holdings or history fails.
+- Eight homepage and 24 detail group/theme/width cases passed without page
+  overflow. Settings fit four widths. Wide-table keyboard findings were fixed;
+  repeated Axe checks now identify only the documented library sentinels.
+- Final production settings checks passed: six guard cases, ten AI configuration
+  flows and four keyboard/theme cases.
+- Independent specification review identified missing focus restoration/Escape
+  behavior only in the newly introduced lazy settings loading/error fallback.
+  The official drawer shell correction passed independent specification review
+  and seven actual stalled/failed/transition browser checks before publication.
 
-## DeepSeek diagnostic acceptance
+### Detail specification review passed
 
-User-requested configuration authenticated successfully. A separate invented-company
-and invented-position database exposed a list-field prompt ambiguity and an output
-cap truncation (`finish_reason=length`). A temporary clarified prompt with4096
-output tokens passed7 real route/persistence checks and2 provider calls. Neither
-real watchlist nor holdings were sent. This diagnostic is not final product-code
-acceptance; Task2b incorporates the fix, then repeats without the temporary patch.
+The final suite passes 203 tests across 19 files and the production build passes.
+Independent specification review passed, including 16 focused delta tests after
+the loading-state focus repair. Initial static JavaScript totals 681,522 bytes
+versus approximately 913.7 kB before splitting; the detail/settings chunks load
+on demand. All individual chunks are below 500 kB with the warning unchanged.
+The favicon request now resolves from a local asset. Independent quality review passed, including 77 focused tests and a production build.
 
-Supporting regressions currently pass:382 backend tests and15 launcher/smoke tests.
-The first scripts run was blocked from binding a loopback port by the sandbox;
-the same tests passed when run with local-listening permission.
 
-## Initial homepage visual check
+## Final loading stability and production measurements
 
-The initial desktop layout showed all5 watchlist rows within1440x900 (last row
-bottom827px);390px view had no document overflow. The compact header was further
-adjusted to the approved64px height. Final acceptance follows the frozen code.
+A subsequent full production run exposed initial layout shifts of 0.293 on desktop
+and 0.452 on mobile. The final correction matches loading placeholders to actual
+market tiles, table rows, spotlight fields and macro entries. It reserves the
+existing refresh-time row and avoids rendering both data and skeleton rows while
+cached AI labels are pending. No artificial wait or whole-page minimum height is
+used. Deferred-response regression coverage preserves the original request count.
 
-Axe flagged Fluent/Tabster's own `data-tabster-dummy` focus sentinel elements for
-`aria-hidden-focus`. These are recorded separately with raw results retained;
-application elements are still checked under the same rule. This library pattern
-is tracked in [Fluent issue27517](https://github.com/microsoft/fluentui/issues/27517).
-No focus sentinels or accessibility rules are removed to raise audit scores.
-A real browser also exposed nested confirmation focus restoration, which is
-being repaired and will be retested before homepage acceptance.
+Controlled delayed-API measurement at 1350px recorded workspace height 914px before
+and after loading; at 412px it changed from 1526px to 1527px. Measured layout shifts
+were 0.00121 and 0.00103 respectively.
 
-### Frozen homepage and drawer browser pass
+| Production Lighthouse | Desktop | Mobile |
+| --- | ---: | ---: |
+| Performance | 100 | 92 |
+| Accessibility | 96 | 96 |
+| Best Practices | 100 | 100 |
+| First Contentful Paint | 609 ms | 2559 ms |
+| Largest Contentful Paint | 655 ms | 2719 ms |
+| Total Blocking Time | 0 ms | 0 ms |
+| Cumulative Layout Shift | 0.00121 | 0.00134 |
 
-- Settings guard probe:6 checks passed, including lazy mounting, cross-tab draft
-  retention, Escape/continue, discard/unmount/reopen and all three busy dismissal
-  routes. Four settings widths pass without overflow; no page errors.
-- Homepage:both themes at320/390/768/1440 pass with64px header and no document
-  overflow. Axe flags only the documented Fluent/Tabster sentinel pattern.
-- Immediate post-theme screenshots initially captured Fluent's short color
-  transition. Fresh dark loads render correct foreground colors; final captures
-  await active transition completion. No source change was needed for this.
-- Independent specification review found a filtered-out spotlight return-focus
-  case. That regression is being repaired before quality review.
+These are single local laboratory runs against fixed isolated fixtures, using
+Lighthouse desktop/mobile presets. They are not field performance guarantees.
+The remaining accessibility score reflects the reviewed library focus sentinels
+above; manual keyboard verification passes. Raw reports remain in ignored local
+artifacts. The final initial JavaScript is approximately 683.46 kB, with detail and
+settings loaded on demand and each individual chunk below 500 kB.
 
-### Homepage increment complete
 
-193 frontend tests and production build pass. Independent specification and quality
-reviews pass. The spotlight focus omission is fixed and covered by two RED/GREEN
-regressions. Actual browser checks pass:6 drawer guards,6 watchlist flows and5
-sync/cache/error/empty states. Temporary custom-code add/remove returned the
-isolated demo database to its five-row baseline.
+## Final packaging review
 
-Initial desktop production Lighthouse:Performance100,Accessibility96,Best
-Practices96;FCP645ms,LCP689ms,TBT0ms,CLS0.0156. This is a lab baseline, not a field
-CWV claim. Accessibility flags the recorded library sentinels; the console error
-is a missing favicon. Final assets/loading and mobile results follow Task3/4.
+The final frontend suite passes 204 tests across 20 files, and the production build
+passes. Independent Task4 specification review passed with 23 tests across four
+files and checked README claims against implementation. Eight final homepage
+width/theme cases passed after the loading correction. The two 1440x960 main
+screenshots and the direct settings-drawer capture were refreshed from the frozen
+production build and visually inspected. README local file links resolve.
 
-### DeepSeek product-code acceptance complete
+The README introduces the actual research workflow, shows light/dark runtime views,
+and then presents installation and web AI configuration. Advanced environment,
+API and directory details are folded for readability. Fixture provenance and local
+credential storage are explicit. Repository About and topics are included in the
+authorized publication scope.
 
-The diagnostic monkeypatch was removed. Final source passed7 actual route and
-persistence checks with official `deepseek-flash`:2 fresh calls (stock7.69s,
-holding10.65s), cache reuse with zero extra calls, history and new-app persisted
-reads. Only invented company/quote/position data was sent. Both independent
-reviews pass;41 provider tests and386 full backend tests pass. The current
-account's prior integration blocker is resolved. This verifies functionality,
-not investment accuracy or guaranteed future provider availability.
 
-The new AI settings interface also passed10 actual browser checks with invented
-keys and the loopback mock; the isolated saved override was reset afterwards.
+### Final quality and privacy gate
+
+Independent Task4 quality review passed with 23 tests across four files, static
+review and visual inspection of all three captures. No actionable findings remain.
+Both independent reviewers confirmed the refined README and screenshot provenance.
+The frontend module is done. The reviewed loading fix is committed at `0c6cc07`.
+
+Final private checks confirm the original environment, authorized local web AI
+configuration, five user watchlist entries and zero holdings are preserved. The
+actual credential is absent from tracked files, the diff and pending commits.
+Only the owned acceptance services on 8011/5175/5177/8321 were stopped; the user's
+backend on 8000 and frontend on 5173 still return HTTP 200.
+
+Repository About now describes watchlist filtering, charts/fundamentals, holdings,
+web-configured DeepSeek and themes. Existing topics were preserved and `deepseek`
+was added. Visibility remains public and the default branch remains main.
