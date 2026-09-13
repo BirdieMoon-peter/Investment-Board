@@ -33,6 +33,7 @@ Investment Board 面向个人的沪深证券与基金跟踪场景。用一页首
 | 基金展示 | 保留报价中的小数精度，避免把低价基金统一四舍五入到两位小数 |
 | 持仓记录 | 保存、更新、删除持仓数量、成本、投资期限与备注 |
 | AI 辅助研究 | 手动生成股票或持仓分析，读取已有缓存，回看最近分析记录；默认保留最近 20 条 |
+| AI 配置 | 在网页设置中修改服务地址、模型、密钥和高级参数，测试连接并随时恢复环境配置 |
 | 个性化 | 中英文切换、实时/专注模式、紧凑/舒适密度、首页区域开关；设置保存在当前浏览器 |
 
 首页自动刷新与行情同步只读取已有 AI 标签，不会自动发起新的模型生成。股票与持仓分析由详情页的生成操作触发。
@@ -101,7 +102,25 @@ DATABASE_URL="sqlite:///$DEMO_DIR/investment-board-demo.db" ./scripts/run_all.sh
 
 ## AI 配置
 
-AI 是可选能力，需要一个已认证、模型可用的服务账号。先复制配置模板：
+AI 是可选能力，需要一个已认证、模型可用的服务账号。启动后打开首页的 **设置 → AI 服务配置**：
+
+1. 选择服务类型，填写 API 地址、模型名称和密钥。
+2. 可按需展开高级设置，修改温度、最大输出长度和请求超时。
+3. 点击 **测试连接** 检查当前表单，或直接 **保存 AI 配置**。保存不调用模型，下一次新分析立即使用新配置，无需重启。
+
+支持 OpenAI-compatible、Anthropic-compatible、DashScope/Kimi。API 地址可填写服务根地址、以 `/v1` 结尾的基础地址，或完整的 `/v1/chat/completions`、`/v1/messages` 接口。远程服务使用 HTTPS，本机代理可使用 loopback HTTP。
+
+[查看 AI 配置界面](docs/images/ai-settings.png) · [功能验收记录](docs/verification/web-ai-settings.md)
+
+**测试连接** 只发送一条固定的简短测试文本，不发送自选、持仓或分析记录，也不会保存尚未提交的表单。连接成功说明该服务能响应测试请求；完整投资分析仍需服务支持相应模型、输出格式及额度。
+
+网页不会回显已保存的密钥。地址和服务类型不变时，可保留旧密钥；切换服务地址或协议时，需要输入新密钥，或明确清除密钥后保存。**恢复环境配置** 只移除网页覆盖值，不修改原配置文件。
+
+配置优先级为：**网页保存值 → 进程环境变量 → `backend/.env.local` → 内置默认值**。网页保存值位于后端本机的 `backend/.ai-settings.json`，采用仅文件所有者可读写的权限；这是本地文件存储，不是加密凭据库。该文件已排除版本跟踪，密钥不会存入浏览器 localStorage。`INVESTMENT_BOARD_AI_SETTINGS_FILE` 可指定独立文件路径。
+
+设置面向本机单用户运行，同一后端实例的标签页共享 AI 配置；配置接口仅接受受保护的本机请求。使用其他本机前端端口时，通过 `INVESTMENT_BOARD_AI_SETTINGS_ORIGINS` 显式配置允许的完整来源地址，多个地址以逗号分隔。设置文件路径和允许来源这两项均通过启动进程的环境变量指定。
+
+也可以继续使用环境配置作为备用。先复制模板：
 
 ```bash
 cp -n backend/.env.example backend/.env.local
@@ -116,9 +135,9 @@ AI_MODEL=your-model-id
 AI_API_KEY=replace-with-your-own-key
 ```
 
-以上均为占位值。`AI_API_URL` 可以填写服务根地址，应用会补全 `/v1/chat/completions`；也可直接填写完整的该接口地址。Anthropic-compatible、DashScope/Kimi 选项见 [配置模板](backend/.env.example)。修改配置后重启后端。
+以上均为占位值。Anthropic-compatible、DashScope/Kimi 选项见 [配置模板](backend/.env.example)。要让环境配置生效，先在网页中恢复环境配置；修改启动进程的环境变量后需重启后端。
 
-进程环境变量优先于本地配置文件。密钥仅放在本地配置中，不要提交到版本库。已有缓存可以直接回看；生成新分析还需要外部服务认证、权限和额度正常。应用启动、自动化测试或缓存展示成功，都不代表当前真实模型生成已通过验证。
+密钥不要提交到版本库。已有缓存可以直接回看；生成新分析还需要外部服务认证、权限和额度正常。应用启动、自动化测试或缓存展示成功，都不代表当前真实模型生成已通过验证。
 
 ## 开发与验证
 
@@ -153,6 +172,8 @@ PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 | 持仓 | `GET /api/holdings`、`POST /api/holdings`、`PUT /api/holdings/{holding_id}`、`DELETE /api/holdings/{holding_id}` |
 | 股票与持仓分析 | `POST /api/ai/stocks/{security_id}/advice`、`POST /api/ai/holdings/{holding_id}/advice` |
 | 分析历史 | `GET /api/ai/history` |
+| AI 配置 | `GET /api/ai/settings`、`PUT /api/ai/settings`、`DELETE /api/ai/settings` |
+| AI 连接测试 | `POST /api/ai/settings/test` |
 
 完整请求字段、响应与其他接口以运行后的 [API 文档](http://127.0.0.1:8000/docs) 为准。
 

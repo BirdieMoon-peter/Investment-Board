@@ -108,3 +108,10 @@
 - Reason: an OpenAI-compatible model service exposes `/v1/chat/completions`, not Anthropic `/v1/messages`, so fresh AI generation required a protocol-specific adapter.
 - OpenAI-compatible settings read `AI_*` or `OPENAI_*` values without falling back to unrelated `ANTHROPIC_*` env vars, and they use a longer default timeout.
 - Reason: shell-level Anthropic env vars were incorrectly overriding the local proxy config, and real stock-analysis generations took longer than the original 30-second default.
+
+## 2026-09-13
+### Web AI configuration
+- The local Settings panel edits a complete request-time AI override; environment values remain the fallback and reset only removes the web override.
+- Credentials are stored in an ignored owner-only local file and never returned by settings APIs or persisted in browser storage. This is a single-user loopback feature, not a shared hosted credential service.
+- The backend is the sole authority for canonical protocol/endpoint equivalence and retained-key use. The frontend provides edit guidance and controlled conflict recovery.
+- Connection tests use the current draft and a fixed short message, without accessing user watchlists, holdings or analysis history. They neither save the draft nor establish full external investment-analysis availability.

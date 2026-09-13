@@ -1,19 +1,21 @@
 # Current Progress
 
 ## Current Focus
-Frontend web AI configuration is active after independent backend specification and quality PASS. Backend new-feature verification:129 focused/382full tests; parent isolated HTTP/restart checks passed. Existing authenticated external analysis acceptance remains separate and blocked. Plan: `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
+Web AI configuration implementation, independent specification/quality reviews and isolated runtime acceptance are complete. Final repository publication and hosted CI verification are next. Plan: `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
 
 ## Verified State
-- Backend: 278 tests passed; fresh external AI acceptance remains blocked by provider authentication.
-- Frontend: 100 tests and production build passed.
-- Scripts: 15 tests, actual isolated smoke and launcher lifecycle passed; independent review passed.
-- Clean-source installation of Python and Node dependencies passed, followed by the same complete checks.
-- Hosted Ubuntu CI passed both jobs for the publication commit. README and two images match the verified remote tree.
-- Frontend, data-layer and scripts are done. Backend remains blocked only on live provider acceptance.
+- Backend: 382 tests passed; new configuration scope reviewed and complete. Fresh external AI analysis acceptance remains blocked by provider authentication.
+- Frontend: 163 tests and production build passed; independent specification and quality reviews passed.
+- Scripts: 15 tests and actual isolated watchlist smoke passed.
+- Isolated runtime: 19 HTTP/persistence checks and 18 browser acceptance checks passed, using only invented credentials and a local mock provider.
+- Desktop/mobile screenshots inspected; no document overflow at 320/390/768/1440px.
+- Original configuration hashes, five watchlist rows and zero holdings match the pre-test baseline. Temporary services stopped; the user app remains running.
+- Frontend, data-layer and scripts are done. Backend remains blocked only on live external analysis acceptance.
 
 ## Next Work
-Execute and review backend settings first, then frontend configuration UI and isolated browser acceptance. Keep fresh demo stock/holding AI generation acceptance separate: it still requires an authorized authenticated provider, persistence/history/cache replay, and cannot be established by mock connectivity tests.
+Publish the reviewed feature and verify hosted CI. Fresh demo stock/holding AI generation still requires an authorized authenticated provider, followed by persistence/history/cache replay acceptance; mock connectivity tests do not establish that result.
 
 ## Evidence
-- docs/verification/release-readiness.md
+- docs/verification/web-ai-settings.md
+- docs/verification/release-readiness.md (earlier packaging milestone)
 - Raw local logs, databases and session-specific notes stay outside version control.

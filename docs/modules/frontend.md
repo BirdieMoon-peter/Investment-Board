@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-doing
+done
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -178,6 +178,24 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 
 ## Web AI Configuration — 2026-09-13
 - Backend contract independently reviewed; frontend implementation active under `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
-- [ ] Add isolated bilingual settings form/client/types with explicit credential actions and draft connection test.
-- [ ] Verify save/reset/loading/failure/stale-response states and responsive layout.
-- [ ] Complete independent specification and quality review plus isolated browser acceptance.
+- [x] Add isolated bilingual settings form/client/types with explicit credential actions and draft connection test.
+- [x] Verify save/reset/loading/failure/stale-response states in automated tests; responsive browser acceptance follows.
+- [x] Complete independent specification and quality review plus isolated browser acceptance.
+
+### Web settings implementation verification
+- Implementer:58 focused/158 complete frontend tests passed; production build passed. RED tests preceded implementation, Kimi protocol correction and dirty/success-copy refinement.
+- Form is in independent specification review while parent performs isolated browser acceptance.
+
+- Specification review found WHATWG/httpx destination-normalization drift for literal/encoded dot paths. Repair removes duplicate client endpoint identity enforcement: the form gives an advisory on edits, while protected backend409 remains authoritative before any provider call. Corrupt-configuration key decisions remain enforced in the form. Add regressions for both equivalent and conflicting paths.
+
+### Final web settings specification and runtime verification
+- Independent specification review PASS after the endpoint-equivalence correction; reviewer reran63 focused tests.
+- Parent full frontend suite163/163 passed (14 files), production build passed (59 modules).
+- Isolated browser acceptance18/18 passed, including actual HTTP save/test/reset, both protocols, credential transitions, reload, language switching and storage inspection.
+- Desktop/mobile screenshots inspected;320/390/768/1440 viewport widths have no document overflow. Independent quality review is active.
+
+### Web AI settings final review — 2026-09-13
+- Independent specification and quality review PASS; each reviewer reran 63 focused tests. No unresolved frontend findings remain.
+- Parent fresh verification: 163 frontend tests and production build passed; 18 isolated browser checks passed. Actual desktop/mobile captures were visually inspected.
+- Original environment and web configuration file hashes, all five watchlist rows and zero holdings match the pre-test baseline. Temporary acceptance services are stopped; the user app remains running.
+- Feature evidence: [Web AI settings verification](../verification/web-ai-settings.md). Frontend scope is done; authenticated external analysis remains a separate backend follow-up.

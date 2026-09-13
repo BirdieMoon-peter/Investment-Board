@@ -100,6 +100,10 @@ Supporting an authenticated multi-user/publicly hosted administration console
 is outside this local settings change.
 
 The key update contract has explicit `keep`, `replace` and `clear` actions.
+The backend is authoritative for endpoint equivalence and credential reuse; the
+form shows an advisory after address/provider edits and displays a controlled
+409 rejection when a retained key would change destination. It does not
+duplicate Python URL normalization with the browser URL parser.
 Only `replace` carries a non-empty key. Validation errors expose field names
 and controlled messages, never rejected secret input or upstream response bodies.
 Responses use `Cache-Control: no-store`; logs and frontend storage do not contain

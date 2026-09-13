@@ -17,6 +17,7 @@ import {
 } from './homepageSettings'
 import { I18nProvider, useI18n } from './i18n'
 import { SearchBox } from './components/SearchBox'
+import { AiSettingsPanel } from './components/AiSettingsPanel'
 import { StatusMessage } from './components/StatusMessage'
 import { WatchlistTable } from './components/WatchlistTable'
 import { StockDetailPage } from './pages/StockDetailPage'
@@ -613,6 +614,7 @@ function AppBody({
                   </div>
                 </section>
               </div>
+              <AiSettingsPanel />
             </section>
           ) : null}
 

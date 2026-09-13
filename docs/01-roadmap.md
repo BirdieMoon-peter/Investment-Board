@@ -22,11 +22,11 @@
 - [x] AI advice availability validation and usability improvements
 
 ## Current Target
-- Implement approved web-editable AI settings: backend persistence and connection test, then frontend form and isolated acceptance.
+- [x] Web-editable AI settings: protected persistence, connection test, bilingual form, independent reviews and isolated browser acceptance complete.
 - Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
 - Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
 - Backend regression verification passes; fresh stock/holding AI acceptance remains dependent on valid external provider authentication.
-- Current consolidated evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.
+- Current feature evidence: `docs/verification/web-ai-settings.md`; earlier packaging evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.
 
 ## Done
 - Workflow scaffold created on 2026-03-10

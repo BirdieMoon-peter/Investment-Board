@@ -104,7 +104,7 @@ Deferred in this milestone:
 - broader portfolio optimization beyond single-security or single-holding advice
 
 ## Next Requested Scope
-- Add web-editable local AI configuration, redacted settings APIs and a fixed-message connection test; proposed design: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`. Approved on 2026-09-13; backend settings implementation is active.
+- Add web-editable local AI configuration, redacted settings APIs and a fixed-message connection test; proposed design: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`. Approved on 2026-09-13; backend settings implementation and independent reviews are complete.
 - validate end-to-end AI advice availability against the configured runtime provider, not just cached responses
 - improve backend/provider behavior only where frontend usability validation exposes reliability or clarity gaps
 - keep provider changes compatible with the existing structured advice contracts
@@ -139,7 +139,7 @@ blocked
 - Consolidated verification: `docs/verification/release-readiness.md`.
 
 ## Implementation Notes
-- AI provider settings come from environment variables or the optional local `backend/.env.local`; tests ignore that local file unless explicitly configured.
+- AI provider settings use a request-time web override when saved; environment variables and the optional local `backend/.env.local` remain the fallback. Tests ignore default user configuration files unless explicitly configured.
 - Stock and holding analysis uses a configured provider and persists the most recent 20 entries by default. Cached reads do not trigger new model requests.
 - Holdings deletion preserves historical advice without allowing stale holding IDs to reuse current-position cache.
 - Public data providers can degrade independently; source timestamps and quote precision must remain traceable.
@@ -164,4 +164,6 @@ blocked
 
 ### Web configuration backend review complete
 - Independent specification PASS and independent quality PASS after both findings were repaired. Quality reviewer reran129 focused tests and verified failed-flush recovery plus concurrent full snapshots. Implementer full suite382 passed.
-- Web configuration backend scope is complete. Overall backend remains `blocked` solely on the pre-existing authenticated external stock/holding analysis acceptance. Frontend web settings implementation is next.
+- Web configuration backend scope is complete. Overall backend remains `blocked` solely on the pre-existing authenticated external stock/holding analysis acceptance. Frontend settings and isolated runtime acceptance also passed; see `docs/verification/web-ai-settings.md`.
+
+- Parent final backend regression: 382 passed. Isolated HTTP acceptance: 19 checks, including actual process-restart persistence, owner-only file permissions, same-origin browser proxy access and empty-key bootstrap. No real external model calls were made.

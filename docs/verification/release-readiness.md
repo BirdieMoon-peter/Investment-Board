@@ -23,3 +23,7 @@ Repository maintenance removes dependencies, caches, runtime databases, logs and
 The staged source tree was exported without dependencies, databases or local configuration. A new Python3.12 virtual environment installed the package with `pip install -e './backend[dev]'`; frontend dependencies were installed with `npm ci --prefix frontend`. The new environment passed278backend tests,100frontend tests,15launcher tests, the frontend build and the real isolated smoke entrypoint. README relative links were checked, and both JPEG screenshot files were visually inspected.
 
 Independent packaging review scanned all248tracked files: no runtime/dependency paths, credential-pattern findings, personal absolute paths or broken Markdown links. Existing private raw logs remain local.
+
+## Subsequent feature verification
+
+Web-editable AI configuration was implemented and independently reviewed on 2026-09-13. Its updated test counts, browser acceptance and screenshot evidence are recorded in [Web AI settings verification](web-ai-settings.md); the earlier publication results above remain historical.
