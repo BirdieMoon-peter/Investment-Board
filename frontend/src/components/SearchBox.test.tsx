@@ -1,13 +1,13 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { SearchBox } from './SearchBox'
 
-describe('SearchBox', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
+describe('SearchBox', () => {
   it('searches for securities, renders an Add button, and calls onAdd when clicked', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -35,7 +35,9 @@ describe('SearchBox', () => {
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith('/api/watchlist/securities/search?query=Ping')
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/watchlist/securities/search?query=Ping',
+      )
     })
 
     expect(await screen.findByText('Ping An Bank')).toBeInTheDocument()
@@ -76,7 +78,9 @@ describe('SearchBox', () => {
 
     expect(await screen.findByText('BYD')).toBeInTheDocument()
     expect(screen.getByText('SZ:002594')).toBeInTheDocument()
-    expect(screen.queryByLabelText(/market for custom stock/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(/market for custom stock/i),
+    ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
     expect(onAdd).toHaveBeenCalledWith(99)
@@ -99,8 +103,12 @@ describe('SearchBox', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
-    expect(await screen.findByLabelText(/market for custom stock/i)).toHaveValue('SH')
-    expect(screen.getByRole('button', { name: /add sh:600519/i })).toBeInTheDocument()
+    expect(
+      await screen.findByLabelText(/market for custom stock/i),
+    ).toHaveValue('SH')
+    expect(
+      screen.getByRole('button', { name: /add sh:600519/i }),
+    ).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText(/market for custom stock/i), {
       target: { value: 'SZ' },
@@ -125,9 +133,15 @@ describe('SearchBox', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
-    expect(await screen.findByText(/no securities matched your search/i)).toBeInTheDocument()
-    expect(screen.queryByLabelText(/market for custom stock/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /add /i })).not.toBeInTheDocument()
+    expect(
+      await screen.findByText(/no securities matched your search/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(/market for custom stock/i),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /add /i }),
+    ).not.toBeInTheDocument()
   })
 
   it('offers custom add when search returns no matches and adds by market and code', async () => {
@@ -147,7 +161,9 @@ describe('SearchBox', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
-    expect(await screen.findByRole('button', { name: /add sz:002594/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', { name: /add sz:002594/i }),
+    ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /add sz:002594/i }))
 
@@ -169,7 +185,9 @@ describe('SearchBox', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
-    expect(await screen.findByText(/no securities matched your search/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(/no securities matched your search/i),
+    ).toBeInTheDocument()
   })
 
   it('renders the search error state when the request fails', async () => {
@@ -187,6 +205,125 @@ describe('SearchBox', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /search/i }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Search failed. Please try again.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Search failed. Please try again.',
+    )
   })
+})
+
+it('discards a pending search after the query changes and does not search while typing', async () => {
+  let resolve!: (value: unknown) => void
+  const fetchMock = vi.fn().mockReturnValue(
+    new Promise((value) => {
+      resolve = value
+    }),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+  render(<SearchBox onAdd={vi.fn()} onAddCustom={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText(/search securities/i), {
+    target: { value: 'Old' },
+  })
+  expect(fetchMock).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: /^search$/i }))
+  fireEvent.change(screen.getByLabelText(/search securities/i), {
+    target: { value: 'New' },
+  })
+  resolve({
+    ok: true,
+    json: async () => [
+      { security_id: 1, name: 'Old result', market: 'SH', code: '600000' },
+    ],
+  })
+  await waitFor(() =>
+    expect(screen.queryByText(/searching/i)).not.toBeInTheDocument(),
+  )
+  expect(screen.queryByText('Old result')).not.toBeInTheDocument()
+  expect(fetchMock).toHaveBeenCalledTimes(1)
+})
+it('keeps add failures in the search and prevents duplicate additions', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        { security_id: 1, name: 'Tracked', market: 'SH', code: '600001' },
+        { security_id: 2, name: 'Available', market: 'SZ', code: '000002' },
+      ],
+    }),
+  )
+  const onAdd = vi.fn().mockRejectedValue(new Error('private upstream failure'))
+  render(
+    <SearchBox onAdd={onAdd} onAddCustom={vi.fn()} addedSecurityIds={[1]} />,
+  )
+  fireEvent.change(screen.getByLabelText(/search securities/i), {
+    target: { value: 'a' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: /^search$/i }))
+  expect(
+    await screen.findByRole('button', { name: 'Already added' }),
+  ).toBeDisabled()
+  fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Unable to add that security to your watchlist right now.',
+  )
+  expect(screen.getByText('Available')).toBeInTheDocument()
+})
+
+it('keeps a newer successful result when an older submitted request fails later', async () => {
+  let rejectOld!: (error: Error) => void
+  const fetchMock = vi
+    .fn()
+    .mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectOld = reject
+      }),
+    )
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        { security_id: 2, name: 'New result', market: 'SZ', code: '000002' },
+      ],
+    })
+  vi.stubGlobal('fetch', fetchMock)
+  render(<SearchBox onAdd={vi.fn()} onAddCustom={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText('Search securities'), {
+    target: { value: 'Old' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+  fireEvent.change(screen.getByLabelText('Search securities'), {
+    target: { value: 'New' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+  await screen.findByText('New result')
+  await act(async () => rejectOld(new Error('old failure')))
+  expect(screen.getByText('New result')).toBeInTheDocument()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+it('does not reuse an obsolete search after closing and reopening', async () => {
+  let resolveOld!: (value: unknown) => void
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveOld = resolve
+      }),
+    ),
+  )
+  const old = render(<SearchBox onAdd={vi.fn()} onAddCustom={vi.fn()} />)
+  fireEvent.change(screen.getByLabelText('Search securities'), {
+    target: { value: 'Old' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+  old.unmount()
+  render(<SearchBox onAdd={vi.fn()} onAddCustom={vi.fn()} />)
+  await act(async () =>
+    resolveOld({
+      ok: true,
+      json: async () => [
+        { security_id: 1, name: 'Old result', market: 'SH', code: '600001' },
+      ],
+    }),
+  )
+  expect(screen.getByLabelText('Search securities')).toHaveValue('')
+  expect(screen.queryByText('Old result')).not.toBeInTheDocument()
 })

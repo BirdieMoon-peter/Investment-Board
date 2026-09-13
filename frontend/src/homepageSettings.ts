@@ -33,7 +33,8 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   language: 'en',
 }
 
-export const HOMEPAGE_SETTINGS_STORAGE_KEY = 'investment-board-homepage-settings'
+export const HOMEPAGE_SETTINGS_STORAGE_KEY =
+  'investment-board-homepage-settings'
 
 const validRefreshIntervals = new Set([60_000, 120_000, 300_000])
 const validSyncIntervals = new Set([180_000, 300_000, 600_000])
@@ -43,17 +44,20 @@ export function loadHomepageSettings(): HomepageSettings {
     return DEFAULT_HOMEPAGE_SETTINGS
   }
 
-  const rawValue = window.localStorage.getItem(HOMEPAGE_SETTINGS_STORAGE_KEY)
-  if (!rawValue) {
-    return DEFAULT_HOMEPAGE_SETTINGS
-  }
-
   try {
+    const rawValue = window.localStorage.getItem(HOMEPAGE_SETTINGS_STORAGE_KEY)
+    if (!rawValue) return DEFAULT_HOMEPAGE_SETTINGS
     const parsed = JSON.parse(rawValue) as Partial<HomepageSettings>
     return {
       homepageMode: parsed.homepageMode === 'focused' ? 'focused' : 'live',
-      density: parsed.density === 'comfortable' ? 'comfortable' : DEFAULT_HOMEPAGE_SETTINGS.density,
-      showHero: typeof parsed.showHero === 'boolean' ? parsed.showHero : DEFAULT_HOMEPAGE_SETTINGS.showHero,
+      density:
+        parsed.density === 'comfortable'
+          ? 'comfortable'
+          : DEFAULT_HOMEPAGE_SETTINGS.density,
+      showHero:
+        typeof parsed.showHero === 'boolean'
+          ? parsed.showHero
+          : DEFAULT_HOMEPAGE_SETTINGS.showHero,
       showSpotlight:
         typeof parsed.showSpotlight === 'boolean'
           ? parsed.showSpotlight
@@ -74,7 +78,9 @@ export function loadHomepageSettings(): HomepageSettings {
         typeof parsed.autoRefreshEnabled === 'boolean'
           ? parsed.autoRefreshEnabled
           : DEFAULT_HOMEPAGE_SETTINGS.autoRefreshEnabled,
-      autoRefreshIntervalMs: validRefreshIntervals.has(parsed.autoRefreshIntervalMs ?? 0)
+      autoRefreshIntervalMs: validRefreshIntervals.has(
+        parsed.autoRefreshIntervalMs ?? 0,
+      )
         ? (parsed.autoRefreshIntervalMs as number)
         : DEFAULT_HOMEPAGE_SETTINGS.autoRefreshIntervalMs,
       autoSyncEnabled:
@@ -96,5 +102,12 @@ export function saveHomepageSettings(settings: HomepageSettings) {
     return
   }
 
-  window.localStorage.setItem(HOMEPAGE_SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+  try {
+    window.localStorage.setItem(
+      HOMEPAGE_SETTINGS_STORAGE_KEY,
+      JSON.stringify(settings),
+    )
+  } catch {
+    // Browser policy or quota must not prevent session-only preference changes.
+  }
 }

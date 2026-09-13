@@ -1,128 +1,191 @@
-import { FormEvent, useEffect, useState } from 'react'
-
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import {
+  Button,
+  Field,
+  Input,
+  Select,
+  Spinner,
+} from '@fluentui/react-components'
 import { useI18n } from '../i18n'
 import { searchSecurities } from '../api/watchlist'
 import { StatusMessage } from './StatusMessage'
 import type { SecuritySearchResult } from '../types/watchlist'
-
-function inferDefaultMarket(query: string) {
-  if (/^(6|9)\d{5}$/.test(query)) {
-    return 'SH'
-  }
-  if (/^(0|2|3)\d{5}$/.test(query)) {
-    return 'SZ'
-  }
-  return 'SZ'
+export interface SearchBoxProps {
+  onAdd: (securityId: number) => void | Promise<void>
+  onAddCustom: (market: string, code: string) => void | Promise<void>
+  addedSecurityIds?: number[]
 }
-
-function isCustomCodeCandidate(query: string) {
-  return /^\d{6}$/.test(query)
-}
-
-interface SearchBoxProps {
-  onAdd: (securityId: number) => void
-  onAddCustom: (market: string, code: string) => void
-}
-
-export function SearchBox({ onAdd, onAddCustom }: SearchBoxProps) {
+export function SearchBox({
+  onAdd,
+  onAddCustom,
+  addedSecurityIds = [],
+}: SearchBoxProps) {
   const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SecuritySearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorKey, setErrorKey] = useState<string | null>(null)
   const [customMarket, setCustomMarket] = useState('SZ')
-
+  const [adding, setAdding] = useState<string | null>(null)
+  const [added, setAdded] = useState<number[]>([])
+  const [customAdded, setCustomAdded] = useState<string[]>([])
+  const requestVersion = useRef(0)
+  const mounted = useRef(true)
+  const addInFlight = useRef(false)
   useEffect(() => {
-    const trimmedQuery = query.trim()
-    if (isCustomCodeCandidate(trimmedQuery)) {
-      setCustomMarket(inferDefaultMarket(trimmedQuery))
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      requestVersion.current += 1
     }
-  }, [query])
-
+  }, [])
+  function changeQuery(value: string) {
+    requestVersion.current += 1
+    setQuery(value)
+    setResults([])
+    setHasSearched(false)
+    setIsLoading(false)
+    setErrorKey(null)
+    if (/^\d{6}$/.test(value.trim()))
+      setCustomMarket(/^[69]/.test(value.trim()) ? 'SH' : 'SZ')
+  }
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
-    const trimmedQuery = query.trim()
-    setHasSearched(true)
-    setErrorMessage(null)
-
-    if (!trimmedQuery) {
-      setResults([])
+    const value = query.trim(),
+      version = ++requestVersion.current
+    setErrorKey(null)
+    setResults([])
+    setHasSearched(false)
+    if (!value) {
+      setIsLoading(false)
       return
     }
-
     setIsLoading(true)
-
     try {
-      const nextResults = await searchSecurities(trimmedQuery)
-      setResults(nextResults)
+      const next = await searchSecurities(value)
+      if (mounted.current && requestVersion.current === version) {
+        setResults(next)
+        setHasSearched(true)
+      }
     } catch {
-      setResults([])
-      setErrorMessage(t('search.error'))
+      if (mounted.current && requestVersion.current === version)
+        setErrorKey('search.error')
     } finally {
-      setIsLoading(false)
+      if (mounted.current && requestVersion.current === version)
+        setIsLoading(false)
     }
   }
-
+  async function add(id?: number) {
+    if (addInFlight.current) return
+    const code = query.trim(),
+      market = customMarket,
+      identity = id === undefined ? `${market}:${code}` : String(id)
+    if (id !== undefined && [...addedSecurityIds, ...added].includes(id)) return
+    if (id === undefined && customAdded.includes(identity)) return
+    const version = requestVersion.current
+    addInFlight.current = true
+    setAdding(identity)
+    setErrorKey(null)
+    try {
+      if (id === undefined) await onAddCustom(market, code)
+      else await onAdd(id)
+      if (mounted.current) {
+        if (id === undefined)
+          setCustomAdded((previous) => [...previous, identity])
+        else setAdded((previous) => [...previous, id])
+      }
+    } catch {
+      if (mounted.current && requestVersion.current === version)
+        setErrorKey(
+          id === undefined ? 'homepage.addCustomError' : 'homepage.addError',
+        )
+    } finally {
+      addInFlight.current = false
+      if (mounted.current) setAdding(null)
+    }
+  }
+  const customIdentity = `${customMarket}:${query.trim()}`
   return (
-    <section className="search-box" aria-label={t('search.ariaLabel')}>
-      <form className="search-box__form" onSubmit={handleSubmit}>
-        <label className="watchlist-shell__search-label" htmlFor="watchlist-search">
-          {t('search.label')}
-        </label>
-        <div className="search-box__controls">
-          <input
-            id="watchlist-search"
-            className="watchlist-shell__search-input"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('search.placeholder')}
-          />
-          <button type="submit">{t('common.search')}</button>
-        </div>
+    <section className="security-search" aria-label={t('search.ariaLabel')}>
+      <form onSubmit={handleSubmit}>
+        <Field label={t('search.label')}>
+          <div className="security-search-controls">
+            <Input
+              type="search"
+              value={query}
+              onChange={(_, data) => changeQuery(data.value)}
+              placeholder={t('search.placeholder')}
+            />
+            <Button appearance="primary" type="submit">
+              {t('common.search')}
+            </Button>
+          </div>
+        </Field>
       </form>
-
-      {isLoading ? <StatusMessage message={t('search.searching')} /> : null}
-      {!isLoading && errorMessage ? <StatusMessage tone="error" message={errorMessage} /> : null}
-      {!isLoading && !errorMessage && hasSearched && results.length === 0 ? (
-        <div className="search-box__empty-state">
-          <p className="dashboard-empty">{t('search.empty')}</p>
-          {isCustomCodeCandidate(query.trim()) ? (
-            <div className="search-box__custom-add">
-              <label htmlFor="custom-stock-market">{t('search.customMarket')}</label>
-              <div className="search-box__custom-add-controls">
-                <select
-                  id="custom-stock-market"
+      {isLoading ? <Spinner size="tiny" label={t('search.searching')} /> : null}
+      {errorKey ? <StatusMessage tone="error" message={t(errorKey)} /> : null}
+      {!isLoading && hasSearched && results.length === 0 ? (
+        <div className="workspace-empty">
+          <p>{t('search.empty')}</p>
+          {/^\d{6}$/.test(query.trim()) ? (
+            <div className="security-search-custom">
+              <Field label={t('search.customMarket')}>
+                <Select
                   value={customMarket}
-                  onChange={(event) => setCustomMarket(event.target.value)}
+                  disabled={adding !== null}
+                  onChange={(_, data) => setCustomMarket(data.value)}
                 >
                   <option value="SH">SH</option>
                   <option value="SZ">SZ</option>
-                </select>
-                <button type="button" onClick={() => onAddCustom(customMarket, query.trim())}>
-                  {t('search.addCustom', { market: customMarket, code: query.trim() })}
-                </button>
-              </div>
+                </Select>
+              </Field>
+              <Button
+                disabled={
+                  adding !== null || customAdded.includes(customIdentity)
+                }
+                onClick={() => void add()}
+              >
+                {customAdded.includes(customIdentity)
+                  ? t('workspace.alreadyAdded')
+                  : t('search.addCustom', {
+                      market: customMarket,
+                      code: query.trim(),
+                    })}
+              </Button>
             </div>
           ) : null}
         </div>
       ) : null}
       {!isLoading && results.length > 0 ? (
-        <ul className="search-box__results" aria-label={t('search.results')}>
-          {results.map((result) => (
-            <li key={result.security_id} className="search-box__result-item">
-              <div>
-                <strong>{result.name}</strong>
-                <div>{`${result.market}:${result.code}`}</div>
-                {result.industry ? <div>{result.industry}</div> : null}
-              </div>
-              <button type="button" onClick={() => onAdd(result.security_id)}>
-                {t('common.add')}
-              </button>
-            </li>
-          ))}
+        <ul
+          className="security-search-results"
+          aria-label={t('search.results')}
+        >
+          {results.map((result) => {
+            const isAdded = [...addedSecurityIds, ...added].includes(
+              result.security_id,
+            )
+            return (
+              <li key={result.security_id}>
+                <div>
+                  <strong>{result.name}</strong>
+                  <span className="security-code">
+                    {result.market}:{result.code}
+                  </span>
+                  {result.industry ? (
+                    <span className="workspace-muted">{result.industry}</span>
+                  ) : null}
+                </div>
+                <Button
+                  disabled={isAdded || adding !== null}
+                  onClick={() => void add(result.security_id)}
+                >
+                  {isAdded ? t('workspace.alreadyAdded') : t('common.add')}
+                </Button>
+              </li>
+            )
+          })}
         </ul>
       ) : null}
     </section>

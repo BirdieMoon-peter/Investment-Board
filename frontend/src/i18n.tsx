@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react'
 
 export type Language = 'en' | 'zh'
 
@@ -8,6 +8,30 @@ type TranslationDictionary = Record<Language, Record<string, TranslationValue>>
 
 const translations: TranslationDictionary = {
   en: {
+    "workspace.filter": "Filter watchlist",
+    "workspace.market": "Market filter",
+    "workspace.allMarkets": "All markets",
+    "workspace.clearFilters": "Clear filters",
+    "workspace.noMatches": "No securities match these filters.",
+    "workspace.moreDetails": "More details",
+    "workspace.alreadyAdded": "Already added",
+    "workspace.closeSearch": "Close search",
+    "workspace.interfaceSettings": "Interface and refresh",
+    "workspace.aiSettings": "AI service configuration",
+    "workspace.theme": "Theme",
+    "workspace.themeSystem": "System",
+    "workspace.themeLight": "Light",
+    "workspace.themeDark": "Dark",
+    "workspace.discardTitle": "Discard unsaved AI changes?",
+    "workspace.discardDescription": "The unsaved configuration and replacement API key will be cleared when you close settings.",
+    "workspace.continueEditing": "Continue editing",
+    "workspace.discard": "Discard changes",
+    "workspace.research": "Investment research",
+    "workspace.disclaimer": "For personal research only. Data may be delayed; AI analysis does not constitute investment advice.",
+    'workspace.count': ({ filtered, total }) => `${filtered} of ${total} securities`,
+    'workspace.actionsFor': ({ name }) => `Actions for ${name}`,
+    'workspace.removeTitle': ({ name }) => `Remove ${name}?`,
+    'workspace.removeDescription': ({ name }) => `${name} will be removed from your watchlist. Saved holdings and research remain available.`,
     "aiSettings.title": "AI configuration",
     "aiSettings.description": "Choose the service used for AI analysis. Saving takes effect on the next AI request.",
     "aiSettings.configuration": "AI service settings",
@@ -17,7 +41,7 @@ const translations: TranslationDictionary = {
     "aiSettings.source.environment": "Environment configuration",
     "aiSettings.source.default": "Default configuration",
     "aiSettings.provider": "Provider / protocol",
-    "aiSettings.unsupportedProvider": "Unsupported saved provider — choose a supported service",
+    "aiSettings.unsupportedProvider": "Unsupported saved provider; choose a supported service",
     "aiSettings.url": "Service URL",
     "aiSettings.model": "Model",
     "aiSettings.urlHint": "Enter a service root, /v1 URL or full endpoint. Use HTTPS; HTTP is supported for local services. Do not include credentials, query parameters or fragments in the URL.",
@@ -39,7 +63,7 @@ const translations: TranslationDictionary = {
     "aiSettings.temperature": "Temperature",
     "aiSettings.maxTokens": "Maximum output tokens",
     "aiSettings.timeout": "Request timeout (seconds)",
-    "aiSettings.limits": "Temperature: 0–2 · Output tokens: 1–131072, whole numbers · Timeout: 1–600 seconds",
+    "aiSettings.limits": "Temperature: 0 to 2 · Output tokens: 1 to 131072, whole numbers · Timeout: 1 to 600 seconds",
     "aiSettings.testHint": "Test connection sends only a short fixed message to the selected service using this draft. It does not save settings or send your watchlist or holdings. Saving does not call the AI service.",
     "aiSettings.save": "Save AI settings",
     "aiSettings.test": "Test connection",
@@ -78,13 +102,13 @@ const translations: TranslationDictionary = {
     'common.previous': 'Previous',
     'common.next': 'Next',
     'common.pageOf': ({ page, total }) => `Page ${page} of ${total}`,
-    'common.notAvailable': '—',
+    'common.notAvailable': 'Not available',
     'common.pendingSync': 'Pending sync',
     'common.language': 'Language',
     'common.english': 'English',
     'common.chinese': '中文',
     'homepage.title': 'Market watchboard',
-    'homepage.description': 'Professional dark workspace for tracking your focus list, market breadth, macro pulse, and next detail drill-down.',
+    'homepage.description': 'Track your watchlist, review market context and open a security for detailed research.',
     'homepage.leadMover': 'Lead mover',
     'homepage.waitingForSyncedPrices': 'Waiting for synced prices',
     'homepage.addAndSyncPrompt': 'Add and sync securities to populate this board.',
@@ -318,6 +342,30 @@ const translations: TranslationDictionary = {
     'security.unknown': 'unknown',
   },
   zh: {
+    "workspace.filter": "筛选自选",
+    "workspace.market": "市场筛选",
+    "workspace.allMarkets": "全部市场",
+    "workspace.clearFilters": "清除筛选",
+    "workspace.noMatches": "没有符合筛选条件的标的。",
+    "workspace.moreDetails": "更多信息",
+    "workspace.alreadyAdded": "已添加",
+    "workspace.closeSearch": "关闭搜索",
+    "workspace.interfaceSettings": "界面与刷新",
+    "workspace.aiSettings": "AI 服务配置",
+    "workspace.theme": "主题",
+    "workspace.themeSystem": "跟随系统",
+    "workspace.themeLight": "浅色",
+    "workspace.themeDark": "深色",
+    "workspace.discardTitle": "放弃未保存的 AI 修改？",
+    "workspace.discardDescription": "关闭设置后，未保存的配置和新 API 密钥将被清除。",
+    "workspace.continueEditing": "继续编辑",
+    "workspace.discard": "放弃修改",
+    "workspace.research": "投资研究",
+    "workspace.disclaimer": "仅用于个人研究。数据可能延迟，AI 分析不构成投资建议。",
+    'workspace.count': ({ filtered, total }) => `显示 ${filtered} / ${total} 个标的`,
+    'workspace.actionsFor': ({ name }) => `${name} 的操作`,
+    'workspace.removeTitle': ({ name }) => `移除 ${name}？`,
+    'workspace.removeDescription': ({ name }) => `将从自选股中移除 ${name}，已保存的持仓和研究仍会保留。`,
     "aiSettings.title": "AI 服务配置",
     "aiSettings.description": "设置 AI 分析使用的服务，保存后将在下一次 AI 请求时生效。",
     "aiSettings.configuration": "AI 服务设置",
@@ -349,7 +397,7 @@ const translations: TranslationDictionary = {
     "aiSettings.temperature": "温度",
     "aiSettings.maxTokens": "最大输出 Token 数",
     "aiSettings.timeout": "请求超时（秒）",
-    "aiSettings.limits": "温度：0–2 · 输出 Token：1–131072 的整数 · 超时：1–600 秒",
+    "aiSettings.limits": "温度：0 至 2 · 输出 Token：1 至 131072 的整数 · 超时：1 至 600 秒",
     "aiSettings.testHint": "测试连接会使用当前草稿，仅向所选服务发送一条简短固定消息，不保存配置，也不发送自选股或持仓。保存配置不会调用 AI 服务。",
     "aiSettings.save": "保存 AI 配置",
     "aiSettings.test": "测试连接",
@@ -388,13 +436,13 @@ const translations: TranslationDictionary = {
     'common.previous': '上一页',
     'common.next': '下一页',
     'common.pageOf': ({ page, total }) => `第 ${page} / ${total} 页`,
-    'common.notAvailable': '—',
+    'common.notAvailable': '暂无',
     'common.pendingSync': '待同步',
     'common.language': '语言',
     'common.english': 'English',
     'common.chinese': '中文',
     'homepage.title': '市场看板',
-    'homepage.description': '以专业深色工作台跟踪你的关注列表、大盘动向、宏观脉搏与下一步详情分析。',
+    'homepage.description': '跟踪自选标的、查看市场背景，并进入详情开展研究。',
     'homepage.leadMover': '领涨标的',
     'homepage.waitingForSyncedPrices': '等待同步价格',
     'homepage.addAndSyncPrompt': '添加并同步股票后，这里会显示实时看板。',
@@ -643,7 +691,7 @@ const fallbackContext: I18nContextValue = {
   },
   formatDateTime: (value) => {
     if (!value) {
-      return '—'
+      return 'Not available'
     }
 
     const parsed = new Date(value)
@@ -672,6 +720,15 @@ export function I18nProvider({
   children: ReactNode
   language: Language
 }) {
+  useEffect(() => {
+    const previous = document.documentElement.getAttribute('lang')
+    document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en'
+    return () => {
+      if (previous === null) document.documentElement.removeAttribute('lang')
+      else document.documentElement.lang = previous
+    }
+  }, [language])
+
   const t = useCallback(
     (key: string, params: Record<string, string | number> = {}) => {
       const value = translations[language][key] ?? translations.en[key] ?? key

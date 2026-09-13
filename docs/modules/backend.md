@@ -110,7 +110,7 @@ Deferred in this milestone:
 - keep provider changes compatible with the existing structured advice contracts
 
 ## Current Status
-blocked
+doing
 
 ## Recommended Skills
 - `superpowers:brainstorming` for boundary changes
@@ -167,3 +167,9 @@ blocked
 - Web configuration backend scope is complete. Overall backend remains `blocked` solely on the pre-existing authenticated external stock/holding analysis acceptance. Frontend settings and isolated runtime acceptance also passed; see `docs/verification/web-ai-settings.md`.
 
 - Parent final backend regression: 382 passed. Isolated HTTP acceptance: 19 checks, including actual process-restart persistence, owner-only file permissions, same-origin browser proxy access and empty-key bootstrap. No real external model calls were made.
+
+## DeepSeek Flash user request - 2026-09-13
+- User explicitly selected official DeepSeek Flash and provided a credential for local configuration. Saved through the protected web API as `deepseek-flash` at `https://api.deepseek.com`; fixed-message test passed. No credential is recorded in tracked files.
+- Synthetic-only acceptance identified two separate causes: the prompt did not name which fields are lists (`position_notes` was returned as text), and the1400-token output cap could truncate JSON.
+- Temporary prompt clarification plus4096-token budget passed7 route/persistence checks with two actual model calls. Production clarification and final verification follow Task2b of the workspace plan; existing parser/API/data contracts remain unchanged.
+- The original external-authentication blocker is resolved for this configured account; module completion awaits the small compatibility repair and independent review.

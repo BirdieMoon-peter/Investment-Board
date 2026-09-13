@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-doing
+todo
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -212,3 +212,12 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Official Fluent themes, guarded separate system/light/dark preference and local IBM Plex fonts implemented. Theme RED8 failures preceded14 focused passes; full frontend177 passes and production build passed.
 - Independent specification and quality review PASS; both reviewers reran14 theme tests. Actual Edge light/dark pages inspected with no page errors. Homepage/settings is the next increment.
 - Supporting dependency maintenance passed clean npm ci and audit0 vulnerabilities (Vite7.3.6/Vitest4.1.11).
+
+### Homepage/search/settings increment in progress
+- Watchlist-first layout, controlled filters/sorts, separate search and guarded settings drawer implemented; existing request ownership retained in App.
+- Root actual browser found nested-modal focus restoration after Continue editing and a320px theme-selector style collision. Corrections are being verified before independent reviews. First viewport5 rows and390px no-overflow already observed; final matrix uses frozen source.
+
+### Homepage/search/settings final review
+-193 frontend tests and production build passed. Independent specification and quality review PASS after the filtered-out spotlight focus repair; reviewers reran10 App and31 focused tests respectively.
+- Root actual Edge acceptance:6 drawer guard checks,6 watchlist flow checks,5 sync/cache/error/empty checks. All8 theme-width homepage cases pass without overflow, with64px header; settings also fit four widths.
+- Frontend is briefly paused for the requested DeepSeek compatibility increment. Detail groups/chart themes/loading optimization remain Task3 and frontend is not yet done.

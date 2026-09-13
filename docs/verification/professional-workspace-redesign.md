@@ -73,3 +73,56 @@ investment interface; published images must be actual browser captures.
 - Theme tests:14 passed; frontend suite177 passed; production build passed. RED evidence records8 behavior failures before implementation.
 - Actual Edge browser theme switch produced no page errors; both light/dark captures inspected. Charts and final layouts are verified in subsequent increments.
 - Independent specification and quality review PASS; both reviewers independently reran14 theme tests. No unresolved findings.
+
+## DeepSeek diagnostic acceptance
+
+User-requested configuration authenticated successfully. A separate invented-company
+and invented-position database exposed a list-field prompt ambiguity and an output
+cap truncation (`finish_reason=length`). A temporary clarified prompt with4096
+output tokens passed7 real route/persistence checks and2 provider calls. Neither
+real watchlist nor holdings were sent. This diagnostic is not final product-code
+acceptance; Task2b incorporates the fix, then repeats without the temporary patch.
+
+Supporting regressions currently pass:382 backend tests and15 launcher/smoke tests.
+The first scripts run was blocked from binding a loopback port by the sandbox;
+the same tests passed when run with local-listening permission.
+
+## Initial homepage visual check
+
+The initial desktop layout showed all5 watchlist rows within1440x900 (last row
+bottom827px);390px view had no document overflow. The compact header was further
+adjusted to the approved64px height. Final acceptance follows the frozen code.
+
+Axe flagged Fluent/Tabster's own `data-tabster-dummy` focus sentinel elements for
+`aria-hidden-focus`. These are recorded separately with raw results retained;
+application elements are still checked under the same rule. This library pattern
+is tracked in [Fluent issue27517](https://github.com/microsoft/fluentui/issues/27517).
+No focus sentinels or accessibility rules are removed to raise audit scores.
+A real browser also exposed nested confirmation focus restoration, which is
+being repaired and will be retested before homepage acceptance.
+
+### Frozen homepage and drawer browser pass
+
+- Settings guard probe:6 checks passed, including lazy mounting, cross-tab draft
+  retention, Escape/continue, discard/unmount/reopen and all three busy dismissal
+  routes. Four settings widths pass without overflow; no page errors.
+- Homepage:both themes at320/390/768/1440 pass with64px header and no document
+  overflow. Axe flags only the documented Fluent/Tabster sentinel pattern.
+- Immediate post-theme screenshots initially captured Fluent's short color
+  transition. Fresh dark loads render correct foreground colors; final captures
+  await active transition completion. No source change was needed for this.
+- Independent specification review found a filtered-out spotlight return-focus
+  case. That regression is being repaired before quality review.
+
+### Homepage increment complete
+
+193 frontend tests and production build pass. Independent specification and quality
+reviews pass. The spotlight focus omission is fixed and covered by two RED/GREEN
+regressions. Actual browser checks pass:6 drawer guards,6 watchlist flows and5
+sync/cache/error/empty states. Temporary custom-code add/remove returned the
+isolated demo database to its five-row baseline.
+
+Initial desktop production Lighthouse:Performance100,Accessibility96,Best
+Practices96;FCP645ms,LCP689ms,TBT0ms,CLS0.0156. This is a lab baseline, not a field
+CWV claim. Accessibility flags the recorded library sentinels; the console error
+is a missing favicon. Final assets/loading and mobile results follow Task3/4.

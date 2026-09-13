@@ -53,6 +53,6 @@ describe('FinancialMetricsPanel', () => {
     expect(screen.getByRole('cell', { name: '15.60%' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: '42.10%' })).toBeInTheDocument()
 
-    expect(screen.getAllByRole('cell', { name: '—' })).toHaveLength(5)
+    expect(screen.getAllByRole('cell', { name: 'Not available' })).toHaveLength(5)
   })
 })
