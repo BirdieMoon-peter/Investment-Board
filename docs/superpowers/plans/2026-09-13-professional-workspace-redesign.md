@@ -78,13 +78,13 @@ interface AiSettingsPanelProps {
 
 User steering2026-09-13 explicitly selects DeepSeek official Flash. Official current model is `deepseek-flash`, endpoint `https://api.deepseek.com`. Protected local settings save and fixed-message test already passed. This is a narrow confirmed provider-contract gap discovered while accepting that request, not a new analysis feature.
 
-- [ ] After Task2 is reviewed, pause frontend implementation and activate the backend module for this increment only.
-- [ ] Preserve existing response fields and strict parser. Clarify the shared system prompt: name all five list fields explicitly; required lists must be nonempty and may state missing/not-applicable context without inventing facts, while warnings may be empty. No coercion, silent retries, extra protocol options or API schema changes.
-- [ ] Add focused failing provider request-contract coverage for both protocols proving the prompt explicitly distinguishes all list fields from scalar fields and communicates nonempty/missing-context rules. Implement the minimal clarification, then run provider/full backend regressions.
-- [ ] Update the optional `.env.example` to DeepSeek Flash with an empty key and4096 output budget. Keep runtime defaults for other providers unchanged.
-- [ ] The actual user web override now uses4096 tokens. Credentials remain in the ignored local configuration only. No user watchlist or holdings may be transmitted during acceptance.
-- [ ] Repeat actual fresh stock/holding generation, cache reuse and persisted-history checks using only the separate invented-company/invented-position database; remove temporary monkeypatch so final acceptance exercises product code.
-- [ ] Independent specification then quality review; update backend state only after fresh verification. Commit this bounded increment, then resume frontend Task3.
+- [x] After Task2 is reviewed, pause frontend implementation and activate the backend module for this increment only.
+- [x] Preserve existing response fields and strict parser. Clarify the shared system prompt: name all five list fields explicitly; required lists must be nonempty and may state missing/not-applicable context without inventing facts, while warnings may be empty. No coercion, silent retries, extra protocol options or API schema changes.
+- [x] Add focused failing provider request-contract coverage for both protocols proving the prompt explicitly distinguishes all list fields from scalar fields and communicates nonempty/missing-context rules. Implement the minimal clarification, then run provider/full backend regressions.
+- [x] Update the optional `.env.example` to DeepSeek Flash with an empty key and4096 output budget. Keep runtime defaults for other providers unchanged.
+- [x] The actual user web override now uses4096 tokens. Credentials remain in the ignored local configuration only. No user watchlist or holdings may be transmitted during acceptance.
+- [x] Repeat actual fresh stock/holding generation, cache reuse and persisted-history checks using only the separate invented-company/invented-position database; remove temporary monkeypatch so final acceptance exercises product code.
+- [x] Independent specification then quality review; update backend state only after fresh verification. Commit this bounded increment, then resume frontend Task3.
 
 Diagnostic evidence: original prompt twice produced `position_notes` as a string. Explicit list-field names corrected its type; the original1400-token cap then returned finish_reason=length. With the clarified prompt and4096-token cap,7 actual route/persistence checks passed,2 provider calls (stock9.09s,holding10.81s), and cache reads made no provider calls. Probe changes existed only in the temporary harness; product fix remains pending.
 

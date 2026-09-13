@@ -126,3 +126,16 @@ Initial desktop production Lighthouse:Performance100,Accessibility96,Best
 Practices96;FCP645ms,LCP689ms,TBT0ms,CLS0.0156. This is a lab baseline, not a field
 CWV claim. Accessibility flags the recorded library sentinels; the console error
 is a missing favicon. Final assets/loading and mobile results follow Task3/4.
+
+### DeepSeek product-code acceptance complete
+
+The diagnostic monkeypatch was removed. Final source passed7 actual route and
+persistence checks with official `deepseek-flash`:2 fresh calls (stock7.69s,
+holding10.65s), cache reuse with zero extra calls, history and new-app persisted
+reads. Only invented company/quote/position data was sent. Both independent
+reviews pass;41 provider tests and386 full backend tests pass. The current
+account's prior integration blocker is resolved. This verifies functionality,
+not investment accuracy or guaranteed future provider availability.
+
+The new AI settings interface also passed10 actual browser checks with invented
+keys and the loopback mock; the isolated saved override was reset afterwards.

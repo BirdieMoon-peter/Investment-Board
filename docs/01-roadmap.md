@@ -26,7 +26,7 @@
 - [x] Web-editable AI settings: protected persistence, connection test, bilingual form, independent reviews and isolated browser acceptance complete.
 - Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
 - Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
-- Backend regression verification passes. User-selected DeepSeek Flash authentication succeeds; a confirmed prompt/output-budget compatibility repair is queued after the homepage increment, with final synthetic-only external analysis acceptance and review required.
+- Backend regression verification passes. User-selected DeepSeek Flash compatibility repair passed386 backend tests, independent reviews and7 actual synthetic-only generation/cache/persistence checks. Backend is complete; frontend detail redesign remains active.
 - Current feature evidence: `docs/verification/web-ai-settings.md`; earlier packaging evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.
 
 ## Done

@@ -164,7 +164,11 @@ def _build_system_prompt() -> str:
         "position_notes, recent_catalysts, full_analysis, warnings, disclaimer. "
         "recommendation must be one of buy, accumulate, hold, trim, sell, watch. "
         "confidence must be one of high, medium, low. "
-        "Each list field must be an array of short strings. "
+        "thesis_points, risk_points, position_notes, recent_catalysts, and warnings must each be arrays of short strings, "
+        "never plain strings, objects, or null. "
+        "thesis_points, risk_points, position_notes, and recent_catalysts must each contain at least one string; "
+        "when context is missing or not applicable, state that limitation in a list item without inventing facts. "
+        "warnings may be an empty array. "
         "full_analysis should be a long-form explanation grounded in the provided context. "
         "Do not claim certainty. Include a clear disclaimer that this is model-generated advisory content, not financial advice."
     )

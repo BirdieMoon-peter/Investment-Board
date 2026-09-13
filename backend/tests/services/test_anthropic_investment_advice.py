@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+import json
 
 import httpx
 import pytest
@@ -12,6 +13,76 @@ from app.services.providers.anthropic_investment_advice import (
     OpenAICompatibleInvestmentAdviceProvider,
     build_investment_advice_provider,
 )
+
+
+@pytest.fixture(params=["anthropic", "openai_compatible"])
+def provider_system_prompt(request: pytest.FixtureRequest) -> str:
+    captured_payload = {}
+    advice = {
+        "recommendation": "watch",
+        "confidence": "low",
+        "summary": "Insufficient context for a firm conclusion.",
+        "thesis_points": ["No financial metrics were provided."],
+        "risk_points": ["The available context is limited."],
+        "position_notes": ["No holding was provided."],
+        "recent_catalysts": ["No recent events were provided."],
+        "full_analysis": "The supplied synthetic context contains no market data.",
+        "warnings": [],
+        "disclaimer": "Model-generated content, not financial advice.",
+    }
+
+    def handler(http_request: httpx.Request) -> httpx.Response:
+        captured_payload.update(json.loads(http_request.content))
+        text = json.dumps(advice)
+        if request.param == "anthropic":
+            envelope = {"content": [{"type": "text", "text": text}]}
+        else:
+            envelope = {"choices": [{"message": {"role": "assistant", "content": text}}]}
+        return httpx.Response(200, json=envelope)
+
+    provider = build_investment_advice_provider(
+        settings=Settings(
+            database_url="sqlite://",
+            ai_provider=request.param,
+            ai_api_key="test-key",
+            ai_api_url="https://provider.example",
+        ),
+        transport=httpx.MockTransport(handler),
+    )
+    provider.generate(InvestmentAdviceContext(
+        target_type="stock",
+        target_id=1,
+        security={
+            "security_id": 1, "market": "SZ", "code": "000001",
+            "name": "Synthetic", "status": "active",
+        },
+        price_history_closes=[],
+        announcement_titles=[],
+        news_titles=[],
+        financial_metric_points=[],
+    ))
+    if request.param == "anthropic":
+        return captured_payload["system"]
+    return next(message["content"] for message in captured_payload["messages"] if message["role"] == "system")
+
+
+def test_provider_request_explicitly_distinguishes_list_fields_from_scalars(provider_system_prompt: str) -> None:
+    assert (
+        "thesis_points, risk_points, position_notes, recent_catalysts, and warnings "
+        "must each be arrays of short strings, never plain strings, objects, or null."
+    ) in provider_system_prompt
+    assert "recommendation must be one of buy, accumulate, hold, trim, sell, watch." in provider_system_prompt
+    assert "confidence must be one of high, medium, low." in provider_system_prompt
+    assert "full_analysis should be a long-form explanation grounded in the provided context." in provider_system_prompt
+
+
+def test_provider_request_explains_required_lists_when_context_is_missing(provider_system_prompt: str) -> None:
+    assert (
+        "thesis_points, risk_points, position_notes, and recent_catalysts "
+        "must each contain at least one string; "
+        "when context is missing or not applicable, state that limitation in a list item without inventing facts."
+    ) in provider_system_prompt
+    assert "warnings may be an empty array." in provider_system_prompt
 
 
 

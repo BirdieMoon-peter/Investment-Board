@@ -110,7 +110,7 @@ Deferred in this milestone:
 - keep provider changes compatible with the existing structured advice contracts
 
 ## Current Status
-doing
+done
 
 ## Recommended Skills
 - `superpowers:brainstorming` for boundary changes
@@ -173,3 +173,9 @@ doing
 - Synthetic-only acceptance identified two separate causes: the prompt did not name which fields are lists (`position_notes` was returned as text), and the1400-token output cap could truncate JSON.
 - Temporary prompt clarification plus4096-token budget passed7 route/persistence checks with two actual model calls. Production clarification and final verification follow Task2b of the workspace plan; existing parser/API/data contracts remain unchanged.
 - The original external-authentication blocker is resolved for this configured account; module completion awaits the small compatibility repair and independent review.
+
+### DeepSeek compatibility final review and acceptance
+- Four request-contract regressions failed before the prompt clarification;41 provider tests and386 complete backend tests pass. Strict parsing, protocol options and runtime defaults remain unchanged.
+- Independent specification and quality review PASS; each reviewer reran41 provider tests.
+- Root actual product-code acceptance (temporary monkeypatch removed) passed7 route/persistence checks against official `deepseek-flash`: fresh stock and holding analyses, cache reuse with no additional model calls, history and new-app persisted reads. Only a completely invented company, quote and position were sent; user watchlist/holdings were untouched. Two fresh calls took7.69s and10.65s.
+- The previous provider-authentication/compatibility blocker is resolved for this configured account as verified on2026-09-13. Backend is done; this is functional integration evidence, not a claim about investment accuracy or ongoing provider availability.

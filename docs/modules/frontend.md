@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-todo
+doing
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -221,3 +221,5 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 -193 frontend tests and production build passed. Independent specification and quality review PASS after the filtered-out spotlight focus repair; reviewers reran10 App and31 focused tests respectively.
 - Root actual Edge acceptance:6 drawer guard checks,6 watchlist flow checks,5 sync/cache/error/empty checks. All8 theme-width homepage cases pass without overflow, with64px header; settings also fit four widths.
 - Frontend is briefly paused for the requested DeepSeek compatibility increment. Detail groups/chart themes/loading optimization remain Task3 and frontend is not yet done.
+
+- Task2b backend compatibility increment passed both reviews and actual synthetic-only provider acceptance. Frontend Task3 now resumes: detail groups, themed charts and loading optimization.
