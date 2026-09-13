@@ -110,7 +110,7 @@ Deferred in this milestone:
 - keep provider changes compatible with the existing structured advice contracts
 
 ## Current Status
-doing
+blocked
 
 ## Recommended Skills
 - `superpowers:brainstorming` for boundary changes
@@ -146,7 +146,22 @@ doing
 
 ## Web AI Configuration — 2026-09-13
 - Approved design and plan: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`, `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
-- [ ] Implement settings store, protected redacted API, request-time override and fixed-message connection test.
-- [ ] Verify credential transitions, persistence, corruption recovery, provider URL forms and failure handling.
-- [ ] Complete independent specification and quality reviews before frontend implementation.
+- [x] Implement settings store, protected redacted API, request-time override and fixed-message connection test.
+- [x] Verify credential transitions, persistence, corruption recovery, provider URL forms and failure handling.
+- [x] Complete independent specification and quality reviews before frontend implementation.
 - Existing live stock/holding AI authentication acceptance remains a separate blocker.
+
+### Web configuration verification before review
+- Backend implementer: 117 focused and 370 complete tests passed. RED cases covered missing settings routes, duplicate `/v1`, non-ASCII tokens and invalid header keys before repair.
+- Parent real HTTP acceptance passed 15 flow checks plus actual process-restart persistence and owner-only 0600 file permissions; requests used invented credentials and a local mock provider.
+- Independent specification review is next; no fresh external investment-analysis success is inferred.
+
+- Specification review found a credential-readback gap for legacy environment URLs containing userinfo/query/fragment. Reopened for sanitized fallback views and regression coverage of initial read/reset/corrupt-file recovery.
+
+- Legacy URL redaction repaired with 8 RED/GREEN regressions. Independent specification review PASS; reviewer reran 125 focused tests. Implementer full backend 378 passed. Quality review is active.
+
+- Quality review reproduced `AI_API_KEY=` from the example fallback configuration causing a 500 on keep-key saves. Reopened for empty-key normalization and controlled invalid legacy-key recovery.
+
+### Web configuration backend review complete
+- Independent specification PASS and independent quality PASS after both findings were repaired. Quality reviewer reran129 focused tests and verified failed-flush recovery plus concurrent full snapshots. Implementer full suite382 passed.
+- Web configuration backend scope is complete. Overall backend remains `blocked` solely on the pre-existing authenticated external stock/holding analysis acceptance. Frontend web settings implementation is next.

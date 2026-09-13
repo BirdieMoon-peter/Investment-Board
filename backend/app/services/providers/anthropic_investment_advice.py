@@ -28,6 +28,7 @@ class AnthropicInvestmentAdviceProvider(InvestmentAdviceProvider):
         self._client = httpx.Client(
             timeout=httpx.Timeout(settings.ai_http_timeout_seconds),
             transport=transport,
+            follow_redirects=False,
         )
 
     def generate(self, context: InvestmentAdviceContext) -> GeneratedInvestmentAdvice:
@@ -59,7 +60,7 @@ class AnthropicInvestmentAdviceProvider(InvestmentAdviceProvider):
         except httpx.HTTPError as exc:
             raise InvestmentAdviceProviderError(_provider_error_message(exc)) from None
 
-        return _parse_generated_advice(_extract_anthropic_text(response.json()))
+        return _parse_generated_advice(_extract_anthropic_text(_response_payload(response)))
 
 
 class OpenAICompatibleInvestmentAdviceProvider(InvestmentAdviceProvider):
@@ -73,6 +74,7 @@ class OpenAICompatibleInvestmentAdviceProvider(InvestmentAdviceProvider):
         self._client = httpx.Client(
             timeout=httpx.Timeout(settings.ai_http_timeout_seconds),
             transport=transport,
+            follow_redirects=False,
         )
 
     def generate(self, context: InvestmentAdviceContext) -> GeneratedInvestmentAdvice:
@@ -106,7 +108,7 @@ class OpenAICompatibleInvestmentAdviceProvider(InvestmentAdviceProvider):
         except httpx.HTTPError as exc:
             raise InvestmentAdviceProviderError(_provider_error_message(exc)) from None
 
-        return _parse_generated_advice(_extract_openai_text(response.json()))
+        return _parse_generated_advice(_extract_openai_text(_response_payload(response)))
 
 
 
@@ -176,6 +178,8 @@ def _resolve_messages_url(url: str) -> str:
     normalized = url.rstrip("/")
     if normalized.endswith(MESSAGES_PATH_SUFFIX):
         return normalized
+    if normalized.endswith("/v1"):
+        return f"{normalized}/messages"
     return f"{normalized}{MESSAGES_PATH_SUFFIX}"
 
 
@@ -183,7 +187,27 @@ def _resolve_chat_completions_url(url: str) -> str:
     normalized = url.rstrip("/")
     if normalized.endswith(CHAT_COMPLETIONS_PATH_SUFFIX):
         return normalized
+    if normalized.endswith("/v1"):
+        return f"{normalized}/chat/completions"
     return f"{normalized}{CHAT_COMPLETIONS_PATH_SUFFIX}"
+
+
+def canonical_provider_destination(provider: str, api_url: str) -> tuple[str, str]:
+    if provider in SUPPORTED_ANTHROPIC_COMPATIBLE_PROVIDERS:
+        return ('anthropic', str(httpx.URL(_resolve_messages_url(api_url))))
+    if provider in SUPPORTED_OPENAI_COMPATIBLE_PROVIDERS:
+        return ('openai', str(httpx.URL(_resolve_chat_completions_url(api_url))))
+    raise ValueError('Unsupported AI provider')
+
+
+def _response_payload(response: httpx.Response) -> dict:
+    try:
+        payload = response.json()
+    except ValueError:
+        raise InvestmentAdviceProviderError('AI provider returned invalid JSON') from None
+    if not isinstance(payload, dict):
+        raise InvestmentAdviceProviderError('AI provider returned invalid content payload')
+    return payload
 
 
 def _extract_anthropic_text(payload: dict) -> str:

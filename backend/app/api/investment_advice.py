@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlmodel import Session
 
 from app.api.dependencies import get_session
 from app.api.homepage import PublicMarketIndexSource
 from app.core.settings import Settings
+from app.core.ai_settings_store import AISettingsStoreError, load_effective_ai_settings
 from app.db.repositories import (
     HoldingsRepository,
     InvestmentAdviceCacheRepository,
@@ -26,9 +27,21 @@ router = APIRouter()
 
 
 def get_investment_advice_service(
+    request: Request,
     session: Session = Depends(get_session),
 ) -> InvestmentAdviceService:
     settings = Settings()
+    try:
+        settings = load_effective_ai_settings(settings)
+    except AISettingsStoreError as exc:
+        # Read-only history/cache browsing remains available during recovery.
+        history_only = request.method == 'GET' and request.url.path.endswith('/history')
+        cached_labels_only = (
+            request.method == 'GET' and request.url.path.endswith('/watchlist-labels')
+            and request.query_params.get('use_cache', '').lower() in {'true', '1', 'yes', 'on'}
+        )
+        if not (history_only or cached_labels_only):
+            raise HTTPException(status_code=503, detail=str(exc)) from None
     return InvestmentAdviceService(
         settings=settings,
         stock_detail_repository=StockDetailRepository(session),

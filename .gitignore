@@ -1,4 +1,6 @@
 # Local configuration and credentials
+/backend/.ai-settings.json
+/backend/..ai-settings.json.*
 .env
 .env.*
 !.env.example

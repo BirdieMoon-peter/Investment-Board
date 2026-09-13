@@ -309,3 +309,12 @@ def test_proxy_auth_unavailable_message_marker_is_classified_without_leaking_env
     assert "providers=codex" not in str(captured.value)
     assert "gpt-5.5" not in str(captured.value)
     assert "hidden-secret" not in str(captured.value)
+
+
+@pytest.mark.parametrize('prefix', ['', '/custom', '/apps/anthropic'])
+@pytest.mark.parametrize('base_suffix', ['', '/', '/v1', '/v1/'])
+def test_protocol_url_base_forms(prefix, base_suffix):
+    from app.services.providers.anthropic_investment_advice import _resolve_messages_url, _resolve_chat_completions_url
+    base = 'https://test.example' + prefix
+    assert _resolve_messages_url(base + base_suffix) == base + '/v1/messages'
+    assert _resolve_chat_completions_url(base + base_suffix) == base + '/v1/chat/completions'

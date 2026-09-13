@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-done
+doing
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -175,3 +175,9 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Browser: full-data 320/390/768/1440 details no document overflow; price/financial tables retain internal scrolling. English/Chinese validation, cache hit/miss, offline original cache timestamp and online recovery passed.
 - Main settings restored to original English/compact/live/all sections/60s refresh/180s sync.
 - Frontend scope done. Real model generation remains an explicitly tracked backend external-auth blocker; cached fixtures are synthetic.
+
+## Web AI Configuration — 2026-09-13
+- Backend contract independently reviewed; frontend implementation active under `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
+- [ ] Add isolated bilingual settings form/client/types with explicit credential actions and draft connection test.
+- [ ] Verify save/reset/loading/failure/stale-response states and responsive layout.
+- [ ] Complete independent specification and quality review plus isolated browser acceptance.
