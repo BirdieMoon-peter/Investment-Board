@@ -74,3 +74,16 @@ Desktop.ini
 
 # Private local acceptance plan
 /docs/superpowers/plans/2026-09-12-full-functional-verification.md
+
+# Local agent instructions, memory, plans and execution records
+/AGENTS.md
+/CLAUDE.md
+/investment_dashboard_plan.md
+/memory/
+/docs/00-workflow.md
+/docs/01-roadmap.md
+/docs/02-module-registry.md
+/docs/03-review-checklist.md
+/docs/modules/
+/docs/superpowers/
+/docs/verification/

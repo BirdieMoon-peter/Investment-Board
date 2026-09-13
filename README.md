@@ -2,54 +2,56 @@
 
 # Investment Board
 
-**把自选行情、个股研究与 AI 分析，放在同一张工作台。**
+**面向沪深证券与基金的本地投资研究工作台**
 
-A local-first workspace for market tracking and AI-assisted investment research.
+A local-first investment research workspace for market monitoring, security analysis and configurable AI services.
 
 [![CI](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml/badge.svg)](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml)
 ![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 
-[界面预览](#界面预览) · [核心体验](#核心体验) · [快速开始](#快速开始) · [AI 配置](#ai-配置) · [开发与验证](#开发与验证)
+[界面预览](#界面预览) · [功能模块](#功能模块) · [快速开始](#快速开始) · [AI 配置](#ai-配置) · [开发与验证](#开发与验证)
 
 </div>
 
-Investment Board 是面向个人的沪深证券与基金研究工作台。它将自选管理、市场背景、历史 K 线、公司信息、持仓记录和按需 AI 分析连接起来，方便从日常观察进入具体标的研究。
+## 项目概述
 
-**自选是首页的中心，研究按任务分组，模型服务在网页中配置。** 数据保存在本地 SQLite；界面提供中英文、浅色、深色与跟随系统主题。
+Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深证券与基金的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
+
+系统采用 React 与 FastAPI 前后端分离架构，以 SQLite 保存业务数据。前端围绕自选列表和研究任务组织信息，提供中英文界面、浅色与深色主题及响应式布局；模型服务可通过网页配置，并由用户显式触发分析。
 
 ## 界面预览
 
-### 自选工作台 · 先看到值得关注的变化
+### 自选与市场概览
 
 ![浅色自选工作台：行情列表、筛选排序、大盘指数和研究摘要](docs/images/dashboard.jpg)
 
-在同一屏中查看关注标的、比较价格与涨跌幅，并通过本地关键词和沪深市场筛选缩小范围。大盘指数、焦点标的和宏观摘要提供辅助背景；搜索添加与列表筛选分开，操作目的更清楚。
+首页以自选列表为主要信息区域，支持关键词筛选、市场筛选和数值排序。大盘指数、焦点标的与宏观指标提供研究背景；证券检索、添加与已有自选筛选采用独立操作入口。
 
-### 个股研究 · 沿着研究任务深入
+### 个股研究工作区
 
 ![深色个股研究视图：历史K线、成交量、报价摘要、财务指标和公司资料](docs/images/stock-detail.jpg)
 
-详情分为 **行情与基本面 / 资讯公告 / 持仓与 AI**。图表跟随主题，原始价格明细按需展开；切换分组时保留持仓草稿和已选分析，返回首页时保留筛选、排序与位置。
+个股详情按 **行情与基本面 / 资讯公告 / 持仓与 AI** 划分研究任务，集中展示历史 K 线、成交量、报价快照、财务指标与公司资料。图表适配当前主题，原始价格明细可展开查阅；研究分组切换和列表返回保留相应操作状态。
 
 > 截图为独立演示数据库的真实运行画面，包含公开历史快照和固定测试行情。部分 AI 标签来自本地模拟回复，不代表实时行情、实际投资表现或真实模型建议；不包含个人真实持仓。[截图来源说明](docs/images/README.md)
 
-## 核心体验
+## 功能模块
 
-| 从观察到研究 | 你可以做什么 |
+| 模块 | 功能说明 |
 | --- | --- |
-| **管理自选** | 搜索并添加证券或基金，手动补充代码；按名称、最新价或涨跌幅排序，结合关键词与市场筛选；移除前确认具体标的 |
-| **掌握背景** | 查看大盘指数、宏观指标和焦点标的；手动同步全看板或单个标的，按需配置自动刷新与同步 |
-| **研究标的** | 阅读历史日 K 线、成交量、报价快照、财务指标与公司资料；查看带来源、日期和原链接的公告与新闻 |
-| **记录持仓** | 保存、修改或删除数量、成本、投资期限与备注，为持仓视角分析提供上下文 |
-| **调用 AI** | 显式生成股票或持仓分析，阅读结构化要点与长篇分析；直接回看缓存和最近历史，默认展示最近 20 条 |
-| **配置工作台** | 在网页中修改模型服务与密钥、测试连接、恢复环境配置；调整语言、主题、密度和首页区域 |
+| **自选管理** | 搜索并添加证券或基金，手动补充代码；按名称、最新价或涨跌幅排序，结合关键词与市场筛选；移除前确认具体标的 |
+| **市场概览** | 查看大盘指数、宏观指标和焦点标的；手动同步全看板或单个标的，按需配置自动刷新与同步 |
+| **个股研究** | 阅读历史日 K 线、成交量、报价快照、财务指标与公司资料；查看带来源、日期和原链接的公告与新闻 |
+| **持仓记录** | 保存、修改或删除数量、成本、投资期限与备注，为持仓视角分析提供上下文 |
+| **AI 辅助分析** | 显式生成股票或持仓分析，阅读结构化要点与长篇分析；直接回看缓存和最近历史，默认展示最近 20 条 |
+| **工作台配置** | 在网页中修改模型服务与密钥、测试连接、恢复环境配置；调整语言、主题、密度和首页区域 |
 
-- **保留数据精度**：沿用报价的小数精度，适合展示低价基金；缺失数据明确标记，不补造数值。
-- **减少重复操作**：研究分组保留草稿，返回自选恢复上下文；AI 配置草稿切换标签不会丢失，关闭前提示未保存修改。
-- **适应不同屏幕**：桌面以表格和分栏组织信息，移动端以单列和研究分组选择器组织内容；宽数据表在自身区域内滚动。
-- **按需使用 AI**：首页刷新和行情同步只读取已有分析标签，不会自动发起新的模型生成。
+- **数据展示**：沿用报价的小数精度，适合展示低价基金；缺失数据明确标记，不补造数值。
+- **状态保留**：研究分组保留草稿，返回自选恢复上下文；AI 配置草稿切换标签不会丢失，关闭前提示未保存修改。
+- **响应式交互**：桌面以表格和分栏组织信息，移动端以单列和研究分组选择器组织内容；宽数据表在自身区域内滚动。
+- **分析触发机制**：首页刷新和行情同步只读取已有分析标签，不会自动发起新的模型生成。
 
 ## 快速开始
 
@@ -107,9 +109,9 @@ DATABASE_URL="sqlite:///$DEMO_DIR/investment-board-demo.db" ./scripts/run_all.sh
 
 ## AI 配置
 
-### 在网页中连接 DeepSeek 官方 Flash
+### DeepSeek 官方 Flash 配置示例
 
-以下为一个可用的起步配置。模型标识以 [DeepSeek 官方文档](https://api-docs.deepseek.com/zh-cn/) 为准。
+以下示例使用 DeepSeek 官方服务。模型标识以 [DeepSeek 官方文档](https://api-docs.deepseek.com/zh-cn/) 为准。
 
 | 网页字段 | 填写内容 |
 | --- | --- |
@@ -123,11 +125,11 @@ DATABASE_URL="sqlite:///$DEMO_DIR/investment-board-demo.db" ./scripts/run_all.sh
 2. 点击 **测试连接** 验证当前草稿。它只发送一条固定的简短文本，不发送自选、持仓或历史记录，也不会保存草稿。
 3. 点击 **保存 AI 配置**。保存不调用模型；在个股详情的 **持仓与 AI** 中，选择股票或持仓作用域，再显式生成新分析。
 
-[查看 AI 配置界面](docs/images/ai-settings.png) · [AI 配置验收记录](docs/verification/web-ai-settings.md)
+[查看 AI 配置界面](docs/images/ai-settings.png)
 
 同时支持其他 OpenAI-compatible、Anthropic-compatible 及 DashScope/Kimi 配置。地址可填写服务根地址、以 `/v1` 结尾的基础地址，或完整的 `/v1/chat/completions`、`/v1/messages` 接口。远程服务使用 HTTPS，本机代理可使用 loopback HTTP。
 
-### 配置怎样保存
+### 配置优先级与凭据存储
 
 **网页保存值 → 进程环境变量 → `backend/.env.local` → 内置默认值。**
 
@@ -162,7 +164,7 @@ AI_MAX_OUTPUT_TOKENS=4096
 
 </details>
 
-## 技术结构
+## 技术架构
 
 ```mermaid
 flowchart LR
@@ -202,7 +204,7 @@ PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 
 冒烟检查使用独立临时数据库、日志和随机本地端口，结束时清理本次资源，可以与主服务并行运行。启动等待默认 120 秒；首次依赖加载较慢时可设置 `SMOKE_STARTUP_TIMEOUT=180`。
 
-[贡献指南](CONTRIBUTING.md) · [工作台验收记录](docs/verification/professional-workspace-redesign.md) · [模块与进度](docs/02-module-registry.md)
+[贡献指南](CONTRIBUTING.md) · [自动化检查](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml)
 
 <details>
 <summary><strong>主要接口与源码目录</strong></summary>
@@ -231,13 +233,12 @@ Investment-Board/
 │   │   └── schemas/   # 请求与响应结构
 │   └── tests/         # 后端测试
 ├── scripts/           # 启动与隔离冒烟检查
-├── docs/              # 设计、模块、验收和截图
-└── memory/            # 项目决策与执行状态
+└── docs/images/       # 实际运行截图与来源说明
 ```
 
 </details>
 
-## 数据与使用边界
+## 适用范围与限制
 
 - 公开数据源可能延迟、缺失或暂时不可用。以各项来源日期为准；部分同步失败时，界面会提示并可能保留旧值。
 - 自动化测试和演示中的模拟 AI 回复用于验证应用流程；缓存展示成功不代表当前外部模型可用。
