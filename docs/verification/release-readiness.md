@@ -12,7 +12,7 @@ Verified locally on 2026-09-13 during repository packaging.
 | Actual startup, shutdown and restart | Verified with owned-process cleanup |
 | README screenshots | Captured from the actual application using a separate demo database |
 
-The GitHub workflow runs the deterministic backend, launcher and frontend checks on a clean Ubuntu runner. Hosted CI results are reported by GitHub Actions separately; local macOS verification does not establish an Ubuntu CI pass.
+The GitHub workflow runs the deterministic backend, launcher and frontend checks on a clean Ubuntu runner. Hosted Ubuntu CI subsequently passed both jobs for publication commit `47c338fe7deb2ede8201e34470014d152626baa7`: [CI run](https://github.com/BirdieMoon-peter/Investment-Board/actions/runs/34747255729). Local and hosted results are separate evidence.
 
 Fresh AI generation requires a configured and authenticated external model provider. Current live-provider acceptance remains blocked by authentication; successful mocks, cached history and page rendering do not prove fresh generation. No real user watchlist or holdings were used in screenshot preparation or model probes.
 

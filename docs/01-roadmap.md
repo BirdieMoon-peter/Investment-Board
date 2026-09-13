@@ -22,7 +22,7 @@
 - [x] AI advice availability validation and usability improvements
 
 ## Current Target
-- Package the verified application for reproducible local use: project README, demo screenshots, portable configuration, contributor guide, CI and source-only Git tracking.
+- Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
 - Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
 - Backend regression verification passes; fresh stock/holding AI acceptance remains dependent on valid external provider authentication.
 - Current consolidated evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.

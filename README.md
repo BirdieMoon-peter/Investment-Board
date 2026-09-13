@@ -1,5 +1,7 @@
 # Investment Board
 
+[![CI](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml/badge.svg)](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml)
+
 **把市场概览、自选行情、个股研究与持仓记录，放在同一张本地看板里。**
 
 *A local investment dashboard for market context, watchlists, and AI-assisted research.*
