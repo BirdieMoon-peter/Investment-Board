@@ -1,3 +1,4 @@
+import { signedQuote } from './StockHeader'
 import { useI18n } from '../i18n'
 import type { StockDetailPriceBar } from '../types/watchlist'
 
@@ -19,11 +20,11 @@ export function QuoteSummary({ latestBar }: QuoteSummaryProps) {
           </div>
           <div>
             <dt>{t('detail.changeAmount')}</dt>
-            <dd>{latestBar.change_amount}</dd>
+            <dd className={Number(latestBar.change_amount) >= 0 ? 'quote-positive' : 'quote-negative'}>{signedQuote(latestBar.change_amount)}</dd>
           </div>
           <div>
             <dt>{t('detail.changePercent')}</dt>
-            <dd>{latestBar.change_percent}%</dd>
+            <dd className={Number(latestBar.change_percent) >= 0 ? 'quote-positive' : 'quote-negative'}>{signedQuote(latestBar.change_percent)}%</dd>
           </div>
           <div>
             <dt>{t('detail.snapshotTime')}</dt>

@@ -203,6 +203,7 @@ describe('App background lifecycle', () => {
   })
 
   it('preserves persisted settings on a StrictMode mount and saves edits across a remount', async () => {
+    vi.useRealTimers() // This preference test awaits a lazy module, not the scheduler.
     const savedSettings = {
       ...DEFAULT_HOMEPAGE_SETTINGS,
       language: 'zh',
@@ -229,6 +230,7 @@ describe('App background lifecycle', () => {
       'dashboard-shell--comfortable',
     )
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }))
+    await screen.findByRole('tab', { name: '界面与刷新' })
     expect(screen.getByLabelText('显示大盘指数')).not.toBeChecked()
     fireEvent.change(screen.getByLabelText('密度'), {
       target: { value: 'compact' },
@@ -283,6 +285,7 @@ it('keeps the full app usable when preference storage is denied', async () => {
       )
     })
     fireEvent.click(screen.getByRole('button', { name: 'Open settings' }))
+    await screen.findByRole('tab', { name: 'Interface and refresh' })
     fireEvent.change(screen.getByLabelText('Density'), {
       target: { value: 'comfortable' },
     })
@@ -322,6 +325,7 @@ it('retains valid saved preferences when writes are denied and permits session e
       )
     })
     fireEvent.click(screen.getByRole('button', { name: '打开设置' }))
+    await screen.findByRole('tab', { name: '界面与刷新' })
     expect(screen.getByLabelText('密度')).toHaveValue('comfortable')
     fireEvent.change(screen.getByLabelText('密度'), {
       target: { value: 'compact' },

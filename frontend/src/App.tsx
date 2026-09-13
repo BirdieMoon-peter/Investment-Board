@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { fetchHomepageOverview } from './api/homepage'
 import { fetchHomepageAdviceLabels } from './api/homepageAdvice'
@@ -17,18 +17,18 @@ import {
 } from './homepageSettings'
 import { I18nProvider, useI18n } from './i18n'
 import { AppThemeProvider } from './theme'
-import { Skeleton, SkeletonItem } from '@fluentui/react-components'
+import { Button, Skeleton, SkeletonItem } from '@fluentui/react-components'
 import { WorkspaceHeader } from './components/WorkspaceHeader'
 import { MarketStrip } from './components/MarketStrip'
 import { WorkspaceAside } from './components/WorkspaceAside'
 import { SecuritySearchDialog } from './components/SecuritySearchDialog'
-import { SettingsDrawer } from './components/SettingsDrawer'
+import { SettingsLoadFallback } from './components/SettingsLoadFallback'
+import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary'
 import { StatusMessage } from './components/StatusMessage'
 import {
   WatchlistWorkspace,
   type WatchlistView,
 } from './components/WatchlistWorkspace'
-import { StockDetailPage } from './pages/StockDetailPage'
 import type { HomepageAdviceLabel } from './types/homepageAdvice'
 import type { HomepageMacroItem, HomepageMarketIndex } from './types/homepage'
 import type {
@@ -36,6 +36,20 @@ import type {
   StockDetailPageViewState,
   WatchlistItem,
 } from './types/watchlist'
+
+const StockDetailPage = lazy(() => import('./pages/StockDetailPage').then((module) => ({ default: module.StockDetailPage })))
+const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then((module) => ({ default: module.SettingsDrawer })))
+
+function ScreenLoadFailure({ onDismiss, dismissLabel }: { onDismiss: () => void; dismissLabel: string }) {
+  const { t } = useI18n()
+  return <div className="workspace-load-failure">
+    <StatusMessage tone="error" message={t('workspace.loadFailed')} />
+    <div className="workspace-load-failure__actions">
+      <Button onClick={onDismiss}>{dismissLabel}</Button>
+      <Button appearance="primary" onClick={() => window.location.reload()}>{t('workspace.reloadPage')}</Button>
+    </div>
+  </div>
+}
 
 function AppBody({
   settings,
@@ -486,11 +500,19 @@ function AppBody({
       />
       <main className="workspace-content">
         {currentPage === 'detail' ? (
+          <WorkspaceLoadBoundary fallback={<ScreenLoadFailure onDismiss={handleBackToWatchlist} dismissLabel={t('detail.backToWatchlist')} />}>
+          <Suspense fallback={<div role="status" className="detail-loading" aria-label={t('detail.loading')}>
+            <Button onClick={handleBackToWatchlist}>{t('detail.backToWatchlist')}</Button>
+            <span>{t('detail.loading')}</span>
+            <Skeleton aria-hidden="true"><SkeletonItem style={{ height: 360 }} /></Skeleton>
+          </div>}>
           <StockDetailPage
             detail={selectedDetail}
             viewState={detailViewState}
             onBack={handleBackToWatchlist}
           />
+          </Suspense>
+          </WorkspaceLoadBoundary>
         ) : (
           <section
             className={`dashboard-shell dashboard-shell--${settings.density} dashboard-shell--${language}`}
@@ -668,11 +690,15 @@ function AppBody({
         />
       ) : null}
       {isSettingsOpen ? (
+        <WorkspaceLoadBoundary fallback={<SettingsLoadFallback failed onClose={() => setIsSettingsOpen(false)} />}>
+        <Suspense fallback={<SettingsLoadFallback onClose={() => setIsSettingsOpen(false)} />}>
         <SettingsDrawer
           settings={settings}
           onSettingsChange={updateSettings}
           onClose={() => setIsSettingsOpen(false)}
         />
+        </Suspense>
+        </WorkspaceLoadBoundary>
       ) : null}
     </div>
   )

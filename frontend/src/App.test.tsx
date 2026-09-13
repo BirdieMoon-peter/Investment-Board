@@ -221,7 +221,7 @@ describe('App', () => {
     )
 
     expect(
-      screen.getByRole('heading', { name: /stock detail/i }),
+      await screen.findByRole('region', { name: 'Stock detail page shell' }),
     ).toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: /ping an bank/i }),
@@ -229,6 +229,7 @@ describe('App', () => {
     expect(
       await screen.findByText('No price context is available yet.'),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Holdings & AI' }))
     expect(
       await screen.findByText('No holding is saved for this stock yet.'),
     ).toBeInTheDocument()
@@ -425,6 +426,7 @@ describe('App', () => {
     expect(screen.getByText('CPI')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /open settings/i }))
+    await screen.findByRole('tab', { name: 'Interface and refresh' })
     fireEvent.click(screen.getByLabelText(/show market indexes/i))
     fireEvent.click(screen.getByLabelText(/show macro panel/i))
 
@@ -659,6 +661,7 @@ it.each([false, true])(
       await screen.findByRole('heading', { name: 'Ping An Bank' })
       if (hideOrigin) {
         fireEvent.click(screen.getByRole('button', { name: 'Open settings' }))
+        await screen.findByRole('tab', { name: 'Interface and refresh' })
         fireEvent.click(screen.getByLabelText('Show spotlight section'))
         fireEvent.click(screen.getByRole('button', { name: 'Close settings' }))
       }

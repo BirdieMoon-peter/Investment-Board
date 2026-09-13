@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Field, Input, Select, Textarea } from '@fluentui/react-components'
+import { ArrowLeft, ArrowClockwise } from '@phosphor-icons/react'
 
 import { generateHoldingAdvice, generateStockAdvice, fetchInvestmentAdviceHistory } from '../api/investmentAdvice'
 import { fetchHoldings, removeHolding, upsertHolding, updateHolding } from '../api/holdings'
 import { fetchStockDetail, syncStock } from '../api/stocks'
 import { useI18n } from '../i18n'
+import { DetailWorkspaceTabs, type DetailGroup } from '../components/DetailWorkspaceTabs'
 import { AnnouncementList } from '../components/AnnouncementList'
 import { CompanyProfilePanel } from '../components/CompanyProfilePanel'
 import { FinancialMetricsPanel } from '../components/FinancialMetricsPanel'
@@ -75,6 +78,7 @@ function getAdviceTone(
 
 export function StockDetailPage({ detail, viewState, onBack }: StockDetailPageProps) {
   const { t, formatDateTime } = useI18n()
+  const [activeGroup, setActiveGroup] = useState<DetailGroup>('market')
   const [currentDetail, setCurrentDetail] = useState(detail)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
@@ -367,26 +371,19 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
   }
 
   return (
-    <section className="watchlist-shell" aria-label="Stock detail page shell">
-      <header className="watchlist-shell__header">
-        <p className="watchlist-shell__eyebrow">{t('common.appName')}</p>
-        <h1>{t('detail.title')}</h1>
-        <p className="watchlist-shell__description">{t('detail.description')}</p>
-      </header>
-
-      <div className="stock-detail-shell__actions">
-        <button type="button" className="button--ghost" onClick={onBack}>
+    <section className="detail-workspace" aria-label="Stock detail page shell">
+      <header className="detail-workspace-header">
+        <Button appearance="subtle" icon={<ArrowLeft />} onClick={onBack}>
           {t('detail.backToWatchlist')}
-        </button>
-
+        </Button>
+        {currentSecurity ? <StockHeader security={currentSecurity} latestBar={latestPriceContextBar} />
+          : <h1>{t('detail.title')}</h1>}
         {securityId !== null ? (
-          <button type="button" onClick={() => void handleSync()} disabled={isSyncing}>
+          <Button appearance="primary" icon={<ArrowClockwise />} onClick={() => void handleSync()} disabled={isSyncing}>
             {isSyncing ? t('detail.syncingLatest') : t('detail.syncLatest')}
-          </button>
+          </Button>
         ) : null}
-      </div>
-
-      {currentSecurity ? <StockHeader security={currentSecurity} /> : null}
+      </header>
 
       {viewState === 'loading' ? <StatusMessage message={t('detail.loading')} /> : null}
       {viewState === 'error' ? (
@@ -402,17 +399,26 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
       ) : null}
 
       {viewState === 'ready' && currentDetail ? (
-        <section className="stock-detail-layout" aria-label="Stock detail dashboard">
-          <div className="stock-detail-layout__hero-main">
-            <QuoteSummary latestBar={latestPriceContextBar} />
-          </div>
-          <div className="stock-detail-layout__hero-side">
-            <PriceContextPanel priceContext={sortedPriceContext} />
-          </div>
-          <div className="stock-detail-layout__chart">
-            <PriceHistoryChart priceHistory={currentDetail.price_history} />
-          </div>
-          <div className="stock-detail-layout__holding">
+        <DetailWorkspaceTabs active={activeGroup} onChange={setActiveGroup}
+          market={<>
+            <div className="detail-market-grid">
+              <PriceHistoryChart priceHistory={currentDetail.price_history} />
+              <aside className="detail-quote-aside">
+                <QuoteSummary latestBar={latestPriceContextBar} />
+                <PriceContextPanel priceContext={sortedPriceContext} />
+              </aside>
+            </div>
+            <div className="detail-fundamentals-grid">
+              <FinancialMetricsPanel financialMetrics={currentDetail.financial_metrics} />
+              <CompanyProfilePanel companyProfile={currentDetail.company_profile} />
+            </div>
+          </>}
+          news={<div className="detail-news-grid">
+            <AnnouncementList announcements={currentDetail.announcements} />
+            <NewsList news={currentDetail.news} />
+          </div>}
+          holdings={<div className="detail-holdings-grid">
+          <div className="detail-holding-column">
             <section className="stock-detail-section" aria-label={t('detail.holdingsSection')}>
               <div className="dashboard-panel__header">
                 <div>
@@ -454,10 +460,8 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
               )}
 
               <div className="holding-form">
-                <label>
-                  {t('detail.holdingQuantity')}
-                  <input
-                    className="watchlist-shell__search-input"
+                <Field label={t('detail.holdingQuantity')}>
+                  <Input
                     inputMode="decimal"
                     value={holdingForm.quantity}
                     onChange={(event) =>
@@ -467,11 +471,9 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
                       }))
                     }
                   />
-                </label>
-                <label>
-                  {t('detail.holdingAverageCost')}
-                  <input
-                    className="watchlist-shell__search-input"
+                </Field>
+                <Field label={t('detail.holdingAverageCost')}>
+                  <Input
                     inputMode="decimal"
                     value={holdingForm.averageCost}
                     onChange={(event) =>
@@ -481,10 +483,9 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
                       }))
                     }
                   />
-                </label>
-                <label>
-                  {t('detail.holdingTargetHorizon')}
-                  <select
+                </Field>
+                <Field label={t('detail.holdingTargetHorizon')}>
+                  <Select
                     value={holdingForm.targetHorizon}
                     onChange={(event) =>
                       setHoldingForm((currentValue) => ({
@@ -497,12 +498,11 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
                     <option value="swing">{t('detail.holdingTargetHorizon.swing')}</option>
                     <option value="medium_term">{t('detail.holdingTargetHorizon.medium_term')}</option>
                     <option value="long_term">{t('detail.holdingTargetHorizon.long_term')}</option>
-                  </select>
-                </label>
-                <label>
-                  {t('detail.holdingNotes')}
-                  <textarea
-                    className="stock-detail-textarea"
+                  </Select>
+                </Field>
+                <Field label={t('detail.holdingNotes')} className="holding-form__notes">
+                  <Textarea
+                    resize="vertical"
                     value={holdingForm.notes}
                     onChange={(event) =>
                       setHoldingForm((currentValue) => ({
@@ -511,31 +511,31 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
                       }))
                     }
                   />
-                </label>
+                </Field>
               </div>
 
               <div className="stock-detail-shell__actions">
-                <button type="button" onClick={() => void handleSaveHolding()} disabled={isSavingHolding}>
+                <Button appearance="primary" type="button" onClick={() => void handleSaveHolding()} disabled={isSavingHolding}>
                   {isSavingHolding
                     ? t('detail.savingHolding')
                     : currentHolding
                       ? t('detail.updateHolding')
                       : t('detail.saveHolding')}
-                </button>
+                </Button>
                 {currentHolding ? (
-                  <button
+                  <Button
                     type="button"
-                    className="button--ghost"
+                    appearance="secondary"
                     onClick={() => void handleRemoveHolding()}
                     disabled={isSavingHolding}
                   >
                     {t('detail.removeHolding')}
-                  </button>
+                  </Button>
                 ) : null}
               </div>
             </section>
           </div>
-          <div className="stock-detail-layout__advice">
+          <div className="detail-advice-column">
             <section className="stock-detail-section" aria-label={t('detail.aiAdviceSection')}>
               <div className="dashboard-panel__header">
                 <div>
@@ -546,37 +546,37 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
               </div>
 
               <div className="stock-detail-shell__actions">
-                <button
+                <Button
                   type="button"
                   onClick={() => void handleGenerateAdvice('stock', true)}
                   disabled={isGeneratingAdvice}
                 >
                   {isGeneratingAdvice ? t('detail.generatingAdvice') : t('detail.loadStockAdvice')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="button--ghost"
+                  appearance="secondary"
                   onClick={() => void handleGenerateAdvice('stock', false)}
                   disabled={isGeneratingAdvice}
                 >
                   {t('detail.refreshStockAdvice')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="button--ghost"
+                  appearance="secondary"
                   onClick={() => void handleGenerateAdvice('holding', true)}
                   disabled={isGeneratingAdvice || currentHolding === null}
                 >
                   {t('detail.loadHoldingAdvice')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="button--ghost"
+                  appearance="secondary"
                   onClick={() => void handleGenerateAdvice('holding', false)}
                   disabled={isGeneratingAdvice || currentHolding === null}
                 >
                   {t('detail.refreshHoldingAdvice')}
-                </button>
+                </Button>
               </div>
 
               {isLoadingAdviceHistory ? <StatusMessage message={t('detail.loadingAdviceHistory')} /> : null}
@@ -587,14 +587,15 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
                 <ul className="advice-history-list" aria-label={t('detail.adviceHistory')}>
                   {relevantAdviceHistory.map((item) => (
                     <li key={`${item.advice_id ?? item.generated_at}-${item.target_type}-${item.target_id}`}>
-                      <button
+                      <Button
                         type="button"
                         className={`advice-history-item ${selectedAdvice?.generated_at === item.generated_at ? 'advice-history-item--active' : ''}`}
+                        aria-pressed={selectedAdvice?.advice_id === item.advice_id && selectedAdvice?.generated_at === item.generated_at}
                         onClick={() => setSelectedAdvice(item)}
                       >
                         <span>{`${t(`detail.recommendation.${item.recommendation}`)} · ${t(`detail.confidence.${item.confidence}`)}`}</span>
                         <strong>{formatDateTime(item.generated_at)}</strong>
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -685,19 +686,8 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
               )}
             </section>
           </div>
-          <div className="stock-detail-layout__fundamentals">
-            <FinancialMetricsPanel financialMetrics={currentDetail.financial_metrics} />
-          </div>
-          <div className="stock-detail-layout__profile">
-            <CompanyProfilePanel companyProfile={currentDetail.company_profile} />
-          </div>
-          <div className="stock-detail-layout__announcements">
-            <AnnouncementList announcements={currentDetail.announcements} />
-          </div>
-          <div className="stock-detail-layout__news">
-            <NewsList news={currentDetail.news} />
-          </div>
-        </section>
+          </div>}
+        />
       ) : null}
     </section>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 
+import { Button } from '@fluentui/react-components'
 import { useI18n } from '../i18n'
 import type { StockDetailNewsItem } from '../types/watchlist'
 
@@ -53,17 +54,17 @@ export function NewsList({ news }: NewsListProps) {
           </ul>
           {totalPages > 1 ? (
             <nav aria-label={t('detail.newsPagination')}>
-              <button type="button" onClick={() => setPage((current) => current - 1)} disabled={page === 1}>
+              <Button type="button" onClick={() => setPage((current) => current - 1)} disabled={page === 1}>
                 {t('common.previous')}
-              </button>
+              </Button>
               <span>{t('common.pageOf', { page, total: totalPages })}</span>
-              <button
+              <Button
                 type="button"
                 onClick={() => setPage((current) => current + 1)}
                 disabled={page === totalPages}
               >
                 {t('common.next')}
-              </button>
+              </Button>
             </nav>
           ) : null}
         </>

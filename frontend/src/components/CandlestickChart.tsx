@@ -11,6 +11,8 @@ import {
   ColorType,
 } from 'lightweight-charts'
 
+import { webDarkTheme, webLightTheme } from '@fluentui/react-components'
+import { useAppTheme } from '../theme'
 import type { StockDetailPriceHistoryBar } from '../types/watchlist'
 
 interface CandlestickSeriesData {
@@ -69,6 +71,7 @@ interface CandlestickChartProps {
 }
 
 export function CandlestickChart({ bars, height = 400 }: CandlestickChartProps) {
+  const { resolvedTheme } = useAppTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
@@ -79,18 +82,7 @@ export function CandlestickChart({ bars, height = 400 }: CandlestickChartProps) 
     const container = containerRef.current
     if (!container) return
 
-    const chart = createChart(container, {
-      height,
-      layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#333',
-      },
-      grid: {
-        vertLines: { color: '#eee' },
-        horzLines: { color: '#eee' },
-      },
-      timeScale: { borderColor: '#ccc' },
-    })
+    const chart = createChart(container, { height })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: GREEN,
@@ -130,6 +122,23 @@ export function CandlestickChart({ bars, height = 400 }: CandlestickChartProps) 
       volumeSeriesRef.current = null
     }
   }, [height])
+
+  // A theme switch must not change the user's zoom, data or chart lifecycle.
+  useEffect(() => {
+    const palette = resolvedTheme === 'dark' ? webDarkTheme : webLightTheme
+    chartRef.current?.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: palette.colorNeutralBackground2 },
+        textColor: palette.colorNeutralForeground1,
+      },
+      grid: {
+        vertLines: { color: palette.colorNeutralStroke2 },
+        horzLines: { color: palette.colorNeutralStroke2 },
+      },
+      timeScale: { borderColor: palette.colorNeutralStroke1 },
+      rightPriceScale: { borderColor: palette.colorNeutralStroke1 },
+    })
+  }, [resolvedTheme, height])
 
   // Update data
   useEffect(() => {

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 
+import { Button } from '@fluentui/react-components'
+import { CaretDown, CaretRight } from '@phosphor-icons/react'
 import { useI18n } from '../i18n'
 import type { StockDetailPriceHistoryBar } from '../types/watchlist'
 import { CandlestickChart } from './CandlestickChart'
@@ -12,6 +14,8 @@ interface PriceHistoryChartProps {
 
 export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
   const { t } = useI18n()
+  const [expanded, setExpanded] = useState(false)
+  const dataId = useId()
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -32,7 +36,12 @@ export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
       ) : (
         <>
           <CandlestickChart bars={priceHistory} />
-          <div className="stock-detail-table-wrap">
+          <Button appearance="subtle" className="detail-price-disclosure" icon={expanded ? <CaretDown /> : <CaretRight />}
+            aria-expanded={expanded} aria-controls={dataId} onClick={() => setExpanded((value) => !value)}>
+            {t('detail.rawPriceData')}
+          </Button>
+          <div id={dataId} hidden={!expanded}>
+          <div className="stock-detail-table-wrap" tabIndex={0} role="region" aria-label={t('detail.priceHistory')}>
             <table className="stock-detail-table" aria-label={t('detail.priceHistory')}>
               <thead>
                 <tr>
@@ -61,20 +70,21 @@ export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
             </table>
           </div>
           {totalPages > 1 ? (
-            <nav aria-label="Price history pagination">
-              <button type="button" onClick={() => setPage((current) => current - 1)} disabled={page === 1}>
+            <nav aria-label={t('detail.priceHistoryPagination')}>
+              <Button type="button" onClick={() => setPage((current) => current - 1)} disabled={page === 1}>
                 {t('common.previous')}
-              </button>
+              </Button>
               <span>{t('common.pageOf', { page, total: totalPages })}</span>
-              <button
+              <Button
                 type="button"
                 onClick={() => setPage((current) => current + 1)}
                 disabled={page === totalPages}
               >
                 {t('common.next')}
-              </button>
+              </Button>
             </nav>
           ) : null}
+          </div>
         </>
       )}
     </section>

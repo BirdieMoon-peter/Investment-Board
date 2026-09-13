@@ -1,8 +1,13 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { createChart } from 'lightweight-charts'
 import type { StockDetailPriceHistoryBar } from '../types/watchlist'
 import { CandlestickChart, transformBars } from './CandlestickChart'
+
+const themeState = vi.hoisted(() => ({ resolvedTheme: 'light' }))
+vi.mock('../theme', () => ({ useAppTheme: () => themeState }))
+afterEach(() => { themeState.resolvedTheme = 'light'; vi.unstubAllGlobals() })
 
 // Mock lightweight-charts so tests don't need a real canvas
 vi.mock('lightweight-charts', () => {
@@ -121,4 +126,45 @@ describe('CandlestickChart', () => {
 
     expect(screen.getByTestId('candlestick-chart')).toBeInTheDocument()
   })
+  it('updates theme options without recreating the chart, resetting its range or changing data', () => {
+    const bars = makeBars([{ trade_date: '2026-01-01' }])
+    const { rerender } = render(<CandlestickChart bars={bars} />)
+    const chart = vi.mocked(vi.mocked(createChart).mock.results.slice(-1)[0].value, true)
+    const creates = vi.mocked(createChart).mock.calls.length
+    chart.applyOptions.mockClear()
+    chart.timeScale().fitContent.mockClear()
+    chart.addSeries.mock.results.forEach((result: { value: { setData: ReturnType<typeof vi.fn> } }) => vi.mocked(result.value!.setData).mockClear())
+    themeState.resolvedTheme = 'dark'
+    rerender(<CandlestickChart bars={bars} />)
+    expect(createChart).toHaveBeenCalledTimes(creates)
+    expect(chart.applyOptions).toHaveBeenCalledWith(expect.objectContaining({
+      layout: { background: { type: 'Solid', color: '#1f1f1f' }, textColor: '#ffffff' },
+      grid: { vertLines: { color: '#525252' }, horzLines: { color: '#525252' } },
+      timeScale: { borderColor: '#666666' }, rightPriceScale: { borderColor: '#666666' },
+    }))
+    expect(chart.timeScale().fitContent).not.toHaveBeenCalled()
+    chart.addSeries.mock.results.forEach((result: { value: { setData: ReturnType<typeof vi.fn> } }) => expect(result.value!.setData).not.toHaveBeenCalled())
+  })
+
+  it('ignores hidden zero widths, resizes when shown and disconnects on unmount', () => {
+    let resize!: ResizeObserverCallback
+    const disconnect = vi.fn()
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { resize = callback }
+      observe = vi.fn()
+      disconnect = disconnect
+    })
+    const { unmount } = render(<CandlestickChart bars={makeBars([{ trade_date: '2026-01-01' }])} />)
+    const chart = vi.mocked(vi.mocked(createChart).mock.results.slice(-1)[0].value, true)
+    chart.applyOptions.mockClear()
+    chart.timeScale().fitContent.mockClear()
+    act(() => resize([{ contentRect: { width: 0 } }] as ResizeObserverEntry[], {} as ResizeObserver))
+    expect(chart.applyOptions).not.toHaveBeenCalled()
+    act(() => resize([{ contentRect: { width: 640 } }] as ResizeObserverEntry[], {} as ResizeObserver))
+    expect(chart.applyOptions).toHaveBeenCalledWith({ width: 640 })
+    expect(chart.timeScale().fitContent).not.toHaveBeenCalled()
+    unmount()
+    expect(disconnect).toHaveBeenCalledOnce()
+  })
+
 })

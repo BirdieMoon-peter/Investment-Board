@@ -51,6 +51,7 @@ describe('PriceHistoryChart', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
     expect(screen.getByRole('table', { name: 'Price history' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Trade date' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Open' })).toBeInTheDocument()
@@ -84,6 +85,7 @@ describe('PriceHistoryChart', () => {
       />,
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
     expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled()
     expect(screen.getByRole('cell', { name: '2026-03-20' })).toBeInTheDocument()
@@ -98,4 +100,22 @@ describe('PriceHistoryChart', () => {
     expect(screen.queryByRole('cell', { name: '2026-03-20' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
   })
+  it('discloses raw prices on demand and preserves the selected page when collapsed', () => {
+    const priceHistory = Array.from({ length: 12 }, (_, index) => ({
+      trade_date: `2026-03-${String(20 - index).padStart(2, '0')}`,
+      open_price: '10.0000', high_price: '11.0000', low_price: '9.0000',
+      close_price: '10.5000', volume: '100', amount: '1050.0000',
+    }))
+    render(<PriceHistoryChart priceHistory={priceHistory} />)
+    expect(screen.queryByRole('table', { name: 'Price history' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByRole('cell', { name: '2026-03-10' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
+    expect(screen.getByText('Page 2 of 2')).toBeVisible()
+    expect(screen.getByRole('cell', { name: '2026-03-10' })).toBeVisible()
+  })
+
 })

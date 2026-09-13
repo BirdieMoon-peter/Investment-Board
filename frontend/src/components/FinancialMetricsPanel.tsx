@@ -14,7 +14,7 @@ export function FinancialMetricsPanel({ financialMetrics }: FinancialMetricsPane
       {financialMetrics.length === 0 ? (
         <p>{t('detail.noFinancialMetrics')}</p>
       ) : (
-        <div className="stock-detail-table-wrap">
+        <div className="stock-detail-table-wrap" tabIndex={0} role="region" aria-label={t('detail.financialMetrics')}>
           <table className="stock-detail-table" aria-label={t('detail.financialMetrics')}>
             <thead>
               <tr>

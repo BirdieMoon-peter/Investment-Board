@@ -1,3 +1,4 @@
+import { signedQuote } from './StockHeader'
 import { useI18n } from '../i18n'
 import type { StockDetailPriceBar } from '../types/watchlist'
 
@@ -14,7 +15,7 @@ export function PriceContextPanel({ priceContext }: PriceContextPanelProps) {
       {priceContext.length === 0 ? (
         <p>{t('detail.noPriceContext')}</p>
       ) : (
-        <div className="stock-detail-table-wrap">
+        <div className="stock-detail-table-wrap" tabIndex={0} role="region" aria-label={t('detail.recentPriceContext')}>
           <table className="stock-detail-table" aria-label={t('detail.recentPriceContext')}>
             <thead>
               <tr>
@@ -29,8 +30,8 @@ export function PriceContextPanel({ priceContext }: PriceContextPanelProps) {
                 <tr key={`${snapshot.snapshot_time}-${index}`}>
                   <td>{formatDateTime(snapshot.snapshot_time)}</td>
                   <td>{snapshot.last_price}</td>
-                  <td>{snapshot.change_amount}</td>
-                  <td>{snapshot.change_percent}%</td>
+                  <td className={Number(snapshot.change_amount) >= 0 ? 'quote-positive' : 'quote-negative'}>{signedQuote(snapshot.change_amount)}</td>
+                  <td className={Number(snapshot.change_percent) >= 0 ? 'quote-positive' : 'quote-negative'}>{signedQuote(snapshot.change_percent)}%</td>
                 </tr>
               ))}
             </tbody>

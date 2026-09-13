@@ -68,6 +68,7 @@ describe('Homepage AI settings integration', () => {
     )
     act(() => screen.getByRole('button', { name: 'Open settings' }).focus())
     click(screen.getByRole('button', { name: 'Open settings' }))
+    await screen.findByRole('tab', { name: 'Interface and refresh' })
     act(() => screen.getByRole('button', { name: 'Close settings' }).focus())
     expect(fetch.mock.calls.some(([url]) => url === '/api/ai/settings')).toBe(
       false,

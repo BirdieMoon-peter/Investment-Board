@@ -245,6 +245,59 @@ describe('StockDetailPage', () => {
     })
   }
 
+  it('opens the market group by default and keeps other groups mounted but inaccessible', async () => {
+    await renderReadyDetailPage()
+    expect(screen.getByRole('tab', { name: 'Market & fundamentals' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: 'Market & fundamentals' })).toBeVisible()
+    expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(3)
+    expect(screen.queryByRole('button', { name: 'Save holding' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Broker raises target price' })).not.toBeInTheDocument()
+  })
+
+  it('keeps holding drafts and selected history across groups without generating advice', async () => {
+    fetchHoldingsMock.mockResolvedValue([holdingData])
+    fetchInvestmentAdviceHistoryMock.mockResolvedValue({ items: [freshStockAdviceData, adviceData] })
+    await renderReadyDetailPage()
+    fireEvent.click(screen.getByRole('tab', { name: 'Holdings & AI' }))
+    await screen.findByDisplayValue('80.0000')
+    fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'Unsaved research note' } })
+    const history = screen.getByRole('list', { name: 'Advice history' })
+    fireEvent.click(within(history).getAllByRole('button')[1])
+    expect(screen.getByText(adviceData.summary)).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: 'News & announcements' }))
+    expect(screen.queryByRole('textbox', { name: 'Notes' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'Market & fundamentals' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Holdings & AI' }))
+    expect(screen.getByLabelText('Notes')).toHaveValue('Unsaved research note')
+    expect(screen.getByText(adviceData.summary)).toBeVisible()
+    expect(fetchHoldingsMock).toHaveBeenCalledTimes(1)
+    expect(fetchInvestmentAdviceHistoryMock).toHaveBeenCalledTimes(1)
+    expect(generateStockAdviceMock).not.toHaveBeenCalled()
+    expect(generateHoldingAdviceMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps wide table regions keyboard reachable without exposing collapsed prices', async () => {
+    await renderReadyDetailPage()
+    expect(screen.getByRole('region', { name: 'Recent price context' })).toHaveAttribute('tabindex', '0')
+    expect(screen.getByRole('region', { name: 'Financial metrics' })).toHaveAttribute('tabindex', '0')
+    expect(screen.queryByRole('region', { name: 'Price history' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
+    expect(screen.getByRole('region', { name: 'Price history' })).toHaveAttribute('tabindex', '0')
+  })
+
+  it('shares the active group between the mobile selector and desktop tabs', async () => {
+    await renderReadyDetailPage()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Research group' }), { target: { value: 'news' } })
+    expect(screen.getByRole('tab', { name: 'News & announcements' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tabpanel', { name: 'News & announcements' })).toBeVisible()
+    fireEvent.click(screen.getByRole('tab', { name: 'Holdings & AI' }))
+    expect(screen.getByRole('combobox', { name: 'Research group' })).toHaveValue('holdings')
+  })
+
+  function openHoldingsGroup() {
+    fireEvent.click(screen.getByRole('tab', { name: /Holdings & AI|持仓与 AI/ }))
+  }
+
   it('renders the loading state', () => {
     render(
       <StockDetailPage
@@ -298,6 +351,7 @@ describe('StockDetailPage', () => {
     expect(screen.getByRole('region', { name: /quote summary/i })).toHaveTextContent('10.3000')
     expect(screen.getByRole('region', { name: /quote summary/i })).toHaveTextContent('0.3000')
     expect(screen.getByRole('region', { name: /quote summary/i })).toHaveTextContent('3.0000%')
+    fireEvent.click(screen.getByRole('button', { name: 'Raw price data' }))
     expect(screen.getByRole('table', { name: /price history/i })).toHaveTextContent('2026-03-09')
     expect(screen.getByRole('table', { name: /price history/i })).toHaveTextContent('2222222.0000')
     expect(screen.getByRole('table', { name: /financial metrics/i })).toHaveTextContent('2025-12-31')
@@ -310,6 +364,7 @@ describe('StockDetailPage', () => {
       'https://bank.example.com',
     )
     expect(screen.getByText('12345')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: 'News & announcements' }))
     expect(screen.getByRole('link', { name: /2025 annual results released/i })).toHaveAttribute(
       'href',
       'https://example.com/announcements/1',
@@ -353,6 +408,7 @@ describe('StockDetailPage', () => {
 
   it('paginates announcements and news with 10 newest items per page', async () => {
     await renderReadyDetailPage(paginatedDetailData)
+    fireEvent.click(screen.getByRole('tab', { name: 'News & announcements' }))
 
     expect(screen.getByRole('navigation', { name: 'Announcements pagination' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'News pagination' })).toBeInTheDocument()
@@ -418,6 +474,7 @@ describe('StockDetailPage', () => {
       'Information sync partially completed. Announcements: 2, news items: 3, price bars: 5, financial metric sets: 4, company profile: updated.',
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Warnings: announcement source B failed; news source A timeout')
+    fireEvent.click(screen.getByRole('tab', { name: 'News & announcements' }))
     expect(await screen.findByRole('link', { name: /fresh filing available/i })).toHaveAttribute(
       'href',
       'https://example.com/announcements/2',
@@ -458,6 +515,7 @@ describe('StockDetailPage', () => {
         onBack={vi.fn()}
       />,
     )
+    openHoldingsGroup()
 
     fireEvent.click(screen.getByRole('button', { name: 'Generate fresh stock advice' }))
 
@@ -479,6 +537,7 @@ describe('StockDetailPage', () => {
         onBack={vi.fn()}
       />,
     )
+    openHoldingsGroup()
 
     fireEvent.click(screen.getByRole('button', { name: 'Generate fresh stock advice' }))
 
@@ -501,6 +560,7 @@ describe('StockDetailPage', () => {
         onBack={vi.fn()}
       />,
     )
+    openHoldingsGroup()
 
     expect(await screen.findByText('80.0000')).toBeInTheDocument()
     await waitFor(() => {
@@ -517,6 +577,9 @@ describe('StockDetailPage', () => {
     fetchInvestmentAdviceHistoryMock.mockRejectedValue(new Error('Advice history unavailable'))
 
     await renderReadyDetailPage()
+    expect(screen.getByRole('region', { name: 'Quote summary' })).toHaveTextContent('10.3000')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    openHoldingsGroup()
 
     expect(await screen.findByDisplayValue('80.0000')).toBeInTheDocument()
     const holdingPanel = within(screen.getByRole('region', { name: 'Holdings section' }))
@@ -531,6 +594,7 @@ describe('StockDetailPage', () => {
     fetchInvestmentAdviceHistoryMock.mockResolvedValue({ items: [adviceData] })
 
     await renderReadyDetailPage()
+    openHoldingsGroup()
 
     expect(await screen.findByText('Position can be added on pullbacks.')).toBeInTheDocument()
     const holdingPanel = within(screen.getByRole('region', { name: 'Holdings section' }))
@@ -545,6 +609,7 @@ describe('StockDetailPage', () => {
     fetchInvestmentAdviceHistoryMock.mockReturnValue(new Promise(() => {}))
 
     await renderReadyDetailPage()
+    openHoldingsGroup()
 
     expect(await screen.findByDisplayValue('80.0000')).toBeInTheDocument()
     expect(screen.queryByText('Loading holdings…')).not.toBeInTheDocument()
@@ -556,6 +621,7 @@ describe('StockDetailPage', () => {
     fetchInvestmentAdviceHistoryMock.mockResolvedValue({ items: [adviceData] })
 
     await renderReadyDetailPage()
+    openHoldingsGroup()
 
     expect(await screen.findByText('Position can be added on pullbacks.')).toBeInTheDocument()
     expect(screen.getByText('Loading holdings…')).toBeInTheDocument()
@@ -575,6 +641,7 @@ describe('StockDetailPage', () => {
         onBack={vi.fn()}
       />,
     )
+    openHoldingsGroup()
 
     fireEvent.change(screen.getByLabelText('Quantity'), {
       target: { value: '80.0000' },
@@ -616,6 +683,7 @@ describe('StockDetailPage', () => {
   ] as const)('validates %s holding inputs before saving (existing=%s, %s=%s)', async (language, existing, field, invalidValue) => {
     fetchHoldingsMock.mockResolvedValue(existing ? [holdingData] : [])
     render(<I18nProvider language={language}><StockDetailPage detail={detailData} viewState="ready" onBack={vi.fn()} /></I18nProvider>)
+    openHoldingsGroup()
     await waitFor(() => { expect(screen.queryByText(/Loading holdings|正在加载持仓/)).not.toBeInTheDocument() })
     fireEvent.change(screen.getByLabelText(language === 'en' ? 'Quantity' : '持仓数量'), {
       target: { value: field === 'quantity' ? invalidValue : '1.25' },
@@ -637,6 +705,7 @@ describe('StockDetailPage', () => {
   it('preserves positive decimal strings when saving a holding', async () => {
     upsertHoldingMock.mockResolvedValue(holdingData)
     await renderReadyDetailPage()
+    openHoldingsGroup()
     fireEvent.change(screen.getByLabelText('Quantity'), { target: { value: '0.2500' } })
     fireEvent.change(screen.getByLabelText('Average cost'), { target: { value: '2.5000' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save holding' }))
@@ -653,6 +722,7 @@ describe('StockDetailPage', () => {
     fetchInvestmentAdviceHistoryMock.mockResolvedValueOnce({ items: [] })
       .mockResolvedValueOnce({ items: [otherStock, formerHolding, matching] })
     await renderReadyDetailPage()
+    openHoldingsGroup()
     await screen.findByDisplayValue('80.0000')
     fireEvent.click(screen.getByRole('button', { name: `Load cached ${target} advice` }))
     expect(await screen.findByText('Loaded cached AI advice.')).toBeInTheDocument()
@@ -672,6 +742,7 @@ describe('StockDetailPage', () => {
       { ...adviceData, holding_id: 42, target_id: 42 },
     ] })
     await renderReadyDetailPage()
+    openHoldingsGroup()
     await screen.findByDisplayValue('80.0000')
     fireEvent.click(screen.getByRole('button', { name: `Load cached ${target} advice` }))
     expect(await screen.findByText('No cached advice is available for this selection.')).toBeInTheDocument()
@@ -682,6 +753,7 @@ describe('StockDetailPage', () => {
 
   it('reports missing cached advice in Chinese without generating', async () => {
     render(<I18nProvider language="zh"><StockDetailPage detail={detailData} viewState="ready" onBack={vi.fn()} /></I18nProvider>)
+    openHoldingsGroup()
     await waitFor(() => { expect(screen.queryByText('正在加载建议历史…')).not.toBeInTheDocument() })
     fireEvent.click(screen.getByRole('button', { name: '加载缓存股票建议' }))
     expect(await screen.findByText('当前选择暂无缓存建议。')).toBeInTheDocument()
@@ -703,6 +775,7 @@ describe('StockDetailPage', () => {
       .mockResolvedValue({ items: [freshStockAdviceData] })
     generateStockAdviceMock.mockResolvedValue(freshStockAdviceData)
     await renderReadyDetailPage()
+    openHoldingsGroup()
 
     fireEvent.click(screen.getByRole('button', { name: mode === 'cached'
       ? 'Load cached stock advice' : 'Generate fresh stock advice' }))
@@ -736,6 +809,7 @@ describe('StockDetailPage', () => {
         onBack={vi.fn()}
       />,
     )
+    openHoldingsGroup()
 
     expect(await screen.findByText('80.0000')).toBeInTheDocument()
 
