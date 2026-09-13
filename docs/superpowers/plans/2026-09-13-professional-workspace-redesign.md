@@ -14,8 +14,8 @@ Approved spec: `docs/superpowers/specs/2026-09-13-professional-workspace-redesig
 
 Files: package.json/package-lock.json; new `frontend/src/theme.tsx`, `frontend/src/theme.test.tsx`; modify `frontend/src/App.tsx`, `frontend/src/styles.css`, `frontend/src/main.tsx` and test setup as required.
 
-- [ ] Verify dependency peer compatibility, install the approved official packages, and capture the unchanged163-test baseline.
-- [ ] Add failing theme tests for legacy/no preference -> system, explicit light/dark persistence, system change events, unmount cleanup, and denied/malformed storage. Keep theme separate from existing homepage settings to avoid changing their stable fields.
+- [x] Verify dependency peer compatibility, install the approved official packages, and capture the unchanged163-test baseline.
+- [x] Add failing theme tests for legacy/no preference -> system, explicit light/dark persistence, system change events, unmount cleanup, and denied/malformed storage. Keep theme separate from existing homepage settings to avoid changing their stable fields.
 
 ```tsx
 export type ThemePreference = 'system' | 'light' | 'dark'
@@ -29,12 +29,12 @@ export interface AppThemeValue {
 // default for existing standalone component tests. Store preference only.
 ```
 
-- [ ] Run the new test file and observe failing behavior before implementation.
-- [ ] Implement a FluentProvider at the app root using webLightTheme/webDarkTheme, brand blue and IBM Plex typography. Export the hook for charts and settings. Subscribe with matchMedia change events, guarded storage and complete cleanup. Update document data-theme/color-scheme, not business settings or AI state.
-- [ ] Bundle fontsource font assets with font-display swap; use font weights400/500/600 and Mono400/500 only. No external font requests.
-- [ ] Replace global gradients/glows/oversized corners with semantic CSS variables that follow the resolved theme. Document layer scale, small-radius controls,8px surfaces and a4px spacing grid. Preserve compatibility classes for pages until the following tasks replace layout. Native charts are adapted in Task3.
-- [ ] All native controls remaining during migration use coherent focus/contrast; avoid global styles that override Fluent component internals. No marketing imagery, no motion dependency or infinite effects.
-- [ ] Run focused theme tests, full frontend tests and build. Independently review spec then quality; fix findings and commit only this task's code.
+- [x] Run the new test file and observe failing behavior before implementation.
+- [x] Implement a FluentProvider at the app root using webLightTheme/webDarkTheme, brand blue and IBM Plex typography. Export the hook for charts and settings. Subscribe with matchMedia change events, guarded storage and complete cleanup. Update document data-theme/color-scheme, not business settings or AI state.
+- [x] Bundle fontsource font assets with font-display swap; use font weights400/500/600 and Mono400/500 only. No external font requests.
+- [x] Replace global gradients/glows/oversized corners with semantic CSS variables that follow the resolved theme. Document layer scale, small-radius controls,8px surfaces and a4px spacing grid. Preserve compatibility classes for pages until the following tasks replace layout. Native charts are adapted in Task3.
+- [x] All native controls remaining during migration use coherent focus/contrast; avoid global styles that override Fluent component internals. No marketing imagery, no motion dependency or infinite effects.
+- [x] Run focused theme tests, full frontend tests and build. Independently review spec then quality; fix findings and commit only this task's code.
 
 ## Task 2: Homepage, search and settings workspace
 
@@ -58,6 +58,7 @@ export interface WatchlistViewState {
 - [ ] Use Fluent Table/Button/Menu/Dialog/Input/Select/Field as applicable. Name is the detail action; menu removal requires explicit object-specific confirmation. Keep callbacks from bubbling into navigation. Small screens show name/code,price,change/actions and expose extra columns via a disclosure.
 - [ ] Keep homepage request/auto-refresh/auto-sync effects unchanged. Reopening list restores window scroll and selected-security button focus after render, without a new data fetch caused solely by local sorting.
 - [ ] Move SearchBox to the search dialog, preserve current remote search/custom-code APIs and form names/order. Make onAdd/onAddCustom completion awaitable; keep errors/results in the dialog. Already tracked results have disabled added state. On query changes/unmount discard stale results; Enter submits explicitly and empty query sends no request.
+- [ ] Guard existing homepage preference reads/writes when localStorage is denied, retaining defaults/session values; a storage failure must not crash App or erase valid saved preferences. Include a full-App regression, not only a theme-provider test.
 - [ ] Create SettingsDrawer accessible from home/detail via header. Two related groups: interface/refresh and AI configuration. Use official OverlayDrawer/DrawerBody/TabList; preserve current preference labels/order and append theme selection.
 - [ ] Extend AiSettingsPanel with narrowly scoped callbacks for dirty/busy state and a render prop or optional footer mechanism only if needed. Do not lift keys to App or storage.
 

@@ -16,6 +16,7 @@ import {
   saveHomepageSettings,
 } from './homepageSettings'
 import { I18nProvider, useI18n } from './i18n'
+import { AppThemeProvider } from './theme'
 import { SearchBox } from './components/SearchBox'
 import { AiSettingsPanel } from './components/AiSettingsPanel'
 import { StatusMessage } from './components/StatusMessage'
@@ -863,8 +864,10 @@ export default function App() {
   }, [settings])
 
   return (
-    <I18nProvider language={settings.language}>
-      <AppBody settings={settings} onSettingsChange={setSettings} />
-    </I18nProvider>
+    <AppThemeProvider>
+      <I18nProvider language={settings.language}>
+        <AppBody settings={settings} onSettingsChange={setSettings} />
+      </I18nProvider>
+    </AppThemeProvider>
   )
 }

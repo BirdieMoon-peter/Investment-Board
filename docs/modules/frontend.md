@@ -207,3 +207,8 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Read-only visual/code audit and proposed design complete: `docs/superpowers/specs/2026-09-13-professional-workspace-redesign-design.md`.
 - Proposed scope: official Fluent components, light/dark themes, watchlist-first layout, sorting/filtering, detail task groups, settings drawer and draft protection, consistent charts and responsive controls.
 - User approved the design on2026-09-13. Implementation follows `docs/superpowers/plans/2026-09-13-professional-workspace-redesign.md`. Previous functionality and review evidence above remain the baseline.
+
+### Theme foundation review
+- Official Fluent themes, guarded separate system/light/dark preference and local IBM Plex fonts implemented. Theme RED8 failures preceded14 focused passes; full frontend177 passes and production build passed.
+- Independent specification and quality review PASS; both reviewers reran14 theme tests. Actual Edge light/dark pages inspected with no page errors. Homepage/settings is the next increment.
+- Supporting dependency maintenance passed clean npm ci and audit0 vulnerabilities (Vite7.3.6/Vitest4.1.11).
