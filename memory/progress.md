@@ -1,7 +1,7 @@
 # Current Progress
 
 ## Current Focus
-Repository packaging is complete and published to the existing `main` branch: project README, two actual demo screenshots, portable example configuration, contribution guidance, CI and source-only Git tracking.
+User approved web AI configuration implementation on 2026-09-13. Backend is active: local configuration persistence, redacted protected API, fixed-message connection test and request-time provider settings. Frontend implementation follows backend review. Plan: `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
 
 ## Verified State
 - Backend: 278 tests passed; fresh external AI acceptance remains blocked by provider authentication.
@@ -12,7 +12,7 @@ Repository packaging is complete and published to the existing `main` branch: pr
 - Frontend, data-layer and scripts are done. Backend remains blocked only on live provider acceptance.
 
 ## Next Work
-Verify fresh demo stock/holding AI generation with an authorized authenticated provider, then persistence/history/cache replay before changing backend to done. Mocks and cached results do not establish live generation success.
+Execute and review backend settings first, then frontend configuration UI and isolated browser acceptance. Keep fresh demo stock/holding AI generation acceptance separate: it still requires an authorized authenticated provider, persistence/history/cache replay, and cannot be established by mock connectivity tests.
 
 ## Evidence
 - docs/verification/release-readiness.md

@@ -22,6 +22,7 @@
 - [x] AI advice availability validation and usability improvements
 
 ## Current Target
+- Implement approved web-editable AI settings: backend persistence and connection test, then frontend form and isolated acceptance.
 - Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
 - Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
 - Backend regression verification passes; fresh stock/holding AI acceptance remains dependent on valid external provider authentication.

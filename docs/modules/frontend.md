@@ -87,6 +87,7 @@ Deferred in this milestone:
 - autonomous actions or background advice generation
 
 ## Next Requested Scope
+- Add an AI configuration form to the existing Settings panel, including save, draft connection test and restoration of environment configuration; proposed design: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`. Approved on 2026-09-13; implementation follows the reviewed backend contract.
 - improve the presentation polish of the homepage and stock-detail experiences
 - refine interaction flows and user-feedback states for the most common actions
 - validate AI advice usability, clarify cached/live feedback, and improve the stock-detail advice experience

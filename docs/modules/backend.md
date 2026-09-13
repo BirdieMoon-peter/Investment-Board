@@ -104,12 +104,13 @@ Deferred in this milestone:
 - broader portfolio optimization beyond single-security or single-holding advice
 
 ## Next Requested Scope
+- Add web-editable local AI configuration, redacted settings APIs and a fixed-message connection test; proposed design: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`. Approved on 2026-09-13; backend settings implementation is active.
 - validate end-to-end AI advice availability against the configured runtime provider, not just cached responses
 - improve backend/provider behavior only where frontend usability validation exposes reliability or clarity gaps
 - keep provider changes compatible with the existing structured advice contracts
 
 ## Current Status
-blocked
+doing
 
 ## Recommended Skills
 - `superpowers:brainstorming` for boundary changes
@@ -142,3 +143,10 @@ blocked
 - Stock and holding analysis uses a configured provider and persists the most recent 20 entries by default. Cached reads do not trigger new model requests.
 - Holdings deletion preserves historical advice without allowing stale holding IDs to reuse current-position cache.
 - Public data providers can degrade independently; source timestamps and quote precision must remain traceable.
+
+## Web AI Configuration — 2026-09-13
+- Approved design and plan: `docs/superpowers/specs/2026-09-13-web-ai-settings-design.md`, `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
+- [ ] Implement settings store, protected redacted API, request-time override and fixed-message connection test.
+- [ ] Verify credential transitions, persistence, corruption recovery, provider URL forms and failure handling.
+- [ ] Complete independent specification and quality reviews before frontend implementation.
+- Existing live stock/holding AI authentication acceptance remains a separate blocker.
