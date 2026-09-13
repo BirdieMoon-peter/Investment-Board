@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-done
+todo
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -201,3 +201,9 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Feature evidence: [Web AI settings verification](../verification/web-ai-settings.md). Frontend scope is done; authenticated external analysis remains a separate backend follow-up.
 
 - Repository delivery: feature commit `d1ee72c` is on main; hosted CI run34749705234 passed both jobs. Existing main-app settings API and frontend proxy are ready without modifying user configuration.
+
+## Professional workspace redesign - 2026-09-13
+- Requested: use design-taste-frontend for a professional investment dashboard and improved interaction flow.
+- Read-only visual/code audit and proposed design complete: `docs/superpowers/specs/2026-09-13-professional-workspace-redesign-design.md`.
+- Proposed scope: official Fluent components, light/dark themes, watchlist-first layout, sorting/filtering, detail task groups, settings drawer and draft protection, consistent charts and responsive controls.
+- Implementation has not started; design approval is the remaining gate. Previous functionality and review evidence above remain the baseline.

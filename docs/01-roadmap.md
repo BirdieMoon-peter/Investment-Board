@@ -22,6 +22,7 @@
 - [x] AI advice availability validation and usability improvements
 
 ## Current Target
+- Professional frontend workspace redesign: current visual/interaction audit complete; proposed specification awaits approval before implementation.
 - [x] Web-editable AI settings: protected persistence, connection test, bilingual form, independent reviews and isolated browser acceptance complete.
 - Repository packaging is complete: project README, demo screenshots, portable configuration, contributor guide, passing hosted CI and source-only Git tracking.
 - Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
