@@ -94,7 +94,7 @@ Deferred in this milestone:
 - keep the work frontend-first unless a backend contract gap is confirmed
 
 ## Current Status
-todo
+doing
 
 ## Recommended Skills
 - `superpowers:brainstorming` for scope or structure changes
@@ -206,4 +206,4 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Requested: use design-taste-frontend for a professional investment dashboard and improved interaction flow.
 - Read-only visual/code audit and proposed design complete: `docs/superpowers/specs/2026-09-13-professional-workspace-redesign-design.md`.
 - Proposed scope: official Fluent components, light/dark themes, watchlist-first layout, sorting/filtering, detail task groups, settings drawer and draft protection, consistent charts and responsive controls.
-- Implementation has not started; design approval is the remaining gate. Previous functionality and review evidence above remain the baseline.
+- User approved the design on2026-09-13. Implementation follows `docs/superpowers/plans/2026-09-13-professional-workspace-redesign.md`. Previous functionality and review evidence above remain the baseline.

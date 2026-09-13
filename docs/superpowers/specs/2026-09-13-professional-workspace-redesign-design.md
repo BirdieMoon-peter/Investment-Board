@@ -1,7 +1,7 @@
 # Investment Board 专业工作台重设计
 
 日期：2026-09-13  
-状态：现状审查与方案自检完成，等待用户确认后进入实现。  
+状态：用户于2026-09-13批准，进入实现。
 范围：frontend 模块。现有 API、数据库、AI 配置协议与外部服务认证保持独立。
 
 ## 设计判断
@@ -109,7 +109,7 @@
 实现时先检查 package.json，并使用官方包：
 
 ```bash
-npm install --prefix frontend @fluentui/react-components @tanstack/react-table @phosphor-icons/react @fontsource/ibm-plex-sans @fontsource/ibm-plex-mono
+npm install --prefix frontend @fluentui/react-components @tanstack/react-table@8.21.3 @phosphor-icons/react @fontsource/ibm-plex-sans @fontsource/ibm-plex-mono
 ```
 
 安装前核对当前 React19 兼容性和包的官方说明；使用锁文件记录实际版本。字体使用本地打包资源和 font-display: swap，不请求第三方字体CDN。
@@ -140,4 +140,4 @@ npm install --prefix frontend @fluentui/react-components @tanstack/react-table @
 - [Fluent TabList：相关内容分组与窄屏替代](https://fluent2.microsoft.design/components/web/react/core/tablist/usage)
 - 用户指定的 `/Users/peter/.codex/skills/taste-skill/SKILL.md`。
 
-自检已完成：数据来源保持、用户状态迁移有定义、AI外发边界不变、主题与图表策略一致、表格排序定义明确、抽屉退出规则覆盖所有关闭方式、无新增交易或组合收益计算范围。等待用户确认本方案。
+自检已完成：数据来源保持、用户状态迁移有定义、AI外发边界不变、主题与图表策略一致、表格排序定义明确、抽屉退出规则覆盖所有关闭方式、无新增交易或组合收益计算范围。用户已确认本方案。
