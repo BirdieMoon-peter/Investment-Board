@@ -177,7 +177,7 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Frontend scope done. Real model generation remains an explicitly tracked backend external-auth blocker; cached fixtures are synthetic.
 
 ## Web AI Configuration — 2026-09-13
-- Backend contract independently reviewed; frontend implementation active under `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
+- Backend contract independently reviewed; frontend implementation complete under `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
 - [x] Add isolated bilingual settings form/client/types with explicit credential actions and draft connection test.
 - [x] Verify save/reset/loading/failure/stale-response states in automated tests; responsive browser acceptance follows.
 - [x] Complete independent specification and quality review plus isolated browser acceptance.
@@ -199,3 +199,5 @@ Scope: verify all existing frontend flows and repair reproducible defects, witho
 - Parent fresh verification: 163 frontend tests and production build passed; 18 isolated browser checks passed. Actual desktop/mobile captures were visually inspected.
 - Original environment and web configuration file hashes, all five watchlist rows and zero holdings match the pre-test baseline. Temporary acceptance services are stopped; the user app remains running.
 - Feature evidence: [Web AI settings verification](../verification/web-ai-settings.md). Frontend scope is done; authenticated external analysis remains a separate backend follow-up.
+
+- Repository delivery: feature commit `d1ee72c` is on main; hosted CI run34749705234 passed both jobs. Existing main-app settings API and frontend proxy are ready without modifying user configuration.

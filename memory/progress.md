@@ -1,7 +1,7 @@
 # Current Progress
 
 ## Current Focus
-Web AI configuration implementation, independent specification/quality reviews and isolated runtime acceptance are complete. Final repository publication and hosted CI verification are next. Plan: `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
+Web AI configuration implementation, independent specification/quality reviews and isolated runtime acceptance are complete. The feature is published to main as `d1ee72c`; both hosted CI jobs passed (run34749705234). Plan: `docs/superpowers/plans/2026-09-13-web-ai-settings.md`.
 
 ## Verified State
 - Backend: 382 tests passed; new configuration scope reviewed and complete. Fresh external AI analysis acceptance remains blocked by provider authentication.
@@ -13,7 +13,7 @@ Web AI configuration implementation, independent specification/quality reviews a
 - Frontend, data-layer and scripts are done. Backend remains blocked only on live external analysis acceptance.
 
 ## Next Work
-Publish the reviewed feature and verify hosted CI. Fresh demo stock/holding AI generation still requires an authorized authenticated provider, followed by persistence/history/cache replay acceptance; mock connectivity tests do not establish that result.
+The requested web settings and repository delivery are complete. Fresh demo stock/holding AI generation still requires an authorized authenticated provider, followed by persistence/history/cache replay acceptance; mock connectivity tests do not establish that result.
 
 ## Evidence
 - docs/verification/web-ai-settings.md

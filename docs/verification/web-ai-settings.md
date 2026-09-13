@@ -1,7 +1,7 @@
 # Web AI Settings Verification
 
 Date: 2026-09-13
-Status: implementation, review and local acceptance complete; publication check pending.
+Status: implementation, independent reviews, local acceptance and repository publication verified.
 
 ## Scope
 
@@ -79,6 +79,7 @@ precedence, key handling and local-only operation. The existing homepage/detail
 screenshots remain in the project introduction, with an additional settings
 capture linked from its AI setup section.
 
-The published commit and hosted CI run are recorded after delivery. Current
-[CI runs](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml)
-are available in the repository.
+- Feature commit: [`d1ee72c`](https://github.com/BirdieMoon-peter/Investment-Board/commit/d1ee72c038f7f804c2c6a2a5538ecca5bff6a036), pushed normally to `main`.
+- Hosted [CI run 34749705234](https://github.com/BirdieMoon-peter/Investment-Board/actions/runs/34749705234): both **Backend and launchers** and **Frontend tests and build** passed on Ubuntu.
+- The user's existing backend and frontend proxy both returned the new redacted settings API successfully after publication, without any configuration mutation.
+- This delivery record is a documentation-only follow-up to the verified feature commit. The latest commit's CI status remains visible in the repository's [workflow runs](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml).
