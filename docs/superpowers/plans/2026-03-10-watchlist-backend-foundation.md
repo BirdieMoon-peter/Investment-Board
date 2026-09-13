@@ -87,12 +87,12 @@ def test_search_securities_returns_empty_list_when_no_match(client: TestClient):
 
 - [ ] **Step 3: Install the updated backend package with web-test dependencies**
 
-Run: `python3 -m pip install -e "/Users/peter/Desktop/Investment Board/backend[dev]"`
+Run: `python3 -m pip install -e "backend[dev]"`
 Expected: output includes `fastapi` and `httpx`
 
 - [ ] **Step 4: Run the API search test to verify it fails before implementation**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_search_securities_api.py" -q`
 Expected: FAIL with an import error for `app.main` or missing `client` fixture
 
 - [ ] **Step 5: Implement the minimal FastAPI app and DB dependency**
@@ -148,7 +148,7 @@ def client_fixture(session):
 
 - [ ] **Step 7: Re-run the API search test and verify it now fails because the route itself does not exist yet**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_search_securities_api.py" -q`
 Expected: FAIL with `404` or router import failure for the missing watchlist route module
 
 ### Task 2: Implement the search securities endpoint and response schema
@@ -181,7 +181,7 @@ def test_search_securities_returns_active_matches_in_mvp_order(client, session):
 
 - [ ] **Step 2: Run the search API test to verify it fails because the route/schema do not exist yet**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_search_securities_api.py" -q`
 Expected: FAIL with missing route or schema errors
 
 - [ ] **Step 3: Implement the search response schema**
@@ -233,7 +233,7 @@ def search_securities(
 
 - [ ] **Step 5: Re-run the search API tests**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_search_securities_api.py" -q`
 Expected: PASS
 
 ## Chunk 2: Watchlist Mutation and List APIs
@@ -266,7 +266,7 @@ def test_remove_watchlist_item_returns_404_for_missing_security(client):
 
 - [ ] **Step 2: Run the mutation API tests to verify they fail before implementation**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_watchlist_mutation_api.py" -q`
 Expected: FAIL with missing route/schema errors
 
 - [ ] **Step 3: Implement add/remove request and response schemas**
@@ -319,7 +319,7 @@ def remove_watchlist_item(security_id: int, session: Session = Depends(get_sessi
 
 - [ ] **Step 6: Re-run the mutation API tests**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_watchlist_mutation_api.py" -q`
 Expected: PASS
 
 ### Task 4: Implement the watchlist list API and output schema
@@ -361,7 +361,7 @@ def test_list_watchlist_returns_joined_security_and_quote_fields(client, session
 
 - [ ] **Step 2: Run the watchlist list API test to verify it fails before implementation**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_list_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_watchlist_list_api.py" -q`
 Expected: FAIL with missing route/schema errors
 
 - [ ] **Step 3: Implement the watchlist list response schema**
@@ -402,7 +402,7 @@ def list_watchlist_items(session: Session = Depends(get_session)) -> list[Watchl
 
 - [ ] **Step 5: Re-run the watchlist list API test**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_list_api.py" -q`
+Run: `python3 -m pytest "backend/tests/api/test_watchlist_list_api.py" -q`
 Expected: PASS
 
 ## Chunk 3: Full Backend Verification and Review-State Sync
@@ -418,7 +418,7 @@ Expected: PASS
 
 - [ ] **Step 1: Run the full backend API test suite**
 
-Run: `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api" -q`
+Run: `python3 -m pytest "backend/tests/api" -q`
 Expected: all tests PASS
 
 - [ ] **Step 2: Record stable backend decisions**
@@ -437,7 +437,7 @@ Add or update these points in `docs/modules/backend.md`:
 
 ```md
 ## Verification
-- `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api" -q`
+- `python3 -m pytest "backend/tests/api" -q`
 - search endpoint verified for ordered active-only matches and empty results
 - add/remove endpoints verified for idempotent add and `404` failure paths
 - watchlist list endpoint verified for joined security + latest quote output and missing-quote behavior

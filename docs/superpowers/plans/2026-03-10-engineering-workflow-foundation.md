@@ -31,7 +31,7 @@
 
 - [ ] **Step 2: Verify the rules file is missing before creation**
 
-Run: `test -f "/Users/peter/Desktop/Investment Board/CLAUDE.md" && echo exists || echo missing`
+Run: `test -f "CLAUDE.md" && echo exists || echo missing`
 Expected: `missing`
 
 - [ ] **Step 3: Create `CLAUDE.md` with startup, skill routing, update, and review rules**
@@ -47,7 +47,7 @@ Expected: `missing`
 
 Run: `python - <<'PY'
 from pathlib import Path
-text = Path('/Users/peter/Desktop/Investment Board/CLAUDE.md').read_text()
+text = Path('CLAUDE.md').read_text()
 for section in ['Source of Truth', 'Startup Routine', 'Skill Routing', 'Review Gate']:
     assert section in text, section
 print('ok')
@@ -74,10 +74,10 @@ Expected: `ok`
 Run: `python - <<'PY'
 from pathlib import Path
 paths = [
-'/Users/peter/Desktop/Investment Board/docs/00-workflow.md',
-'/Users/peter/Desktop/Investment Board/docs/01-roadmap.md',
-'/Users/peter/Desktop/Investment Board/docs/02-module-registry.md',
-'/Users/peter/Desktop/Investment Board/docs/03-review-checklist.md',
+'docs/00-workflow.md',
+'docs/01-roadmap.md',
+'docs/02-module-registry.md',
+'docs/03-review-checklist.md',
 ]
 for p in paths:
     assert Path(p).exists(), p
@@ -106,10 +106,10 @@ Run: `python - <<'PY'
 from pathlib import Path
 required = ['## Goal', '## Scope', '## Tasks', '## Current Status', '## Recommended Skills', '## Verification']
 for p in [
-'/Users/peter/Desktop/Investment Board/docs/modules/frontend.md',
-'/Users/peter/Desktop/Investment Board/docs/modules/backend.md',
-'/Users/peter/Desktop/Investment Board/docs/modules/data-layer.md',
-'/Users/peter/Desktop/Investment Board/docs/modules/scripts.md',
+'docs/modules/frontend.md',
+'docs/modules/backend.md',
+'docs/modules/data-layer.md',
+'docs/modules/scripts.md',
 ]:
     text = Path(p).read_text()
     for item in required:
@@ -140,11 +140,11 @@ Expected: `ok`
 Run: `python - <<'PY'
 from pathlib import Path
 checks = {
-'/Users/peter/Desktop/Investment Board/memory/MEMORY.md': '# Project Memory',
-'/Users/peter/Desktop/Investment Board/memory/progress.md': '# Current Progress',
-'/Users/peter/Desktop/Investment Board/memory/decisions.md': '# Decisions',
-'/Users/peter/Desktop/Investment Board/docs/superpowers/specs/2026-03-10-engineering-workflow-design.md': '# Engineering Workflow Design',
-'/Users/peter/Desktop/Investment Board/docs/superpowers/plans/2026-03-10-engineering-workflow-foundation.md': '# Engineering Workflow Foundation Implementation Plan',
+'memory/MEMORY.md': '# Project Memory',
+'memory/progress.md': '# Current Progress',
+'memory/decisions.md': '# Decisions',
+'docs/superpowers/specs/2026-03-10-engineering-workflow-design.md': '# Engineering Workflow Design',
+'docs/superpowers/plans/2026-03-10-engineering-workflow-foundation.md': '# Engineering Workflow Foundation Implementation Plan',
 }
 for p, header in checks.items():
     text = Path(p).read_text()
@@ -181,7 +181,7 @@ expected = [
 'docs/superpowers/specs/2026-03-10-engineering-workflow-design.md',
 'docs/superpowers/plans/2026-03-10-engineering-workflow-foundation.md',
 ]
-root = Path('/Users/peter/Desktop/Investment Board')
+root = Path('project root')
 for rel in expected:
     assert (root / rel).exists(), rel
 print('ok')
@@ -199,7 +199,7 @@ Choose the first technical-layer module to start.
 
 Run: `python - <<'PY'
 from pathlib import Path
-root = Path('/Users/peter/Desktop/Investment Board')
+root = Path('project root')
 texts = {
 'workflow': (root / 'docs/00-workflow.md').read_text(),
 'registry': (root / 'docs/02-module-registry.md').read_text(),

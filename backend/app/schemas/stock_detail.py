@@ -3,7 +3,9 @@ from decimal import Decimal
 
 from sqlmodel import SQLModel
 
-from app.db.models import Announcement, CompanyProfile, FinancialMetrics, NewsItem, PriceBarDaily, PriceHistory
+from app.schemas.timestamps import UTCDateTime
+
+from app.db.models import Announcement, CompanyProfile, FinancialMetrics, NewsItem, PriceBarDaily, PriceHistory, QuoteSnapshot
 from app.db.repositories import StockDetail, StockDetailSecurity
 
 
@@ -38,6 +40,17 @@ class StockDetailPriceBarResponse(SQLModel):
     @classmethod
     def from_model(cls, price_bar: PriceBarDaily) -> "StockDetailPriceBarResponse":
         return cls.model_validate(price_bar)
+
+
+class StockDetailQuoteSnapshotResponse(SQLModel):
+    last_price: Decimal
+    change_amount: Decimal
+    change_percent: Decimal
+    snapshot_time: UTCDateTime
+
+    @classmethod
+    def from_model(cls, quote_snapshot: QuoteSnapshot) -> "StockDetailQuoteSnapshotResponse":
+        return cls.model_validate(quote_snapshot)
 
 
 class StockDetailAnnouncementResponse(SQLModel):
@@ -107,7 +120,7 @@ class StockDetailCompanyProfileResponse(SQLModel):
 
 class StockDetailResponse(SQLModel):
     security: StockDetailSecurityResponse
-    price_context: list[StockDetailPriceBarResponse]
+    price_context: list[StockDetailQuoteSnapshotResponse]
     announcements: list[StockDetailAnnouncementResponse]
     news: list[StockDetailNewsItemResponse]
     price_history: list[StockDetailPriceHistoryResponse]
@@ -119,7 +132,7 @@ class StockDetailResponse(SQLModel):
         return cls(
             security=StockDetailSecurityResponse.from_repository_model(detail.security),
             price_context=[
-                StockDetailPriceBarResponse.from_model(price_bar) for price_bar in detail.price_context
+                StockDetailQuoteSnapshotResponse.from_model(quote_snapshot) for quote_snapshot in detail.price_context
             ],
             announcements=[
                 StockDetailAnnouncementResponse.from_model(announcement)
@@ -149,9 +162,10 @@ class StockSyncResponse(SQLModel):
     news_items_upserted: int
     price_bars_upserted: int = 0
     financial_metrics_upserted: int = 0
+    quote_snapshot_updated: bool = False
     company_profile_updated: bool = False
     warnings: list[str]
-    synced_at: datetime
+    synced_at: UTCDateTime
 
     @classmethod
     def from_service_result(
@@ -163,6 +177,7 @@ class StockSyncResponse(SQLModel):
         news_items_upserted: int,
         price_bars_upserted: int = 0,
         financial_metrics_upserted: int = 0,
+        quote_snapshot_updated: bool = False,
         company_profile_updated: bool = False,
         warnings: list[str],
         synced_at: datetime,
@@ -174,6 +189,7 @@ class StockSyncResponse(SQLModel):
             news_items_upserted=news_items_upserted,
             price_bars_upserted=price_bars_upserted,
             financial_metrics_upserted=financial_metrics_upserted,
+            quote_snapshot_updated=quote_snapshot_updated,
             company_profile_updated=company_profile_updated,
             warnings=warnings,
             synced_at=synced_at,

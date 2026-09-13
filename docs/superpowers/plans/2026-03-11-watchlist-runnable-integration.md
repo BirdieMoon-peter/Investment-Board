@@ -66,7 +66,7 @@ def test_seed_demo_watchlist_data_creates_demo_security_and_quote(session):
 
 - [ ] **Step 2: Run the seed test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_seed_demo_data.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_seed_demo_data.py" -q`
 Expected: FAIL with missing module or missing seed function
 
 - [ ] **Step 3: Implement a deterministic demo seed service on top of `bootstrap_market_data()`**
@@ -103,7 +103,7 @@ with make_session(engine) as session:
 
 - [ ] **Step 5: Re-run the seed test**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_seed_demo_data.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_seed_demo_data.py" -q`
 Expected: PASS
 
 ### Task 2: Verify the backend app can serve seeded watchlist endpoints
@@ -127,7 +127,7 @@ def test_seeded_backend_serves_search_and_watchlist_endpoints(client, session):
 
 - [ ] **Step 2: Run the smoke test to verify it fails before implementation adjustments**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_runtime_smoke.py" -q`
 Expected: FAIL if the seed helper is not wired into runtime tests yet
 
 - [ ] **Step 3: Implement any minimal runtime glue needed so the seeded backend responds correctly**
@@ -138,7 +138,7 @@ Expected: FAIL if the seed helper is not wired into runtime tests yet
 
 - [ ] **Step 4: Re-run the smoke test**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_runtime_smoke.py" -q`
 Expected: PASS
 
 ## Chunk 2: Local Frontend↔Backend Development Wiring
@@ -171,22 +171,22 @@ server: {
 - [ ] **Step 3: Add a backend run script that starts uvicorn with the backend venv**
 
 ```bash
-PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" \
-"/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+PYTHONPATH="backend" \
+"backend/.venv/bin/python" -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 - [ ] **Step 4: Add a frontend run script that starts Vite**
 
 ```bash
-npm run dev --prefix "/Users/peter/Desktop/Investment Board/frontend"
+npm run dev --prefix "frontend"
 ```
 
 - [ ] **Step 5: Add a shell smoke script that checks the backend API after seeding**
 
 ```bash
-PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" \
-"/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" \
-"/Users/peter/Desktop/Investment Board/backend/scripts/seed_watchlist_demo.py"
+PYTHONPATH="backend" \
+"backend/.venv/bin/python" \
+"backend/scripts/seed_watchlist_demo.py"
 curl -sf "http://127.0.0.1:8000/api/watchlist/securities/search?query=000001"
 ```
 
@@ -204,15 +204,15 @@ curl -sf "http://127.0.0.1:8000/api/watchlist/securities/search?query=000001"
 - [ ] **Step 1: Run all new integration-oriented automated tests**
 
 Run:
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_seed_demo_data.py" -q`
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" -q`
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_seed_demo_data.py" -q`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_runtime_smoke.py" -q`
+- `npm test --prefix "frontend"`
 
 Expected: all pass
 
 - [ ] **Step 2: Run the seed script directly**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" "/Users/peter/Desktop/Investment Board/backend/scripts/seed_watchlist_demo.py"`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" "backend/scripts/seed_watchlist_demo.py"`
 Expected: exits successfully and creates/updates local SQLite data
 
 - [ ] **Step 3: Start backend and verify the search endpoint responds**

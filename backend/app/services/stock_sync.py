@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -8,6 +9,7 @@ from app.db.repositories.company_profile_repository import CompanyProfileReposit
 from app.db.repositories.financial_metrics_repository import FinancialMetricsRepository
 from app.db.repositories.news_repository import NewsRepository
 from app.db.repositories.price_history_repository import PriceHistoryRepository
+from app.db.repositories.quote_snapshot_repository import QuoteSnapshotRepository
 from app.services.providers.announcement_provider import AnnouncementProvider
 from app.services.providers.news_provider import NewsProvider
 
@@ -19,6 +21,7 @@ class StockSyncResult:
     news_items_upserted: int
     price_bars_upserted: int = 0
     financial_metrics_upserted: int = 0
+    quote_snapshot_updated: bool = False
     company_profile_updated: bool = False
     warnings: list[str] = field(default_factory=list)
     synced_at: datetime | None = None
@@ -34,9 +37,11 @@ class StockSyncService:
         news_repository: NewsRepository,
         price_history_provider: Any | None = None,
         financial_metrics_provider: Any | None = None,
+        quote_snapshot_provider: Any | None = None,
         company_profile_provider: Any | None = None,
         price_history_repository: PriceHistoryRepository | None = None,
         financial_metrics_repository: FinancialMetricsRepository | None = None,
+        quote_snapshot_repository: QuoteSnapshotRepository | None = None,
         company_profile_repository: CompanyProfileRepository | None = None,
     ):
         self.announcement_provider = announcement_provider
@@ -45,9 +50,11 @@ class StockSyncService:
         self.news_repository = news_repository
         self.price_history_provider = price_history_provider
         self.financial_metrics_provider = financial_metrics_provider
+        self.quote_snapshot_provider = quote_snapshot_provider
         self.company_profile_provider = company_profile_provider
         self.price_history_repository = price_history_repository
         self.financial_metrics_repository = financial_metrics_repository
+        self.quote_snapshot_repository = quote_snapshot_repository
         self.company_profile_repository = company_profile_repository
 
     def sync_security(
@@ -56,8 +63,12 @@ class StockSyncService:
         *,
         stock_code: str,
         market: str,
+        industry: str | None = None,
         synced_at: datetime | None = None,
     ) -> StockSyncResult:
+        warnings: list[str] = []
+        is_fund_like = self._is_fund_like(industry)
+
         latest_announcement_at = self._normalize_since_utc(
             self.announcement_repository.get_latest_published_at(security_id)
         )
@@ -70,7 +81,7 @@ class StockSyncService:
                 market=market,
                 since=latest_announcement_at,
             )
-        )
+        ) if not is_fund_like else {"items": [], "warnings": []}
         news_fetch = self._normalize_fetch_result(
             self.news_provider.fetch_for_security(
                 security_id,
@@ -78,17 +89,23 @@ class StockSyncService:
                 market=market,
                 since=latest_news_at,
             )
-        )
+        ) if not is_fund_like else {"items": [], "warnings": []}
+        warnings.extend(announcement_fetch["warnings"])
+        warnings.extend(news_fetch["warnings"])
 
-        persisted_announcements = (
-            self.announcement_repository.upsert_many(announcement_fetch["items"])
-            if announcement_fetch["items"]
-            else []
+        persisted_announcements = self._persist_many(
+            repository=self.announcement_repository,
+            items=announcement_fetch["items"],
+            warning_prefix="announcement persistence failed",
+            warnings=warnings,
+            commit=False,
         )
-        persisted_news_items = (
-            self.news_repository.upsert_many(news_fetch["items"])
-            if news_fetch["items"]
-            else []
+        persisted_news_items = self._persist_many(
+            repository=self.news_repository,
+            items=news_fetch["items"],
+            warning_prefix="news persistence failed",
+            warnings=warnings,
+            commit=False,
         )
 
         price_history_fetch = self._normalize_fetch_result(
@@ -104,29 +121,61 @@ class StockSyncService:
                 stock_code=stock_code,
                 market=market,
             )
-        ) if self.financial_metrics_provider is not None else {"items": [], "warnings": []}
+        ) if self.financial_metrics_provider is not None and not is_fund_like else {"items": [], "warnings": []}
+        quote_snapshot_fetch = self._normalize_single_fetch_result(
+            self.quote_snapshot_provider.fetch_for_security(
+                security_id,
+                stock_code=stock_code,
+                market=market,
+            )
+        ) if self.quote_snapshot_provider is not None else {"item": None, "warnings": []}
         company_profile_fetch = self._normalize_single_fetch_result(
             self.company_profile_provider.fetch_for_security(
                 security_id,
                 stock_code=stock_code,
                 market=market,
             )
-        ) if self.company_profile_provider is not None else {"item": None, "warnings": []}
+        ) if self.company_profile_provider is not None and not is_fund_like else {"item": None, "warnings": []}
+        warnings.extend(price_history_fetch["warnings"])
+        warnings.extend(financial_metrics_fetch["warnings"])
+        warnings.extend(quote_snapshot_fetch["warnings"])
+        warnings.extend(company_profile_fetch["warnings"])
 
-        persisted_price_history = (
-            self.price_history_repository.upsert_many(price_history_fetch["items"])
-            if self.price_history_repository is not None and price_history_fetch["items"]
-            else []
+        persisted_price_history = self._persist_many(
+            repository=self.price_history_repository,
+            items=price_history_fetch["items"],
+            warning_prefix="price history persistence failed",
+            warnings=warnings,
+            commit=False,
         )
-        persisted_financial_metrics = (
-            self.financial_metrics_repository.upsert_many(financial_metrics_fetch["items"])
-            if self.financial_metrics_repository is not None and financial_metrics_fetch["items"]
-            else []
+        persisted_financial_metrics = self._persist_many(
+            repository=self.financial_metrics_repository,
+            items=financial_metrics_fetch["items"],
+            warning_prefix="financial metrics persistence failed",
+            warnings=warnings,
+            commit=False,
         )
-        persisted_company_profile = (
-            self.company_profile_repository.upsert(company_profile_fetch["item"])
-            if self.company_profile_repository is not None and company_profile_fetch["item"] is not None
-            else None
+        persisted_quote_snapshot = self._persist_many(
+            repository=self.quote_snapshot_repository,
+            items=[quote_snapshot_fetch["item"]] if quote_snapshot_fetch["item"] is not None else [],
+            warning_prefix="quote snapshot persistence failed",
+            warnings=warnings,
+            commit=False,
+        )
+        persisted_company_profile = self._persist_one(
+            repository=self.company_profile_repository,
+            item=company_profile_fetch["item"],
+            warning_prefix="company profile persistence failed",
+            warnings=warnings,
+            commit=False,
+        )
+        self._commit_repositories(
+            self.announcement_repository,
+            self.news_repository,
+            self.price_history_repository,
+            self.financial_metrics_repository,
+            self.quote_snapshot_repository,
+            self.company_profile_repository,
         )
 
         return StockSyncResult(
@@ -135,14 +184,9 @@ class StockSyncService:
             news_items_upserted=len(persisted_news_items),
             price_bars_upserted=len(persisted_price_history),
             financial_metrics_upserted=len(persisted_financial_metrics),
+            quote_snapshot_updated=len(persisted_quote_snapshot) > 0,
             company_profile_updated=persisted_company_profile is not None,
-            warnings=[
-                *announcement_fetch["warnings"],
-                *news_fetch["warnings"],
-                *price_history_fetch["warnings"],
-                *financial_metrics_fetch["warnings"],
-                *company_profile_fetch["warnings"],
-            ],
+            warnings=warnings,
             synced_at=synced_at or utc_now(),
         )
 
@@ -171,3 +215,66 @@ class StockSyncService:
             "item": item,
             "warnings": list(warnings),
         }
+
+    @staticmethod
+    def _persist_many(
+        *,
+        repository: Any | None,
+        items: list[Any],
+        warning_prefix: str,
+        warnings: list[str],
+        commit: bool,
+    ) -> list[Any]:
+        if repository is None or not items:
+            return []
+
+        session = getattr(repository, "session", None)
+        transaction = session.begin_nested() if session is not None and not commit else nullcontext()
+        try:
+            with transaction:
+                return list(repository.upsert_many(items, commit=commit))
+        except Exception as exc:
+            warnings.append(f"{warning_prefix}: {type(exc).__name__}: {exc}")
+            return []
+
+    @staticmethod
+    def _persist_one(
+        *,
+        repository: Any | None,
+        item: Any,
+        warning_prefix: str,
+        warnings: list[str],
+        commit: bool,
+    ) -> Any | None:
+        if repository is None or item is None:
+            return None
+
+        session = getattr(repository, "session", None)
+        transaction = session.begin_nested() if session is not None and not commit else nullcontext()
+        try:
+            with transaction:
+                return repository.upsert(item, commit=commit)
+        except Exception as exc:
+            warnings.append(f"{warning_prefix}: {type(exc).__name__}: {exc}")
+            return None
+
+    @staticmethod
+    def _commit_repositories(*repositories: Any | None) -> None:
+        for repository in repositories:
+            session = getattr(repository, "session", None)
+            if session is not None:
+                session.commit()
+                return
+
+    @staticmethod
+    def _is_fund_like(industry: str | None) -> bool:
+        if industry is None:
+            return False
+        normalized = industry.strip()
+        return normalized in {"基金", "指数"}
+
+    @staticmethod
+    def _is_index(industry: str | None) -> bool:
+        if industry is None:
+            return False
+        return industry.strip() == "指数"

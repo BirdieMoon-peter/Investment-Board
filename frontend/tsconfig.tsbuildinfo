@@ -1,1 +1,0 @@
-{"root":["./src/app.test.tsx","./src/app.tsx","./src/main.tsx","./src/api/watchlist.ts","./src/components/searchbox.test.tsx","./src/components/searchbox.tsx","./src/components/statusmessage.tsx","./src/components/watchlisttable.test.tsx","./src/components/watchlisttable.tsx","./src/test/setup.ts","./src/types/watchlist.ts"],"version":"5.9.3"}

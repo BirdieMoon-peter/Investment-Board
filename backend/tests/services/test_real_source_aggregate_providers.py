@@ -307,10 +307,10 @@ def test_provider_modules_export_real_source_primitives():
     client = build_provider_client()
     try:
         assert client.headers["user-agent"].startswith("Mozilla/5.0")
-        assert client.timeout.connect == pytest.approx(10.0)
-        assert client.timeout.read == pytest.approx(10.0)
-        assert client.timeout.write == pytest.approx(10.0)
-        assert client.timeout.pool == pytest.approx(10.0)
+        assert client.timeout.connect == pytest.approx(25.0)
+        assert client.timeout.read == pytest.approx(25.0)
+        assert client.timeout.write == pytest.approx(25.0)
+        assert client.timeout.pool == pytest.approx(25.0)
     finally:
         client.close()
 

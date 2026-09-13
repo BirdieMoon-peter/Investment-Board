@@ -21,18 +21,18 @@ class EastmoneyFinancialMetricsSource:
     ) -> list[RawFinancialMetrics]:
         normalized_code = stock_code.strip()
         normalized_market = market.strip().upper()
-        secid = _secid(normalized_market, normalized_code)
+        security_code = _security_code(normalized_market, normalized_code)
 
         with build_provider_client(transport=self._transport) as client:
             response = client.get(
                 _EASTMONEY_FINANCIAL_METRICS_URL,
                 params={
                     "reportName": "RPT_LICO_FN_CPD",
-                    "columns": "REPORT_DATE_NAME,TOTAL_OPERATE_INCOME,PARENT_NETPROFIT,BASIC_EPS,WEIGHTAVG_ROE,DEBT_ASSET_RATIO",
-                    "filter": f'(SECUCODE="{secid}")',
+                    "columns": "SECURITY_CODE,SECUCODE,DATATYPE,NOTICE_DATE,TOTAL_OPERATE_INCOME,PARENT_NETPROFIT,BASIC_EPS,WEIGHTAVG_ROE",
+                    "filter": f'(SECURITY_CODE="{security_code}")',
                     "pageNumber": "1",
                     "pageSize": str(limit),
-                    "sortColumns": "REPORT_DATE",
+                    "sortColumns": "NOTICE_DATE",
                     "sortTypes": "-1",
                 },
             )
@@ -59,14 +59,12 @@ def _extract_metric_rows(payload: object) -> object:
 
 
 
-def _secid(market: str, code: str) -> str:
-    market_map = {"SZ": "0", "SH": "1"}
-    market_prefix = market_map.get(market)
-    if market_prefix is None:
+def _security_code(market: str, code: str) -> str:
+    if market not in {"SZ", "SH"}:
         raise ValueError(f"unsupported market: {market}")
     if not code:
         raise ValueError("stock code is required")
-    return f"{market_prefix}.{code}"
+    return code
 
 
 
@@ -74,7 +72,7 @@ def _parse_metric_row(row: object) -> RawFinancialMetrics:
     if not isinstance(row, dict):
         raise ValueError("Eastmoney financial metrics row is not a dict")
 
-    report_period = _require_text(row, "REPORT_DATE_NAME")
+    report_period = _report_period(row)
     return RawFinancialMetrics(
         report_period=report_period,
         revenue=_optional_decimal(row.get("TOTAL_OPERATE_INCOME")),
@@ -86,11 +84,29 @@ def _parse_metric_row(row: object) -> RawFinancialMetrics:
 
 
 
-def _require_text(row: dict[str, object], key: str) -> str:
-    value = row.get(key)
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"Eastmoney financial metrics row missing {key}")
-    return value.strip()
+def _report_period(row: dict[str, object]) -> str:
+    report_period = row.get("REPORT_DATE_NAME")
+    if isinstance(report_period, str) and report_period.strip():
+        return report_period.strip()
+
+    datatype = row.get("DATATYPE")
+    if not isinstance(datatype, str) or not datatype.strip():
+        raise ValueError("Eastmoney financial metrics row missing DATATYPE")
+    return _normalize_datatype(datatype)
+
+
+
+def _normalize_datatype(datatype: str) -> str:
+    normalized = datatype.strip().replace(" ", "")
+    if normalized.endswith("一季报"):
+        return normalized[:4] + "Q1"
+    if normalized.endswith("半年报"):
+        return normalized[:4] + "Q2"
+    if normalized.endswith("三季报"):
+        return normalized[:4] + "Q3"
+    if normalized.endswith("年报"):
+        return normalized[:4] + "Q4"
+    return normalized
 
 
 

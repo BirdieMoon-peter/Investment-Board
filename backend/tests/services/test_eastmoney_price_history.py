@@ -51,6 +51,22 @@ def test_eastmoney_price_history_source_maps_klines_to_raw_price_bars():
 
 
 
+def test_eastmoney_price_history_source_requests_all_time_daily_bars_by_default():
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"data": {"klines": []}})
+
+    source = EastmoneyPriceHistorySource(transport=httpx.MockTransport(handler))
+
+    result = source.fetch("600519", "sh")
+
+    assert result == []
+    assert len(requests) == 1
+    assert requests[0].url.params.get("lmt") == "10000"
+
+
 def test_eastmoney_price_history_source_raises_clear_error_for_missing_klines():
     transport = httpx.MockTransport(
         lambda request: httpx.Response(200, json={"data": {}})

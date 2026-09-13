@@ -70,7 +70,7 @@ from app.services.providers.http_client import build_provider_client
 
 - [ ] **Step 2: Run the focused import test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py::test_provider_modules_export_real_source_primitives" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_real_source_aggregate_providers.py::test_provider_modules_export_real_source_primitives" -q`
 Expected: FAIL with import errors because the shared provider files do not exist yet.
 
 - [ ] **Step 3: Promote provider runtime dependencies into the backend package**
@@ -151,7 +151,7 @@ def test_sina_announcement_source_raises_clear_error_for_missing_markup(): ...
 
 - [ ] **Step 3: Run the announcement adapter tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_announcement.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py" "backend/tests/services/test_sina_announcement.py" -q`
 Expected: FAIL because the source modules do not exist yet.
 
 - [ ] **Step 4: Implement the Eastmoney announcement adapter with JSON parsing**
@@ -200,7 +200,7 @@ def test_sina_news_source_raises_clear_error_for_invalid_rows(): ...
 
 - [ ] **Step 3: Run the news adapter tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_news.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_news.py" "backend/tests/services/test_sina_news.py" -q`
 Expected: FAIL because the source modules do not exist yet.
 
 - [ ] **Step 4: Implement the Eastmoney news adapter with JSON parsing**
@@ -260,7 +260,7 @@ def test_get_stock_sync_service_builds_real_aggregate_providers(session): ...
 
 - [ ] **Step 4: Run the aggregate and sync tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_real_source_aggregate_providers.py" "backend/tests/services/test_stock_sync_service.py" "backend/tests/api/test_stock_sync_api.py" -q`
 Expected: FAIL because the aggregate providers and sync service still only accept `security_id` and the sync dependency still injects empty source lists.
 
 - [ ] **Step 5: Update aggregate providers to call real source adapters and convert raw records**
@@ -318,7 +318,7 @@ Expected: PASS
 
 - [ ] **Step 1: Run the real-source backend verification suite**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_announcement.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py" "backend/tests/services/test_sina_announcement.py" "backend/tests/services/test_eastmoney_news.py" "backend/tests/services/test_sina_news.py" "backend/tests/services/test_real_source_aggregate_providers.py" "backend/tests/services/test_stock_sync_service.py" "backend/tests/api/test_stock_sync_api.py" -q`
 Expected: PASS
 
 - [ ] **Step 2: Record stable provider decisions if the verification passes**

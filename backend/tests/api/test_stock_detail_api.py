@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from app.db.models import Announcement, CompanyProfile, FinancialMetrics, NewsItem, PriceBarDaily, PriceHistory
+from app.db.models import Announcement, CompanyProfile, FinancialMetrics, NewsItem, PriceHistory, QuoteSnapshot
 
 
 def test_get_stock_detail_returns_security_with_price_context_announcements_and_news(
@@ -10,14 +10,12 @@ def test_get_stock_detail_returns_security_with_price_context_announcements_and_
     session,
 ) -> None:
     session.add(
-        PriceBarDaily(
+        QuoteSnapshot(
             security_id=seeded_security.id,
-            trade_date=date(2026, 3, 10),
-            open_price=Decimal("10.0000"),
-            high_price=Decimal("10.5000"),
-            low_price=Decimal("9.8000"),
-            close_price=Decimal("10.3000"),
-            volume=Decimal("1234567.0000"),
+            last_price=Decimal("10.3000"),
+            change_amount=Decimal("0.3000"),
+            change_percent=Decimal("3.0000"),
+            snapshot_time=datetime(2026, 3, 10, 15, 0, 0),
         )
     )
     session.add(
@@ -93,12 +91,10 @@ def test_get_stock_detail_returns_security_with_price_context_announcements_and_
         },
         "price_context": [
             {
-                "trade_date": "2026-03-10",
-                "open_price": "10.0000",
-                "high_price": "10.5000",
-                "low_price": "9.8000",
-                "close_price": "10.3000",
-                "volume": "1234567.0000",
+                "last_price": "10.3000",
+                "change_amount": "0.3000",
+                "change_percent": "3.0000",
+                "snapshot_time": "2026-03-10T15:00:00Z",
             }
         ],
         "announcements": [
@@ -150,6 +146,51 @@ def test_get_stock_detail_returns_security_with_price_context_announcements_and_
             "employees": 35000,
         },
     }
+
+
+def test_get_stock_detail_returns_price_context_newest_first(
+    client,
+    seeded_security,
+    session,
+) -> None:
+    session.add(
+        QuoteSnapshot(
+            security_id=seeded_security.id,
+            last_price=Decimal("10.1000"),
+            change_amount=Decimal("0.1000"),
+            change_percent=Decimal("1.0000"),
+            snapshot_time=datetime(2026, 3, 10, 9, 0, 0),
+        )
+    )
+    session.add(
+        QuoteSnapshot(
+            security_id=seeded_security.id,
+            last_price=Decimal("10.4000"),
+            change_amount=Decimal("0.4000"),
+            change_percent=Decimal("4.0000"),
+            snapshot_time=datetime(2026, 3, 10, 15, 0, 0),
+        )
+    )
+    session.commit()
+
+    response = client.get(f"/api/stocks/{seeded_security.id}")
+
+    assert response.status_code == 200
+    assert response.json()["price_context"] == [
+        {
+            "last_price": "10.4000",
+            "change_amount": "0.4000",
+            "change_percent": "4.0000",
+            "snapshot_time": "2026-03-10T15:00:00Z",
+        },
+        {
+            "last_price": "10.1000",
+            "change_amount": "0.1000",
+            "change_percent": "1.0000",
+            "snapshot_time": "2026-03-10T09:00:00Z",
+        },
+    ]
+
 
 
 def test_get_stock_detail_returns_404_for_unknown_security(client) -> None:

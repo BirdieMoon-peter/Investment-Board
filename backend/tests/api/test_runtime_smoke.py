@@ -40,7 +40,7 @@ def test_runtime_app_serves_seeded_watchlist_items_from_configured_database(tmp_
             "industry": "Beverages",
             "last_price": "1688.0000",
             "change_percent": "0.7362",
-            "snapshot_time": "2026-03-11T09:30:00",
+            "snapshot_time": "2026-03-11T09:30:00Z",
         },
         {
             "security_id": 2,
@@ -50,7 +50,7 @@ def test_runtime_app_serves_seeded_watchlist_items_from_configured_database(tmp_
             "industry": "Banking",
             "last_price": "10.5000",
             "change_percent": "5.0000",
-            "snapshot_time": "2026-03-11T09:30:00",
+            "snapshot_time": "2026-03-11T09:30:00Z",
         },
     ]
     assert search_response.status_code == 200

@@ -49,6 +49,39 @@ describe('SearchBox', () => {
     expect(onAdd).toHaveBeenCalledWith(1)
   })
 
+  it('shows externally discovered A-share results through the normal Add flow', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          security_id: 99,
+          market: 'SZ',
+          code: '002594',
+          name: 'BYD',
+          industry: 'Auto',
+          status: 'active',
+        },
+      ],
+    })
+
+    const onAdd = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<SearchBox onAdd={onAdd} onAddCustom={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText(/search securities/i), {
+      target: { value: '002594' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /search/i }))
+
+    expect(await screen.findByText('BYD')).toBeInTheDocument()
+    expect(screen.getByText('SZ:002594')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/market for custom stock/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
+    expect(onAdd).toHaveBeenCalledWith(99)
+  })
+
   it('offers a market selector with a safe default for a custom code fallback', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

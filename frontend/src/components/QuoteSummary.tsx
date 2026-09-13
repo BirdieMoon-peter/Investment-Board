@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n'
 import type { StockDetailPriceBar } from '../types/watchlist'
 
 interface QuoteSummaryProps {
@@ -5,39 +6,33 @@ interface QuoteSummaryProps {
 }
 
 export function QuoteSummary({ latestBar }: QuoteSummaryProps) {
-  if (!latestBar) {
-    return <p>No quote summary is available yet.</p>
-  }
+  const { t, formatDateTime } = useI18n()
 
   return (
-    <section className="stock-detail-section" aria-label="Quote summary">
-      <h2>Quote summary</h2>
-      <dl className="stock-detail-grid">
-        <div>
-          <dt>Close</dt>
-          <dd>{latestBar.close_price}</dd>
-        </div>
-        <div>
-          <dt>Open</dt>
-          <dd>{latestBar.open_price}</dd>
-        </div>
-        <div>
-          <dt>High</dt>
-          <dd>{latestBar.high_price}</dd>
-        </div>
-        <div>
-          <dt>Low</dt>
-          <dd>{latestBar.low_price}</dd>
-        </div>
-        <div>
-          <dt>Volume</dt>
-          <dd>{latestBar.volume}</dd>
-        </div>
-        <div>
-          <dt>Trade date</dt>
-          <dd>{latestBar.trade_date}</dd>
-        </div>
-      </dl>
+    <section className="stock-detail-section" aria-label={t('detail.quoteSummary')}>
+      <h2>{t('detail.quoteSummary')}</h2>
+      {latestBar ? (
+        <dl className="stock-detail-grid">
+          <div>
+            <dt>{t('detail.lastPrice')}</dt>
+            <dd>{latestBar.last_price}</dd>
+          </div>
+          <div>
+            <dt>{t('detail.changeAmount')}</dt>
+            <dd>{latestBar.change_amount}</dd>
+          </div>
+          <div>
+            <dt>{t('detail.changePercent')}</dt>
+            <dd>{latestBar.change_percent}%</dd>
+          </div>
+          <div>
+            <dt>{t('detail.snapshotTime')}</dt>
+            <dd>{formatDateTime(latestBar.snapshot_time)}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p>{t('detail.noQuoteSummary')}</p>
+      )}
     </section>
   )
 }

@@ -62,15 +62,15 @@ class PriceHistoryRepository:
 
         if commit:
             self.session.commit()
+            for row in persisted:
+                self.session.refresh(row)
         else:
             self.session.flush()
 
-        for row in persisted:
-            self.session.refresh(row)
         return persisted
 
     def list_recent_by_security_id(
-        self, security_id: int, limit: int = 60
+        self, security_id: int, limit: int = 252
     ) -> list[PriceHistory]:
         if limit <= 0:
             return []

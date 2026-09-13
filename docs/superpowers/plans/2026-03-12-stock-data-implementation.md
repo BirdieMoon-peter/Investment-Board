@@ -83,7 +83,7 @@ def test_price_history_model_creation():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_price_history.py::test_price_history_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_price_history.py::test_price_history_model_creation -v`
 Expected: FAIL with "ModuleNotFoundError: No module named 'app.db.models.price_history'"
 
 - [ ] **Step 3: Implement PriceHistory model**
@@ -116,7 +116,7 @@ from app.db.models.price_history import PriceHistory
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_price_history.py::test_price_history_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_price_history.py::test_price_history_model_creation -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -157,7 +157,7 @@ def test_financial_metrics_model_creation():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_financial_metrics.py::test_financial_metrics_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_financial_metrics.py::test_financial_metrics_model_creation -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement FinancialMetrics model**
@@ -188,7 +188,7 @@ from app.db.models.financial_metrics import FinancialMetrics
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_financial_metrics.py::test_financial_metrics_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_financial_metrics.py::test_financial_metrics_model_creation -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -231,7 +231,7 @@ def test_company_profile_model_creation():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_company_profile.py::test_company_profile_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_company_profile.py::test_company_profile_model_creation -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement CompanyProfile model**
@@ -264,7 +264,7 @@ from app.db.models.company_profile import CompanyProfile
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/models/test_company_profile.py::test_company_profile_model_creation -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/models/test_company_profile.py::test_company_profile_model_creation -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -322,7 +322,7 @@ def test_upsert_price_history():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_price_history_repository.py::test_upsert_price_history -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_price_history_repository.py::test_upsert_price_history -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement PriceHistoryRepository**
@@ -384,7 +384,7 @@ from app.db.repositories.price_history_repository import PriceHistoryRepository
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_price_history_repository.py::test_upsert_price_history -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_price_history_repository.py::test_upsert_price_history -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -440,7 +440,7 @@ def test_upsert_financial_metrics():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_financial_metrics_repository.py::test_upsert_financial_metrics -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_financial_metrics_repository.py::test_upsert_financial_metrics -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement FinancialMetricsRepository**
@@ -500,7 +500,7 @@ from app.db.repositories.financial_metrics_repository import FinancialMetricsRep
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_financial_metrics_repository.py::test_upsert_financial_metrics -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_financial_metrics_repository.py::test_upsert_financial_metrics -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -556,7 +556,7 @@ def test_upsert_company_profile():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_company_profile_repository.py::test_upsert_company_profile -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_company_profile_repository.py::test_upsert_company_profile -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement CompanyProfileRepository**
@@ -610,7 +610,7 @@ from app.db.repositories.company_profile_repository import CompanyProfileReposit
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_company_profile_repository.py::test_upsert_company_profile -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/db/repositories/test_company_profile_repository.py::test_upsert_company_profile -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -673,7 +673,7 @@ def test_raw_company_profile_creation():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/providers/test_raw_types.py -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/providers/test_raw_types.py -v`
 Expected: FAIL with "ImportError: cannot import name 'RawPriceBar'"
 
 - [ ] **Step 3: Add raw stock data types to raw_types.py**
@@ -713,7 +713,7 @@ class RawCompanyProfile(BaseModel):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/providers/test_raw_types.py -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/providers/test_raw_types.py -v`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -747,7 +747,7 @@ def test_eastmoney_price_history_fetch():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_price_history.py::test_eastmoney_price_history_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_price_history.py::test_eastmoney_price_history_fetch -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement Eastmoney price history adapter**
@@ -803,7 +803,7 @@ class EastmoneyPriceHistorySource:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_price_history.py::test_eastmoney_price_history_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_price_history.py::test_eastmoney_price_history_fetch -v`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -836,7 +836,7 @@ def test_eastmoney_financial_metrics_fetch():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_financial_metrics.py::test_eastmoney_financial_metrics_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_financial_metrics.py::test_eastmoney_financial_metrics_fetch -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement Eastmoney financial metrics adapter**
@@ -888,7 +888,7 @@ class EastmoneyFinancialMetricsSource:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_financial_metrics.py::test_eastmoney_financial_metrics_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_financial_metrics.py::test_eastmoney_financial_metrics_fetch -v`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -920,7 +920,7 @@ def test_eastmoney_company_profile_fetch():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_company_profile.py::test_eastmoney_company_profile_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_company_profile.py::test_eastmoney_company_profile_fetch -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement Eastmoney company profile adapter**
@@ -961,7 +961,7 @@ class EastmoneyCompanyProfileSource:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_company_profile.py::test_eastmoney_company_profile_fetch -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_eastmoney_company_profile.py::test_eastmoney_company_profile_fetch -v`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -1012,7 +1012,7 @@ def test_aggregate_price_history_provider():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py::test_aggregate_price_history_provider -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py::test_aggregate_price_history_provider -v`
 Expected: FAIL with "ModuleNotFoundError"
 
 - [ ] **Step 3: Implement aggregate stock data providers**
@@ -1093,7 +1093,7 @@ class AggregateCompanyProfileProvider:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py::test_aggregate_price_history_provider -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py::test_aggregate_price_history_provider -v`
 Expected: PASS
 
 - [ ] **Step 5: Add tests for financial metrics and company profile providers**
@@ -1140,7 +1140,7 @@ def test_aggregate_company_profile_provider():
 
 - [ ] **Step 6: Run all aggregate provider tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_data_aggregate_providers.py -v`
 Expected: PASS (3 tests)
 
 - [ ] **Step 7: Commit**
@@ -1254,7 +1254,7 @@ def test_stock_sync_with_stock_data():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_sync_with_data.py::test_stock_sync_with_stock_data -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_sync_with_data.py::test_stock_sync_with_stock_data -v`
 Expected: FAIL with "TypeError: __init__() got unexpected keyword argument 'price_history_provider'"
 
 - [ ] **Step 3: Extend StockSyncService to support stock data providers**
@@ -1352,7 +1352,7 @@ class StockSyncResult:
 
 - [ ] **Step 6: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_sync_with_data.py::test_stock_sync_with_stock_data -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/services/test_stock_sync_with_data.py::test_stock_sync_with_stock_data -v`
 Expected: PASS
 
 - [ ] **Step 7: Commit**
@@ -1410,7 +1410,7 @@ def test_company_profile_schema():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/schemas/test_stock_detail_schema.py -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/schemas/test_stock_detail_schema.py -v`
 Expected: FAIL with "ImportError: cannot import name 'PriceBarSchema'"
 
 - [ ] **Step 3: Add stock data schemas to stock_detail.py**
@@ -1464,7 +1464,7 @@ class StockDetailResponse(SQLModel):
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/schemas/test_stock_detail_schema.py -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/schemas/test_stock_detail_schema.py -v`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -1546,7 +1546,7 @@ def test_get_stock_detail_with_stock_data():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/api/test_stock_detail_with_data_api.py::test_get_stock_detail_with_stock_data -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/api/test_stock_detail_with_data_api.py::test_get_stock_detail_with_stock_data -v`
 Expected: FAIL with KeyError or missing fields
 
 - [ ] **Step 3: Update stock detail repository to include stock data**
@@ -1646,7 +1646,7 @@ return StockSyncResponse.from_service_result(
 
 - [ ] **Step 8: Run test to verify it passes**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests/api/test_stock_detail_with_data_api.py::test_get_stock_detail_with_stock_data -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests/api/test_stock_detail_with_data_api.py::test_get_stock_detail_with_stock_data -v`
 Expected: PASS
 
 - [ ] **Step 9: Commit**
@@ -1711,7 +1711,7 @@ test('CompanyProfile type structure', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/types/watchlist.test.ts`
+Run: `npm test --prefix "frontend" -- --run src/types/watchlist.test.ts`
 Expected: FAIL with "Module not found" or type errors
 
 - [ ] **Step 3: Add stock data types to watchlist.ts**
@@ -1766,7 +1766,7 @@ export interface StockDetailPageData {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/types/watchlist.test.ts`
+Run: `npm test --prefix "frontend" -- --run src/types/watchlist.test.ts`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -1828,7 +1828,7 @@ test('renders empty state when no price history', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/PriceHistoryChart.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/PriceHistoryChart.test.tsx`
 Expected: FAIL with "Module not found"
 
 - [ ] **Step 3: Implement PriceHistoryChart component**
@@ -1885,7 +1885,7 @@ export function PriceHistoryChart({ bars }: PriceHistoryChartProps) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/PriceHistoryChart.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/PriceHistoryChart.test.tsx`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -1937,7 +1937,7 @@ test('renders empty state when no financial metrics', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/FinancialMetricsPanel.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/FinancialMetricsPanel.test.tsx`
 Expected: FAIL with "Module not found"
 
 - [ ] **Step 3: Implement FinancialMetricsPanel component**
@@ -2004,7 +2004,7 @@ export function FinancialMetricsPanel({ metrics }: FinancialMetricsPanelProps) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/FinancialMetricsPanel.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/FinancialMetricsPanel.test.tsx`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -2056,7 +2056,7 @@ test('renders empty state when no company profile', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/CompanyProfilePanel.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/CompanyProfilePanel.test.tsx`
 Expected: FAIL with "Module not found"
 
 - [ ] **Step 3: Implement CompanyProfilePanel component**
@@ -2133,7 +2133,7 @@ export function CompanyProfilePanel({ profile }: CompanyProfilePanelProps) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/components/CompanyProfilePanel.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/components/CompanyProfilePanel.test.tsx`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -2217,7 +2217,7 @@ test('renders stock data sections when available', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/pages/StockDetailPage.test.tsx`
 Expected: FAIL with "Unable to find element"
 
 - [ ] **Step 3: Import stock data components in StockDetailPage**
@@ -2248,7 +2248,7 @@ import { CompanyProfilePanel } from '../components/CompanyProfilePanel'
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- --run src/pages/StockDetailPage.test.tsx`
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -2267,22 +2267,22 @@ git commit -m "feat: integrate stock data components into stock detail page"
 
 - [ ] **Step 1: Run all backend tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest backend/tests -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest backend/tests -q`
 Expected: All tests pass
 
 - [ ] **Step 2: Run all frontend tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run`
+Run: `npm test --prefix "frontend" -- --run`
 Expected: All tests pass
 
 - [ ] **Step 3: Start backend server**
 
-Run: `cd "/Users/peter/Desktop/Investment Board/backend" && .venv/bin/uvicorn app.main:app --reload`
+Run: `cd "backend" && .venv/bin/uvicorn app.main:app --reload`
 Expected: Server starts on http://127.0.0.1:8000
 
 - [ ] **Step 4: Start frontend dev server**
 
-Run: `npm run dev --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+Run: `npm run dev --prefix "frontend"`
 Expected: Server starts on http://127.0.0.1:5173
 
 - [ ] **Step 5: Manual browser verification**
@@ -2317,4 +2317,3 @@ git commit -m "docs: update module docs for stock data feature"
 ## Plan Complete
 
 All tasks defined for stock data implementation. Ready for execution using superpowers:subagent-driven-development or superpowers:executing-plans.
-

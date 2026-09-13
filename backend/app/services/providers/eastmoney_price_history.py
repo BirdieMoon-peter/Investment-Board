@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import httpx
 
-from app.services.providers.http_client import build_provider_client
+from app.services.providers.http_client import build_provider_client, retry_request
 from app.services.providers.raw_types import RawPriceBar
 
 _EASTMONEY_PRICE_HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
@@ -18,14 +18,16 @@ class EastmoneyPriceHistorySource:
         stock_code: str,
         market: str,
         *,
-        limit: int = 60,
+        limit: int = 10000,  # Fetch all available data since inception (~40 years of trading days)
     ) -> list[RawPriceBar]:
         normalized_code = stock_code.strip()
         normalized_market = market.strip().upper()
         secid = _secid(normalized_market, normalized_code)
 
         with build_provider_client(transport=self._transport) as client:
-            response = client.get(
+            response = retry_request(
+                client,
+                "GET",
                 _EASTMONEY_PRICE_HISTORY_URL,
                 params={
                     "secid": secid,
@@ -38,7 +40,6 @@ class EastmoneyPriceHistorySource:
                     "end": "20500101",
                 },
             )
-            response.raise_for_status()
             payload = response.json()
 
         rows = _extract_kline_rows(payload)

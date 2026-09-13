@@ -18,6 +18,19 @@ export interface WatchlistItem {
   snapshot_time: string | null
 }
 
+export interface WatchlistSyncResponse {
+  security_ids: number[]
+  synced_count: number
+  announcements_upserted: number
+  news_items_upserted: number
+  price_bars_upserted: number
+  financial_metrics_upserted: number
+  quote_snapshots_updated: number
+  company_profiles_updated: number
+  warnings: string[]
+  synced_at: string
+}
+
 export interface StockDetailPageSecurity {
   security_id: number
   market: string
@@ -28,12 +41,10 @@ export interface StockDetailPageSecurity {
 }
 
 export interface StockDetailPriceBar {
-  trade_date: string
-  open_price: string
-  high_price: string
-  low_price: string
-  close_price: string
-  volume: string
+  last_price: string
+  change_amount: string
+  change_percent: string
+  snapshot_time: string
 }
 
 export interface StockDetailPriceHistoryBar {

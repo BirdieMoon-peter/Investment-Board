@@ -74,7 +74,7 @@ def test_aggregated_news_provider_returns_warnings_for_failed_sources(): ...
 
 - [ ] **Step 3: Run the aggregate provider tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_aggregated_announcement_provider.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_aggregated_news_provider.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_aggregated_announcement_provider.py" "backend/tests/services/test_aggregated_news_provider.py" -q`
 Expected: FAIL because aggregate providers do not exist yet
 
 - [ ] **Step 4: Implement source adapters and aggregate providers**
@@ -122,7 +122,7 @@ def test_post_stock_sync_returns_warnings_and_synced_at(client, session, seeded_
 
 - [ ] **Step 3: Run the warning tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service_warnings.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_warning_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_stock_sync_service_warnings.py" "backend/tests/api/test_stock_sync_warning_api.py" -q`
 Expected: FAIL because warning propagation is not implemented yet
 
 - [ ] **Step 4: Extend `StockSyncResult` and `StockSyncResponse` with warning-aware fields**
@@ -170,7 +170,7 @@ expect(await screen.findByText(/1 warning/i)).toBeInTheDocument()
 
 - [ ] **Step 2: Run the detail page test to verify it fails before warning UI implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: FAIL because warning rendering is missing
 
 - [ ] **Step 3: Extend frontend sync types for warning-aware responses**
@@ -195,7 +195,7 @@ export interface StockSyncResponse {
 
 - [ ] **Step 5: Re-run the detail page tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: PASS
 
 ## Chunk 4: Verification and Progress Sync
@@ -210,8 +210,8 @@ Expected: PASS
 - [ ] **Step 1: Run the real-provider automated checks**
 
 Run:
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_aggregated_announcement_provider.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_aggregated_news_provider.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service_warnings.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_warning_api.py" -q`
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_aggregated_announcement_provider.py" "backend/tests/services/test_aggregated_news_provider.py" "backend/tests/services/test_stock_sync_service_warnings.py" "backend/tests/api/test_stock_sync_warning_api.py" -q`
+- `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 
 Expected: all pass
 

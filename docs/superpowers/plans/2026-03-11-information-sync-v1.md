@@ -69,7 +69,7 @@ def test_news_repository_upserts_without_duplicates(session, seeded_security): .
 
 - [ ] **Step 2: Run the repository tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_announcement_upsert_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_news_upsert_repository.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_announcement_upsert_repository.py" "backend/tests/db/test_news_upsert_repository.py" -q`
 Expected: FAIL because upsert methods do not exist yet
 
 - [ ] **Step 3: Implement minimal upsert methods and uniqueness rules**
@@ -91,7 +91,7 @@ def test_stock_sync_service_returns_warning_on_partial_failure(session, seeded_s
 
 - [ ] **Step 5: Run the sync service tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_stock_sync_service.py" -q`
 Expected: FAIL with missing service/provider modules
 
 - [ ] **Step 6: Implement provider protocols and stock sync service**
@@ -126,7 +126,7 @@ def test_post_stock_sync_returns_404_for_missing_security(client): ...
 
 - [ ] **Step 2: Run the API test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_stock_sync_api.py" -q`
 Expected: FAIL because the route does not exist yet
 
 - [ ] **Step 3: Implement sync response schema and POST endpoint**
@@ -160,7 +160,7 @@ expect(await screen.findByRole('button', { name: /sync announcements\/news/i }))
 
 - [ ] **Step 2: Run the detail page test to verify it fails before sync UI implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: FAIL because sync UI is missing
 
 - [ ] **Step 3: Implement frontend sync client call**
@@ -180,7 +180,7 @@ export async function syncStockDetail(securityId: number): Promise<StockSyncResp
 
 - [ ] **Step 5: Re-run the detail page test**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: PASS
 
 ## Chunk 4: Cross-Layer Verification and Sync-State Doc Update
@@ -197,8 +197,8 @@ Expected: PASS
 - [ ] **Step 1: Run the information-sync automated checks**
 
 Run:
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_announcement_upsert_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_news_upsert_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_service.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" -q`
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_announcement_upsert_repository.py" "backend/tests/db/test_news_upsert_repository.py" "backend/tests/services/test_stock_sync_service.py" "backend/tests/api/test_stock_sync_api.py" -q`
+- `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 
 Expected: all pass
 

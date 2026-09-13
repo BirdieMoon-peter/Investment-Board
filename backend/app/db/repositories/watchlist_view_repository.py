@@ -26,6 +26,7 @@ class WatchlistViewRepository:
         self.session = session
 
     def _latest_snapshot_subquery(self):
+        watched_security_ids = select(WatchlistItem.security_id.label("security_id")).subquery()
         ranked_snapshots = (
             select(
                 QuoteSnapshot.id.label("quote_snapshot_id"),
@@ -37,6 +38,7 @@ class WatchlistViewRepository:
                 )
                 .label("row_number"),
             )
+            .join(watched_security_ids, watched_security_ids.c.security_id == QuoteSnapshot.security_id)
             .subquery()
         )
 

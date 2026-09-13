@@ -62,7 +62,7 @@ class RecordingAnnouncementRepository:
     def get_latest_published_at(self, security_id: int) -> datetime | None:
         return self.latest_published_at
 
-    def upsert_many(self, items: list[Announcement]) -> list[Announcement]:
+    def upsert_many(self, items: list[Announcement], commit: bool = True) -> list[Announcement]:
         self.upsert_calls.append(items)
         return items
 
@@ -75,7 +75,7 @@ class RecordingNewsRepository:
     def get_latest_published_at(self, security_id: int) -> datetime | None:
         return self.latest_published_at
 
-    def upsert_many(self, items: list[NewsItem]) -> list[NewsItem]:
+    def upsert_many(self, items: list[NewsItem], commit: bool = True) -> list[NewsItem]:
         self.upsert_calls.append(items)
         return items
 

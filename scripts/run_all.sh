@@ -90,7 +90,9 @@ if [[ "$SEED_FIRST" == true ]]; then
   seed_demo_data
 fi
 
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 "$BACKEND_SCRIPT" &
 BACKEND_PID=$!

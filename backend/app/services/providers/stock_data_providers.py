@@ -1,9 +1,11 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Protocol
 
-from app.db.models import CompanyProfile, FinancialMetrics, PriceHistory
-from app.services.providers.raw_types import RawCompanyProfile, RawFinancialMetrics, RawPriceBar
+from app.db.models import CompanyProfile, FinancialMetrics, PriceHistory, QuoteSnapshot
+from app.services.providers.raw_types import RawCompanyProfile, RawFinancialMetrics, RawPriceBar, RawQuoteSnapshot
 
 
 class RawPriceHistorySource(Protocol):
@@ -12,7 +14,7 @@ class RawPriceHistorySource(Protocol):
         stock_code: str,
         market: str,
         *,
-        limit: int = 60,
+        limit: int = 10000,
     ) -> Iterable[RawPriceBar]: ...
 
 
@@ -24,6 +26,14 @@ class RawFinancialMetricsSource(Protocol):
         *,
         limit: int = 8,
     ) -> Iterable[RawFinancialMetrics]: ...
+
+
+class RawQuoteSnapshotSource(Protocol):
+    def fetch(
+        self,
+        stock_code: str,
+        market: str,
+    ) -> RawQuoteSnapshot: ...
 
 
 class RawCompanyProfileSource(Protocol):
@@ -47,6 +57,12 @@ class RawFinancialMetricsSourceAdapter:
 
 
 @dataclass(frozen=True)
+class RawQuoteSnapshotSourceAdapter:
+    name: str
+    provider: RawQuoteSnapshotSource
+
+
+@dataclass(frozen=True)
 class RawCompanyProfileSourceAdapter:
     name: str
     provider: RawCompanyProfileSource
@@ -65,6 +81,12 @@ class FinancialMetricsFetchResult:
 
 
 @dataclass(frozen=True)
+class QuoteSnapshotFetchResult:
+    item: QuoteSnapshot | None
+    warnings: list[str]
+
+
+@dataclass(frozen=True)
 class CompanyProfileFetchResult:
     item: CompanyProfile | None
     warnings: list[str]
@@ -75,8 +97,10 @@ class AggregatePriceHistoryProvider:
         self,
         *,
         raw_sources: list[RawPriceHistorySourceAdapter] | None = None,
+        fallback_enabled: bool = False,
     ):
         self.raw_sources = list(raw_sources or [])
+        self._fallback_enabled = fallback_enabled
 
     def fetch_for_security(
         self,
@@ -84,7 +108,7 @@ class AggregatePriceHistoryProvider:
         *,
         stock_code: str,
         market: str,
-        limit: int = 60,
+        limit: int = 10000,
     ) -> PriceHistoryFetchResult:
         items: list[PriceHistory] = []
         warnings: list[str] = []
@@ -92,7 +116,10 @@ class AggregatePriceHistoryProvider:
         for source in self.raw_sources:
             try:
                 raw_items = source.provider.fetch(stock_code, market, limit=limit)
-                items.extend(_price_history_from_raw(security_id, item) for item in raw_items)
+                new_items = [_price_history_from_raw(security_id, item) for item in raw_items]
+                if new_items:
+                    items.extend(new_items)
+                    break  # first successful source is enough
             except Exception as exc:
                 warnings.append(
                     _warning_message(source.name, exc, stock_code=stock_code, market=market)
@@ -133,6 +160,39 @@ class AggregateFinancialMetricsProvider:
             items=_deduplicate_financial_metrics(items),
             warnings=warnings,
         )
+
+
+class AggregateQuoteSnapshotProvider:
+    def __init__(
+        self,
+        *,
+        raw_sources: list[RawQuoteSnapshotSourceAdapter] | None = None,
+    ):
+        self.raw_sources = list(raw_sources or [])
+
+    def fetch_for_security(
+        self,
+        security_id: int,
+        *,
+        stock_code: str,
+        market: str,
+    ) -> QuoteSnapshotFetchResult:
+        item: QuoteSnapshot | None = None
+        warnings: list[str] = []
+
+        for source in self.raw_sources:
+            try:
+                raw_item = source.provider.fetch(stock_code, market)
+                candidate = _quote_snapshot_from_raw(security_id, raw_item)
+                _validate_quote_snapshot(candidate)
+                if item is None:
+                    item = candidate
+            except Exception as exc:
+                warnings.append(
+                    _warning_message(source.name, exc, stock_code=stock_code, market=market)
+                )
+
+        return QuoteSnapshotFetchResult(item=item, warnings=warnings)
 
 
 class AggregateCompanyProfileProvider:
@@ -200,6 +260,32 @@ def _financial_metrics_from_raw(security_id: int, item: RawFinancialMetrics) -> 
         roe=item.roe,
         debt_to_asset_ratio=item.debt_to_asset_ratio,
     )
+
+
+def _quote_snapshot_from_raw(security_id: int, item: RawQuoteSnapshot) -> QuoteSnapshot:
+    return QuoteSnapshot(
+        security_id=security_id,
+        last_price=item.last_price,
+        change_amount=item.change_amount,
+        change_percent=item.change_percent,
+        snapshot_time=item.snapshot_time,
+    )
+
+
+
+def _validate_quote_snapshot(item: QuoteSnapshot) -> None:
+    if item.last_price <= 0:
+        raise ValueError("quote snapshot last price must be positive")
+
+    snapshot_time = item.snapshot_time
+    if snapshot_time.tzinfo is None:
+        snapshot_time = snapshot_time.replace(tzinfo=UTC)
+    else:
+        snapshot_time = snapshot_time.astimezone(UTC)
+
+    if snapshot_time <= datetime(2000, 1, 1, tzinfo=UTC):
+        raise ValueError("quote snapshot time is invalid")
+
 
 
 def _company_profile_from_raw(security_id: int, item: RawCompanyProfile) -> CompanyProfile:

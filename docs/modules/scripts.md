@@ -35,6 +35,10 @@ Excluded:
 - `scripts/run_backend.sh`
 - `scripts/run_frontend.sh`
 - `scripts/smoke_watchlist.sh`
+- `scripts/smoke_watchlist.py`
+- `scripts/run_all.sh`
+- `scripts/tests/test_launchers.py`
+- `scripts/tests/test_smoke_watchlist.py`
 
 ## Consumers
 - Local developers can use `seed-watchlist-demo` or `backend/scripts/seed_watchlist_demo.py` to initialize demo data.
@@ -55,7 +59,7 @@ Deferred in this milestone:
 - operational scripts outside MVP bootstrap
 
 ## Current Status
-done
+review
 
 ## Recommended Skills
 - `superpowers:brainstorming` for script scope changes
@@ -65,33 +69,30 @@ done
 - `superpowers:verification-before-completion` before setting status to `done`
 
 ## Verification
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_seed_demo_data.py" -q`
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" -q`
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_seed_demo_data.py" -q`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_runtime_smoke.py" -q`
+- `npm test --prefix "frontend"`
 - `scripts/smoke_watchlist.sh`
 - `curl -s http://127.0.0.1:8000/api/watchlist/items`
 - `curl -s "http://127.0.0.1:8000/api/watchlist/securities/search?query=Ping"`
 - `python3 - <<'PY' ... urlopen('http://127.0.0.1:5173') ... PY`
 
 ## Review Evidence
-- Date: 2026-03-11
-- Verification commands:
-  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_seed_demo_data.py" -q`
-  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" -q`
-  - `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
-  - `scripts/smoke_watchlist.sh`
-  - `curl -s http://127.0.0.1:8000/api/watchlist/items`
-  - `curl -s "http://127.0.0.1:8000/api/watchlist/securities/search?query=Ping"`
-  - `python3 - <<'PY' ... urlopen('http://127.0.0.1:5173') ... PY`
-- Result summary:
-  - backend seed tests pass
-  - backend runtime smoke test passes
-  - frontend test suite passes
-  - backend smoke script passes against a seeded local database
-  - backend and frontend dev servers both respond locally
-- Remaining follow-up items:
-  - A browser-level manual acceptance pass is still useful when the user returns.
+- Review date: 2026-09-13.
+- Script regressions: 15 passed; independent specification and quality reviews passed.
+- Standalone smoke verifies the two exact seeded watchlist identities and local search using an isolated temporary database, held loopback socket and owned child process.
+- Parallel runs, foreign occupied ports, invalid timeouts, startup failures, outer harness timeouts, SIGINT/SIGTERM and cleanup are covered. Default startup deadline is 120 seconds and may be overridden with a finite positive `SMOKE_STARTUP_TIMEOUT`.
+- Actual combined launcher stop/restart verified termination of all owned processes and release/reuse of ports 8000/5173.
+- Migration metadata repair verified the virtualenv activation path, external-directory backend import and disposable-database seed entrypoint.
+- Consolidated verification: `docs/verification/release-readiness.md`.
 
-## Open Questions
-- Which recurring project actions should be automated first?
-- Are these scripts for development only, or also for operations?
+## Repository Packaging Scope
+Included: current verified sources, project-introduction README, two actual demo runtime screenshots, portable example settings, contribution guidance, CI and version-control hygiene. Dependencies, build outputs, personal data, credentials and raw local verification artifacts remain outside version control.
+
+Excluded: changing repository visibility, rewriting Git history, assigning a new license, or adding new product features. Preserve current external-AI acceptance limitations.
+
+## Packaging Verification
+- Review README claims and links against current source and screenshots.
+- Exercise clean-source installation and existing backend/frontend/script checks.
+- Inspect the staged tree for runtime databases, dependencies and credentials.
+- Use a normal history-preserving push to the existing default branch and verify remote contents.

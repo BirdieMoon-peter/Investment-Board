@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react'
 
+import { useI18n } from '../i18n'
 import { searchSecurities } from '../api/watchlist'
+import { StatusMessage } from './StatusMessage'
 import type { SecuritySearchResult } from '../types/watchlist'
 
 function inferDefaultMarket(query: string) {
@@ -23,6 +25,7 @@ interface SearchBoxProps {
 }
 
 export function SearchBox({ onAdd, onAddCustom }: SearchBoxProps) {
+  const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SecuritySearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -56,61 +59,67 @@ export function SearchBox({ onAdd, onAddCustom }: SearchBoxProps) {
       setResults(nextResults)
     } catch {
       setResults([])
-      setErrorMessage('Search failed. Please try again.')
+      setErrorMessage(t('search.error'))
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <section aria-label="Security search">
-      <form onSubmit={handleSubmit}>
+    <section className="search-box" aria-label={t('search.ariaLabel')}>
+      <form className="search-box__form" onSubmit={handleSubmit}>
         <label className="watchlist-shell__search-label" htmlFor="watchlist-search">
-          Search securities
+          {t('search.label')}
         </label>
-        <input
-          id="watchlist-search"
-          className="watchlist-shell__search-input"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by code or name"
-        />
-        <button type="submit">Search</button>
+        <div className="search-box__controls">
+          <input
+            id="watchlist-search"
+            className="watchlist-shell__search-input"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('search.placeholder')}
+          />
+          <button type="submit">{t('common.search')}</button>
+        </div>
       </form>
 
-      {isLoading ? <p>Searching…</p> : null}
-      {!isLoading && errorMessage ? <p role="alert">{errorMessage}</p> : null}
+      {isLoading ? <StatusMessage message={t('search.searching')} /> : null}
+      {!isLoading && errorMessage ? <StatusMessage tone="error" message={errorMessage} /> : null}
       {!isLoading && !errorMessage && hasSearched && results.length === 0 ? (
-        <div>
-          <p>No securities matched your search.</p>
+        <div className="search-box__empty-state">
+          <p className="dashboard-empty">{t('search.empty')}</p>
           {isCustomCodeCandidate(query.trim()) ? (
-            <div>
-              <label htmlFor="custom-stock-market">Market for custom stock</label>
-              <select
-                id="custom-stock-market"
-                value={customMarket}
-                onChange={(event) => setCustomMarket(event.target.value)}
-              >
-                <option value="SH">SH</option>
-                <option value="SZ">SZ</option>
-              </select>
-              <button type="button" onClick={() => onAddCustom(customMarket, query.trim())}>
-                {`Add ${customMarket}:${query.trim()}`}
-              </button>
+            <div className="search-box__custom-add">
+              <label htmlFor="custom-stock-market">{t('search.customMarket')}</label>
+              <div className="search-box__custom-add-controls">
+                <select
+                  id="custom-stock-market"
+                  value={customMarket}
+                  onChange={(event) => setCustomMarket(event.target.value)}
+                >
+                  <option value="SH">SH</option>
+                  <option value="SZ">SZ</option>
+                </select>
+                <button type="button" onClick={() => onAddCustom(customMarket, query.trim())}>
+                  {t('search.addCustom', { market: customMarket, code: query.trim() })}
+                </button>
+              </div>
             </div>
           ) : null}
         </div>
       ) : null}
       {!isLoading && results.length > 0 ? (
-        <ul aria-label="Search results">
+        <ul className="search-box__results" aria-label={t('search.results')}>
           {results.map((result) => (
-            <li key={result.security_id}>
-              <strong>{result.name}</strong>
-              <div>{`${result.market}:${result.code}`}</div>
-              {result.industry ? <div>{result.industry}</div> : null}
+            <li key={result.security_id} className="search-box__result-item">
+              <div>
+                <strong>{result.name}</strong>
+                <div>{`${result.market}:${result.code}`}</div>
+                {result.industry ? <div>{result.industry}</div> : null}
+              </div>
               <button type="button" onClick={() => onAdd(result.security_id)}>
-                Add
+                {t('common.add')}
               </button>
             </li>
           ))}

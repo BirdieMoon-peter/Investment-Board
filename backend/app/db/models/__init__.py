@@ -1,6 +1,8 @@
 from app.db.models.announcement import Announcement
 from app.db.models.company_profile import CompanyProfile
 from app.db.models.financial_metrics import FinancialMetrics
+from app.db.models.holding import Holding
+from app.db.models.investment_advice_cache import InvestmentAdviceCache
 from app.db.models.news_item import NewsItem
 from app.db.models.price_bar_daily import PriceBarDaily
 from app.db.models.price_history import PriceHistory
@@ -17,6 +19,8 @@ __all__ = [
     "PriceHistory",
     "FinancialMetrics",
     "CompanyProfile",
+    "Holding",
+    "InvestmentAdviceCache",
     "Announcement",
     "NewsItem",
     "utc_now",

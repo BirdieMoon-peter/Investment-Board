@@ -4,10 +4,10 @@ This registry tracks product modules. The workflow scaffold itself is already in
 
 | Module | Type | Status | Doc | Last Review |
 |---|---|---|---|---|
-| frontend | tech-layer | done | `docs/modules/frontend.md` | 2026-03-13 |
-| backend | tech-layer | done | `docs/modules/backend.md` | 2026-03-13 |
-| data-layer | tech-layer | done | `docs/modules/data-layer.md` | 2026-03-10 |
-| scripts | tech-layer | done | `docs/modules/scripts.md` | 2026-03-11 |
+| frontend | tech-layer | done | `docs/modules/frontend.md` | 2026-09-12 |
+| backend | tech-layer | blocked | `docs/modules/backend.md` | 2026-09-12 |
+| data-layer | tech-layer | done | `docs/modules/data-layer.md` | 2026-09-12 |
+| scripts | tech-layer | review | `docs/modules/scripts.md` | 2026-09-13 |
 
 ## Status Meanings
 - `todo`: not started

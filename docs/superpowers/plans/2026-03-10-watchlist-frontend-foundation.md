@@ -108,12 +108,12 @@ test("renders watchlist MVP shell", () => {
 
 - [ ] **Step 3: Install frontend dependencies**
 
-Run: `npm install --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+Run: `npm install --prefix "frontend"`
 Expected: install completes with React, Vite, TypeScript, and Testing Library packages
 
 - [ ] **Step 4: Run the app test to verify it fails before implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --runInBand`
+Run: `npm test --prefix "frontend" -- --runInBand`
 Expected: FAIL with missing `App` or missing frontend workspace files
 
 - [ ] **Step 5: Implement the minimal frontend shell and test setup**
@@ -132,7 +132,7 @@ export default function App() {
 
 - [ ] **Step 6: Re-run the app test**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --runInBand`
+Run: `npm test --prefix "frontend" -- --runInBand`
 Expected: PASS
 
 ## Chunk 2: API Client, Search/Add UI, and Watchlist Rendering
@@ -184,7 +184,7 @@ test("searches and renders backend results", async () => {
 
 - [ ] **Step 2: Run the search component test to verify it fails before implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- SearchBox.test.tsx`
+Run: `npm test --prefix "frontend" -- SearchBox.test.tsx`
 Expected: FAIL with missing component or API client
 
 - [ ] **Step 3: Implement the frontend API client and shared response types**
@@ -212,7 +212,7 @@ export function SearchBox({ onAdd }: { onAdd: (securityId: number) => Promise<vo
 
 - [ ] **Step 5: Re-run the search component test**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- SearchBox.test.tsx`
+Run: `npm test --prefix "frontend" -- SearchBox.test.tsx`
 Expected: PASS
 
 ### Task 3: Implement the watchlist list rendering and remove interaction
@@ -258,7 +258,7 @@ test("renders missing-quote fallback when quote fields are null", () => {
 
 - [ ] **Step 2: Run the table/app tests to verify they fail before implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- WatchlistTable.test.tsx App.test.tsx`
+Run: `npm test --prefix "frontend" -- WatchlistTable.test.tsx App.test.tsx`
 Expected: FAIL with missing table component or missing app behavior
 
 - [ ] **Step 3: Implement fetchWatchlist/addWatchlistItem/removeWatchlistItem client functions**
@@ -280,7 +280,7 @@ export async function removeWatchlistItem(securityId: number): Promise<void> { /
 
 - [ ] **Step 5: Re-run the table/app tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- WatchlistTable.test.tsx App.test.tsx`
+Run: `npm test --prefix "frontend" -- WatchlistTable.test.tsx App.test.tsx`
 Expected: PASS
 
 ## Chunk 3: Frontend Verification and Review-State Sync
@@ -296,7 +296,7 @@ Expected: PASS
 
 - [ ] **Step 1: Run the full frontend test suite**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+Run: `npm test --prefix "frontend"`
 Expected: all tests PASS
 
 - [ ] **Step 2: Record stable frontend decisions if confirmed**
@@ -314,7 +314,7 @@ Add or update these points in `docs/modules/frontend.md`:
 
 ```md
 ## Verification
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend"`
+- `npm test --prefix "frontend"`
 - search UI verified for result rendering, no-result state, and add action behavior
 - watchlist list UI verified for joined backend data, remove behavior, and missing-quote fallback
 - top-level app flow verified for initial load, refresh after add/remove, and visible empty/error states

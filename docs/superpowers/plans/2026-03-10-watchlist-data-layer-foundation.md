@@ -109,12 +109,12 @@ def test_local_settings_create_sqlite_database(tmp_path):
 
 - [ ] **Step 3: Install the backend package in editable mode with test dependencies**
 
-Run: `python -m pip install -e "/Users/peter/Desktop/Investment Board/backend[dev]"`
+Run: `python -m pip install -e "backend[dev]"`
 Expected: output includes `investment-board-backend` and `pytest`
 
 - [ ] **Step 4: Run the test to verify it fails before implementation**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_settings_and_session.py" -q`
+Run: `python -m pytest "backend/tests/db/test_settings_and_session.py" -q`
 Expected: FAIL with an import error for `app.core.settings` or `app.db.session`
 
 - [ ] **Step 5: Implement the minimal settings and session bootstrap code**
@@ -182,7 +182,7 @@ def seeded_security_fixture(session):
 
 - [ ] **Step 7: Run the session bootstrap test again**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_settings_and_session.py" -q`
+Run: `python -m pytest "backend/tests/db/test_settings_and_session.py" -q`
 Expected: PASS
 
 ### Task 2: Define the three SQLModel tables for the MVP schema
@@ -216,7 +216,7 @@ def test_create_db_and_tables_creates_watchlist_schema(tmp_path):
 
 - [ ] **Step 2: Run the test to verify it fails because the models do not exist yet**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_settings_and_session.py" -q`
+Run: `python -m pytest "backend/tests/db/test_settings_and_session.py" -q`
 Expected: FAIL because the expected tables are missing
 
 - [ ] **Step 3: Implement the `Security` model with uniqueness for `(market, code)`**
@@ -295,7 +295,7 @@ from app.db import models  # noqa: F401
 
 - [ ] **Step 8: Re-run the table creation test**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_settings_and_session.py" -q`
+Run: `python -m pytest "backend/tests/db/test_settings_and_session.py" -q`
 Expected: PASS
 
 ## Chunk 2: Repository Boundaries and Query Behavior
@@ -345,7 +345,7 @@ def test_search_returns_exact_code_before_partial_name(session):
 
 - [ ] **Step 2: Run the repository tests to verify they fail**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_security_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_security_repository.py" -q`
 Expected: FAIL with an import error for `SecurityRepository`
 
 - [ ] **Step 3: Implement `SecurityRepository.upsert_many()` with `(market, code)` matching**
@@ -399,7 +399,7 @@ class SecurityRepository:
 
 - [ ] **Step 5: Run the security repository tests again**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_security_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_security_repository.py" -q`
 Expected: PASS
 
 ### Task 4: Implement the watchlist repository with add/remove/idempotent behavior
@@ -436,7 +436,7 @@ def test_remove_deletes_item_by_security_id(session, seeded_security):
 
 - [ ] **Step 2: Run the watchlist repository tests to verify they fail**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_watchlist_repository.py" -q`
 Expected: FAIL with an import error for `WatchlistRepository`
 
 - [ ] **Step 3: Implement `WatchlistRepository.add()` with idempotent duplicate handling**
@@ -478,7 +478,7 @@ class WatchlistRepository:
 
 - [ ] **Step 5: Run the watchlist repository tests again**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_watchlist_repository.py" -q`
 Expected: PASS
 
 ### Task 5: Implement the watchlist view repository for latest quote joins
@@ -539,7 +539,7 @@ def test_list_view_keeps_security_when_quote_is_missing(session, seeded_security
 
 - [ ] **Step 2: Run the watchlist view tests to verify they fail**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_watchlist_view_repository.py" -q`
 Expected: FAIL with an import error for `WatchlistViewRepository`
 
 - [ ] **Step 3: Implement a `WatchlistRow` result type and a latest-snapshot subquery**
@@ -608,7 +608,7 @@ def list_rows(self) -> list[WatchlistRow]:
 
 - [ ] **Step 5: Run the watchlist view tests again**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
+Run: `python -m pytest "backend/tests/db/test_watchlist_view_repository.py" -q`
 Expected: PASS
 
 ## Chunk 3: Bootstrap Data, Module Docs, and Final Verification
@@ -653,7 +653,7 @@ def test_bootstrap_market_data_upserts_securities_and_quotes(session):
 
 - [ ] **Step 2: Run the bootstrap test to verify it fails**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_bootstrap_data.py" -q`
+Run: `python -m pytest "backend/tests/db/test_bootstrap_data.py" -q`
 Expected: FAIL with an import error for `bootstrap_market_data`
 
 - [ ] **Step 3: Implement `bootstrap_market_data()` around normalized input dictionaries**
@@ -690,7 +690,7 @@ def bootstrap_market_data(session: Session, *, securities: list[dict], quote_sna
 
 - [ ] **Step 4: Run the bootstrap test again**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_bootstrap_data.py" -q`
+Run: `python -m pytest "backend/tests/db/test_bootstrap_data.py" -q`
 Expected: PASS
 
 ### Task 7: Run the data-layer verification suite and sync project docs for review
@@ -704,7 +704,7 @@ Expected: PASS
 
 - [ ] **Step 1: Run the full data-layer test suite**
 
-Run: `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db" -q`
+Run: `python -m pytest "backend/tests/db" -q`
 Expected: all tests PASS
 
 - [ ] **Step 2: Record stable implementation decisions**
@@ -723,7 +723,7 @@ Add or update these points in `docs/modules/data-layer.md`:
 
 ```md
 ## Verification
-- `python -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db" -q`
+- `python -m pytest "backend/tests/db" -q`
 - search ordering verified for exact code, exact name, code prefix, and name contains
 - latest quote selection verified by `snapshot_time`
 - missing-quote watchlist rows verified to render with null quote fields

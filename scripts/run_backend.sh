@@ -17,4 +17,5 @@ if ! "$VENV_PYTHON" -c 'import uvicorn' >/dev/null 2>&1; then
 fi
 
 cd "$BACKEND_DIR"
-exec env DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}" "$VENV_PYTHON" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
+exec "$VENV_PYTHON" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload

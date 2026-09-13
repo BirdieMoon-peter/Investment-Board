@@ -140,7 +140,7 @@ class RecordingAnnouncementRepository:
     def get_latest_published_at(self, security_id: int) -> datetime | None:
         return self.latest_published_at
 
-    def upsert_many(self, items: list[Announcement]) -> list[Announcement]:
+    def upsert_many(self, items: list[Announcement], commit: bool = True) -> list[Announcement]:
         self.upsert_calls.append(items)
         return items
 
@@ -153,9 +153,32 @@ class RecordingNewsRepository:
     def get_latest_published_at(self, security_id: int) -> datetime | None:
         return self.latest_published_at
 
-    def upsert_many(self, items: list[NewsItem]) -> list[NewsItem]:
+    def upsert_many(self, items: list[NewsItem], commit: bool = True) -> list[NewsItem]:
         self.upsert_calls.append(items)
         return items
+
+
+class FailingPriceHistoryRepository:
+    def upsert_many(self, items, commit: bool = True):
+        raise RuntimeError("price history write failed")
+
+
+class RecordingQuoteSnapshotRepository:
+    def __init__(self):
+        self.upsert_calls: list[list[object]] = []
+
+    def upsert_many(self, items, commit: bool = True):
+        self.upsert_calls.append(items)
+        return items
+
+
+class RecordingCompanyProfileRepository:
+    def __init__(self):
+        self.upsert_calls: list[object] = []
+
+    def upsert(self, item, commit: bool = True):
+        self.upsert_calls.append(item)
+        return item
 
 
 def test_sync_security_normalizes_naive_repository_cutoffs_to_aware_utc_for_provider_comparisons():
@@ -317,6 +340,87 @@ def test_sync_security_keeps_warning_aware_partial_success_with_real_aggregate_r
     assert result.warnings == ["announcement source B failed", "news source A timeout"]
     assert result.announcements_upserted == 1
     assert result.news_items_upserted == 0
+
+
+class FinancialMetricsRepositoryStub:
+    def upsert_many(self, items, commit: bool = True):
+        return items
+
+
+
+def test_sync_security_keeps_other_sections_when_price_history_persistence_fails():
+    security_id = 18
+    stock_code = "000001"
+    market = "sz"
+    announcement = Announcement(
+        security_id=security_id,
+        title="Recovered filing",
+        source="Exchange",
+        url="https://example.com/announcements/18",
+        summary="Recovered from healthy source",
+        published_at=datetime(2026, 3, 11, 13, 30),
+    )
+    news_item = NewsItem(
+        security_id=security_id,
+        title="Recovered news",
+        source="Newswire",
+        url="https://example.com/news/18",
+        summary="Recovered from healthy source",
+        published_at=datetime(2026, 3, 11, 14, 0),
+    )
+    quote_snapshot_repository = RecordingQuoteSnapshotRepository()
+    company_profile_repository = RecordingCompanyProfileRepository()
+
+    class StubDataProvider:
+        def __init__(self, items=None, item=None):
+            self._items = items or []
+            self._item = item
+
+        def fetch_for_security(self, security_id, *, stock_code, market):
+            if self._item is not None:
+                return type("SingleFetch", (), {"item": self._item, "warnings": []})()
+            return type("ManyFetch", (), {"items": self._items, "warnings": []})()
+
+    class StubPriceBar:
+        pass
+
+    class StubMetric:
+        pass
+
+    class StubQuoteSnapshot:
+        pass
+
+    class StubCompanyProfile:
+        pass
+
+    service = StockSyncService(
+        announcement_provider=StubAnnouncementProvider([announcement], None, stock_code, market),
+        news_provider=StubNewsProvider([news_item], None, stock_code, market),
+        announcement_repository=RecordingAnnouncementRepository(),
+        news_repository=RecordingNewsRepository(),
+        price_history_provider=StubDataProvider(items=[StubPriceBar()]),
+        financial_metrics_provider=StubDataProvider(items=[StubMetric()]),
+        quote_snapshot_provider=StubDataProvider(item=StubQuoteSnapshot()),
+        company_profile_provider=StubDataProvider(item=StubCompanyProfile()),
+        price_history_repository=FailingPriceHistoryRepository(),
+        financial_metrics_repository=FinancialMetricsRepositoryStub(),
+        quote_snapshot_repository=quote_snapshot_repository,
+        company_profile_repository=company_profile_repository,
+    )
+
+    result = service.sync_security(security_id, stock_code=stock_code, market=market)
+
+    assert result.synced is True
+    assert result.announcements_upserted == 1
+    assert result.news_items_upserted == 1
+    assert result.price_bars_upserted == 0
+    assert result.financial_metrics_upserted == 1
+    assert result.quote_snapshot_updated is True
+    assert result.company_profile_updated is True
+    assert quote_snapshot_repository.upsert_calls != []
+    assert company_profile_repository.upsert_calls != []
+    assert any("price history persistence failed" in warning for warning in result.warnings)
+
 
 
 def test_sync_security_skips_repository_writes_when_providers_return_no_rows():

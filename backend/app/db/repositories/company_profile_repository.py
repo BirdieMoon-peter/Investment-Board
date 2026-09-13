@@ -34,10 +34,10 @@ class CompanyProfileRepository:
 
         if commit:
             self.session.commit()
+            self.session.refresh(persisted)
         else:
             self.session.flush()
 
-        self.session.refresh(persisted)
         return persisted
 
     def get_by_security_id(self, security_id: int) -> CompanyProfile | None:

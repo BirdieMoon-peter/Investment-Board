@@ -25,6 +25,7 @@ Excluded:
 - [x] Define storage and query responsibilities
 - [x] Document consumers of the data-layer interfaces
 - [x] Define verification steps for reads, writes, and failure cases
+- [x] Improve database read/write efficiency for current storage-backed flows
 
 ## Current Milestone
 Stock detail v1 data foundation
@@ -66,8 +67,13 @@ Excluded for this milestone:
 - multi-user modeling
 - script automation unless required for initial seed/setup
 
+## Next Requested Scope
+- improve read-path efficiency for stock-detail, homepage, and watchlist-backed queries
+- reduce unnecessary writes and optimize storage-bound persistence flows
+- keep schema or API changes minimal unless profiling proves they are required
+
 ## Current Status
-doing
+done
 
 ## Recommended Skills
 - `superpowers:brainstorming` for model or boundary changes
@@ -77,7 +83,7 @@ doing
 - `superpowers:verification-before-completion` before setting status to `done`
 
 ## Verification
-- `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db" -q`
+- `python3 -m pytest "backend/tests/db" -q`
 - schema bootstrap verifies `securities`, `watchlist_items`, and `quote_snapshots` creation, index presence, uniqueness rules, and SQLite foreign-key enforcement
 - search ordering verifies exact code, exact name, code prefix, and name-contains behavior with active-only filtering and literal wildcard handling
 - watchlist repository verifies idempotent add, remove-by-security-id, and empty-list behavior
@@ -85,15 +91,25 @@ doing
 - bootstrap ingestion verifies normalized success paths plus rollback-safe failure paths for unknown security keys, extra keys, and missing required keys
 
 ## Review Evidence
-- Date: 2026-03-10
+- Date: 2026-05-02
 - Verification commands:
-  - `python3 -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db" -q`
+  - `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_watchlist_view_repository.py" "backend/tests/api/test_holdings_api.py" "backend/tests/api/test_watchlist_sync_api.py" "backend/tests/services/test_stock_sync_service.py" "backend/tests/services/test_stock_sync_with_data.py" "backend/tests/services/test_stock_sync_real_sources.py" -q`
+  - `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests" -q`
 - Result summary:
-  - `16 passed in 0.10s`
-  - Data-layer foundations for watchlist MVP are implemented and verified for schema creation, repository behavior, latest quote aggregation, and normalized bootstrap ingestion.
+  - watchlist latest-quote selection now ranks only snapshots for currently watched securities instead of the entire snapshot table
+  - holdings list reads no longer perform an extra joined reread per row
+  - watchlist sync now prefetches security metadata in one query instead of looking up each security inside the sync loop
+  - stock sync persistence now batches repository writes into a single commit path per security and skips unnecessary refresh work on non-committing upserts
+  - targeted repository/API/sync tests passed with `21` tests
+  - full backend suite passed with `214` tests
 - Remaining follow-up items:
-  - Backend module still needs API endpoints for search, watchlist add/remove, and watchlist list responses.
+  - None
 
 ## Open Questions
-- What storage solution will this project use?
-- What are the first entities or datasets needed?
+- None for the current data-layer efficiency scope.
+
+## 2026-09-12 Repair Scope
+Fix deletion of holdings referenced by AI history while retaining history and preventing cached advice reuse after SQLite holding ID recycling. Reproduction in isolated DB raised IntegrityError. Detach nullable holding_id and delete atomically; current holding cache reads require matching holding_id. Verify deletion/history/ID reuse/stock-cache paths with regressions, review before done.
+
+### Review evidence2026-09-12
+RED4fail/1pass; GREEN19targeted, full218pass/1known live-search environmental failure. Independent spec and code-quality review PASS; reviewer independently ran5lifecycle tests. Atomic detachment preserves history and prevents recycled-ID reuse; rollback verified. No schema or historical-data migration.

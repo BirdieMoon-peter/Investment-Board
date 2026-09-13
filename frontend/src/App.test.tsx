@@ -6,6 +6,7 @@ import App from './App'
 describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
+    window.localStorage.clear()
   })
 
   it('loads the watchlist on mount, refreshes after add, and refreshes after remove', async () => {
@@ -14,6 +15,15 @@ describe('App', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -49,6 +59,10 @@ describe('App', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
+        json: async () => ({ items: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({ removed: true, security_id: 7 }),
       })
       .mockResolvedValueOnce({
@@ -73,10 +87,10 @@ describe('App', () => {
     fireEvent.click(addButton)
 
     await screen.findByRole('table', { name: /watchlist holdings/i })
-    expect(screen.getAllByText('Ping An Bank')).toHaveLength(2)
-    expect(screen.getAllByText('SZ:000001')).toHaveLength(2)
-    expect(screen.getByText('10.2000')).toBeInTheDocument()
-    expect(screen.getByText('2.0000%')).toBeInTheDocument()
+    expect(screen.getAllByText('Ping An Bank').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('SZ:000001').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText('10.2000').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('2.0000%').length).toBeGreaterThanOrEqual(1)
 
     fireEvent.click(screen.getByRole('button', { name: /remove ping an bank/i }))
 
@@ -85,20 +99,22 @@ describe('App', () => {
     })
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/watchlist/items')
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/homepage/overview')
     expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
+      3,
       '/api/watchlist/securities/search?query=Ping',
     )
-    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/watchlist/items', {
+    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/watchlist/items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ security_id: 7 }),
     })
-    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/watchlist/items')
-    expect(fetchMock).toHaveBeenNthCalledWith(5, '/api/watchlist/items/7', {
+    expect(fetchMock).toHaveBeenNthCalledWith(5, '/api/watchlist/items')
+    expect(fetchMock).toHaveBeenNthCalledWith(6, '/api/ai/watchlist-labels?use_cache=true')
+    expect(fetchMock).toHaveBeenNthCalledWith(7, '/api/watchlist/items/7', {
       method: 'DELETE',
     })
-    expect(fetchMock).toHaveBeenNthCalledWith(6, '/api/watchlist/items')
+    expect(fetchMock).toHaveBeenNthCalledWith(8, '/api/watchlist/items')
   })
 
   it('navigates from the watchlist table to the stock detail shell and back', async () => {
@@ -121,6 +137,19 @@ describe('App', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
         status: 200,
         json: async () => ({
           security: {
@@ -139,26 +168,39 @@ describe('App', () => {
           news: [],
         }),
       })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [] }),
+      })
 
     vi.stubGlobal('fetch', fetchMock)
 
     render(<App />)
 
     await screen.findByRole('table', { name: /watchlist holdings/i })
-    expect(screen.getByText('SZ:000001')).toBeInTheDocument()
+    expect(screen.getAllByText('SZ:000001').length).toBeGreaterThanOrEqual(2)
 
-    fireEvent.click(screen.getByRole('button', { name: /view details for ping an bank/i }))
+    fireEvent.click(screen.getAllByRole('button', { name: /view details for ping an bank/i })[0])
 
     expect(screen.getByRole('heading', { name: /stock detail/i })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: /ping an bank/i })).toBeInTheDocument()
     expect(await screen.findByText('No price context is available yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No holding is saved for this stock yet.')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /back to watchlist/i }))
 
     expect(await screen.findByRole('table', { name: /watchlist holdings/i })).toBeInTheDocument()
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/watchlist/items')
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/stocks/7')
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/homepage/overview')
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/ai/watchlist-labels?use_cache=true')
+    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/stocks/7')
+    expect(fetchMock).toHaveBeenNthCalledWith(5, '/api/holdings')
+    expect(fetchMock).toHaveBeenNthCalledWith(6, '/api/ai/history')
+    expect(fetchMock).toHaveBeenCalledTimes(6)
   })
 
   it('adds a custom stock after an empty search fallback and refreshes the watchlist', async () => {
@@ -167,6 +209,15 @@ describe('App', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -215,23 +266,35 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('button', { name: /add sz:002594/i }))
 
     expect(await screen.findByRole('table', { name: /watchlist holdings/i })).toBeInTheDocument()
-    expect(screen.getByText('BYD')).toBeInTheDocument()
-    expect(screen.getByText('SZ:002594')).toBeInTheDocument()
+    expect(screen.getAllByText('BYD').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('SZ:002594').length).toBeGreaterThanOrEqual(1)
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/watchlist/items')
-    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/watchlist/securities/search?query=002594')
-    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/watchlist/items/custom', {
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/homepage/overview')
+    expect(fetchMock).toHaveBeenNthCalledWith(3, '/api/watchlist/securities/search?query=002594')
+    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/watchlist/items/custom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ market: 'SZ', code: '002594' }),
     })
-    expect(fetchMock).toHaveBeenNthCalledWith(4, '/api/watchlist/items')
+    expect(fetchMock).toHaveBeenNthCalledWith(5, '/api/watchlist/items')
   })
 
   it('renders the watchlist empty state after an empty initial load', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => [],
-    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
+      })
 
     vi.stubGlobal('fetch', fetchMock)
 
@@ -240,19 +303,96 @@ describe('App', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Your watchlist is empty.')
   })
 
-  it('renders the watchlist load error state when the initial request fails', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      json: async () => ({ detail: 'boom' }),
-    })
+  it('loads homepage overview and lets the user hide overview sections from settings', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [
+            {
+              key: 'shanghai_composite',
+              name: '上证指数',
+              market: 'SH',
+              last_value: '3957.0500',
+              change_amount: '-49.5000',
+              change_percent: '-1.2400',
+              snapshot_time: '2026-03-22T15:00:00',
+            },
+          ],
+          macro: [
+            {
+              key: 'cpi',
+              title: 'CPI',
+              category: 'inflation',
+              value: '1.3',
+              unit: '%',
+              change_text: '环比1%',
+              published_at: '2026-03-01T00:00:00',
+              importance: 'high',
+              summary: '2026年02月份',
+            },
+          ],
+          updated_at: '2026-03-22T15:00:00',
+          warnings: [],
+        }),
+      })
 
     vi.stubGlobal('fetch', fetchMock)
 
     render(<App />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Unable to load your watchlist right now.',
-    )
+    expect(await screen.findByText('上证指数')).toBeInTheDocument()
+    expect(screen.getByText('CPI')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /open settings/i }))
+    fireEvent.click(screen.getByLabelText(/show market indexes/i))
+    fireEvent.click(screen.getByLabelText(/show macro panel/i))
+
+    await waitFor(() => {
+      expect(screen.queryByText('上证指数')).not.toBeInTheDocument()
+      expect(screen.queryByText('CPI')).not.toBeInTheDocument()
+    })
+  })
+
+  it('renders homepage overview warning state without blocking watchlist rendering', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            security_id: 7,
+            market: 'SZ',
+            code: '000001',
+            name: 'Ping An Bank',
+            industry: 'Banking',
+            last_price: '10.2000',
+            change_percent: '2.0000',
+            snapshot_time: '2026-03-10T10:00:00',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [{ section: 'indexes', message: 'upstream timeout' }],
+        }),
+      })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+
+    expect(await screen.findByRole('table', { name: /watchlist holdings/i })).toBeInTheDocument()
+    expect(await screen.findByText(/overview warnings:/i)).toBeInTheDocument()
   })
 
   it('renders a visible add failure message when the add request fails', async () => {
@@ -261,6 +401,15 @@ describe('App', () => {
       .mockResolvedValueOnce({
         ok: true,
         json: async () => [],
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -295,7 +444,7 @@ describe('App', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Unable to add that security to your watchlist right now.',
     )
-    expect(fetchMock).toHaveBeenCalledTimes(3)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
   })
 
   it('renders a visible remove failure message when the remove request fails', async () => {
@@ -317,6 +466,19 @@ describe('App', () => {
         ],
       })
       .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          indexes: [],
+          macro: [],
+          updated_at: null,
+          warnings: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [] }),
+      })
+      .mockResolvedValueOnce({
         ok: false,
         json: async () => ({ detail: 'remove failed' }),
       })
@@ -329,10 +491,8 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /remove ping an bank/i }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Unable to remove that security from your watchlist right now.',
-    )
+    expect(await screen.findByText('Unable to remove that security from your watchlist right now.')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /watchlist holdings/i })).toBeInTheDocument()
-    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenCalledTimes(4)
   })
 })

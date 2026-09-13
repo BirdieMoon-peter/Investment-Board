@@ -16,20 +16,18 @@ def test_eastmoney_financial_metrics_source_maps_rows_to_raw_metrics():
                 "result": {
                     "data": [
                         {
-                            "REPORT_DATE_NAME": "2025Q4",
+                            "DATATYPE": "2025年 年报",
                             "TOTAL_OPERATE_INCOME": "1000000000.0000",
                             "PARENT_NETPROFIT": "100000000.0000",
                             "BASIC_EPS": "1.2500",
                             "WEIGHTAVG_ROE": "0.150000",
-                            "DEBT_ASSET_RATIO": "0.450000",
                         },
                         {
-                            "REPORT_DATE_NAME": "2025Q3",
+                            "DATATYPE": "2025年 三季报",
                             "TOTAL_OPERATE_INCOME": "900000000.0000",
                             "PARENT_NETPROFIT": "90000000.0000",
                             "BASIC_EPS": "1.1000",
                             "WEIGHTAVG_ROE": None,
-                            "DEBT_ASSET_RATIO": "0.470000",
                         },
                     ]
                 }
@@ -48,7 +46,7 @@ def test_eastmoney_financial_metrics_source_maps_rows_to_raw_metrics():
             net_profit=Decimal("100000000.0000"),
             eps=Decimal("1.2500"),
             roe=Decimal("0.150000"),
-            debt_to_asset_ratio=Decimal("0.450000"),
+            debt_to_asset_ratio=None,
         ),
         RawFinancialMetrics(
             report_period="2025Q3",
@@ -56,13 +54,30 @@ def test_eastmoney_financial_metrics_source_maps_rows_to_raw_metrics():
             net_profit=Decimal("90000000.0000"),
             eps=Decimal("1.1000"),
             roe=None,
-            debt_to_asset_ratio=Decimal("0.470000"),
+            debt_to_asset_ratio=None,
         ),
     ]
 
 
 
-def test_eastmoney_financial_metrics_source_raises_clear_error_for_missing_result_data():
+def test_eastmoney_financial_metrics_source_uses_current_filter_and_sort_columns():
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"result": {"data": []}})
+
+    source = EastmoneyFinancialMetricsSource(transport=httpx.MockTransport(handler))
+
+    source.fetch(" 002594 ", " sz ")
+
+    assert len(requests) == 1
+    params = requests[0].url.params
+    assert params.get("filter") == '(SECURITY_CODE="002594")'
+    assert params.get("sortColumns") == "NOTICE_DATE"
+    assert params.get("columns") == "SECURITY_CODE,SECUCODE,DATATYPE,NOTICE_DATE,TOTAL_OPERATE_INCOME,PARENT_NETPROFIT,BASIC_EPS,WEIGHTAVG_ROE"
+
+
     transport = httpx.MockTransport(
         lambda request: httpx.Response(200, json={"result": None})
     )

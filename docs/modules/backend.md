@@ -25,23 +25,43 @@ Excluded:
 - [x] List external and internal interfaces
 - [x] Identify dependencies on the data-layer module
 - [x] Define verification steps for success and failure paths
+- [x] Add minimal holdings CRUD APIs backed by a dedicated holdings repository
+- [x] Add AI advice endpoints for stock- and holding-scoped analysis
+- [x] Add bounded latest-20 AI advice persistence and history reads
+- [x] Wire a real model provider through backend settings
+- [x] Make provider selection configuration-driven for Anthropic-compatible transports
+- [x] Verify Kimi K2.5 integration through the DashScope Anthropic-compatible endpoint
+- [x] Add a local ignored AI env-file fallback for reusable developer configuration
+- [ ] Complete current uncached runtime AI stock/holding acceptance with an authenticated provider (deterministic provider/error-handling checks pass)
 
 ## Implemented Files
 - `backend/app/main.py`
 - `backend/app/api/dependencies.py`
 - `backend/app/api/watchlist.py`
 - `backend/app/api/stocks.py`
+- `backend/app/api/holdings.py`
+- `backend/app/api/investment_advice.py`
 - `backend/app/schemas/security.py`
 - `backend/app/schemas/watchlist.py`
 - `backend/app/schemas/stock_detail.py`
+- `backend/app/schemas/holdings.py`
+- `backend/app/schemas/investment_advice.py`
 - `backend/app/services/stock_sync.py`
+- `backend/app/services/investment_advice.py`
+- `backend/app/services/investment_advice_types.py`
+- `backend/app/services/providers/__init__.py`
+- `backend/app/services/providers/anthropic_investment_advice.py`
 - `backend/app/services/providers/stock_data_providers.py`
 - `backend/app/db/models/price_history.py`
 - `backend/app/db/models/financial_metrics.py`
 - `backend/app/db/models/company_profile.py`
+- `backend/app/db/models/holding.py`
+- `backend/app/db/models/investment_advice_cache.py`
 - `backend/app/db/repositories/price_history_repository.py`
 - `backend/app/db/repositories/financial_metrics_repository.py`
 - `backend/app/db/repositories/company_profile_repository.py`
+- `backend/app/db/repositories/holdings_repository.py`
+- `backend/app/db/repositories/investment_advice_cache_repository.py`
 - `backend/app/db/repositories/watchlist_view_repository.py`
 - `backend/tests/api/conftest.py`
 - `backend/tests/api/test_search_securities_api.py`
@@ -49,35 +69,47 @@ Excluded:
 - `backend/tests/api/test_watchlist_list_api.py`
 - `backend/tests/api/test_stock_detail_api.py`
 - `backend/tests/api/test_stock_sync_api.py`
+- `backend/tests/api/test_holdings_api.py`
+- `backend/tests/api/test_investment_advice_api.py`
 - `backend/tests/api/test_runtime_smoke.py`
 - `backend/tests/db/test_watchlist_view_repository.py`
 - `backend/tests/services/test_stock_sync_with_data.py`
 - `backend/tests/services/test_stock_data_aggregate_providers.py`
+- `backend/tests/services/test_anthropic_investment_advice.py`
 
 ## Consumers
 - The frontend module calls `/api/watchlist/securities/search`, `POST /api/watchlist/items`, `POST /api/watchlist/items/custom`, `DELETE /api/watchlist/items/{security_id}`, and `GET /api/watchlist/items` for watchlist flows.
 - The frontend module calls `GET /api/stocks/{security_id}` for the stock detail page.
 - The frontend module calls `POST /api/stocks/{security_id}/sync` to refresh announcements, news, and stock-data detail sections.
+- The frontend module calls `GET /api/holdings`, `POST /api/holdings`, `PUT /api/holdings/{holding_id}`, and `DELETE /api/holdings/{holding_id}` for holdings management.
+- The frontend module calls `POST /api/ai/stocks/{security_id}/advice`, `POST /api/ai/holdings/{holding_id}/advice`, and `GET /api/ai/history` for AI advice generation and cached history.
 - The backend module depends on the completed data-layer repositories and schemas in `backend/app/db/`.
 
 ## Current Milestone
-Stock data detail and sync contract on top of the watchlist APIs
+AI investment advice backend slice
 
 ## Milestone Scope
 Implemented in this milestone:
-- market-aware watchlist list responses backed by `WatchlistViewRepository` and reflected in runtime smoke coverage
-- stock detail API responses that return `security`, `price_context`, `price_history`, `financial_metrics`, `company_profile`, `announcements`, and `news`
-- stock sync service wiring for aggregate announcement, news, price history, financial metrics, and company profile providers
-- sync response counts/flags for `price_bars_upserted`, `financial_metrics_upserted`, and `company_profile_updated`
-- aggregate provider deduplication for price history and financial metrics plus warning collection across stock-data sources
+- minimal holdings CRUD APIs backed by a dedicated holdings repository
+- AI advice endpoints for stock- and holding-scoped analysis
+- real-model provider wiring through backend settings and an HTTP-based AI provider adapter
+- configuration-driven provider selection for Anthropic-compatible transports
+- Kimi K2.5 integration through the DashScope Anthropic-compatible endpoint
+- bounded persistence of the latest 20 generated analyses for replay/history
+- backend tests covering holdings contracts, AI advice contracts, provider selection, cache reuse, and bounded history retention
 
 Deferred in this milestone:
-- broader portfolio or AI-analysis backend APIs
-- additional stock-data sources beyond the current aggregate adapters
-- browser-level acceptance, which belongs to the frontend module
+- frontend portfolio-level AI workflows beyond stock-detail scope
+- autonomous actions, trade execution, or background AI generation
+- broader portfolio optimization beyond single-security or single-holding advice
+
+## Next Requested Scope
+- validate end-to-end AI advice availability against the configured runtime provider, not just cached responses
+- improve backend/provider behavior only where frontend usability validation exposes reliability or clarity gaps
+- keep provider changes compatible with the existing structured advice contracts
 
 ## Current Status
-done
+blocked
 
 ## Recommended Skills
 - `superpowers:brainstorming` for boundary changes
@@ -87,29 +119,26 @@ done
 - `superpowers:verification-before-completion` before setting status to `done`
 
 ## Verification
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests" -q`
-- watchlist API/runtime coverage verified the market-aware contract and deterministic latest-quote selection
-- stock detail and sync coverage verified the expanded stock-data detail response and sync summary contract
-- full backend verification passed after the market-aware watchlist regression tests were updated to the current contract
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_anthropic_investment_advice.py" "backend/tests/api/test_investment_advice_api.py" "backend/tests/api/test_holdings_api.py" -q`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests" -q`
+- `npm test --prefix "frontend" -- --run src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+- `npm test --prefix "frontend" -- --run`
+- `npm run build --prefix "frontend"`
+- local acceptance with runtime env:
+  - `AI_PROVIDER=openai_compatible`
+  - `AI_API_URL=https://your-provider.example/v1/chat/completions`
+  - `AI_MODEL=your-provider-model`
+  - `AI_API_KEY=<runtime or local ignored env file>`
 
 ## Review Evidence
-- Date: 2026-03-13
-- Verification commands:
-  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_runtime_smoke.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_watchlist_view_repository.py" -q`
-  - `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests" -q`
-- Result summary:
-  - focused backend watchlist regression coverage passed with `4` tests
-  - full backend suite passed with `157` tests
-  - stock-data review found the frontend had not surfaced the expanded sync summary yet; backend contract coverage was already present in `backend/tests/api/test_stock_sync_api.py`
-- Remaining follow-up items:
-  - None for the current backend stock-data slice.
-
-## Open Questions
-- None for the current backend stock-data scope.
+- Review date: 2026-09-13.
+- Backend regression suite: 278 tests passed. Provider failure handling, cache lifecycle, holdings CRUD and source timestamp/precision repairs were independently reviewed.
+- Structured provider responses in automated tests are fixtures. The current runtime acceptance of fresh AI stock/holding generation is blocked by external provider authentication; this does not block browsing, sync, holdings or cached history.
+- Required follow-up: configure an authorized available provider, verify fresh generation with isolated demo stock/holding context, then verify persistence and cache replay before changing this module to `done`.
+- Consolidated verification: `docs/verification/release-readiness.md`.
 
 ## Implementation Notes
-- The watchlist row contract now includes `market`, and backend runtime/repository verification has been updated to lock that contract.
-- `StockSyncResult` and `StockSyncResponse` now expose `price_bars_upserted`, `financial_metrics_upserted`, and `company_profile_updated` so consumers can report stock-data sync outcomes instead of only announcement/news counts.
-- The final company-profile contract intentionally follows the implemented backend schema: `full_name`, `english_name`, `registered_capital`, `establishment_date`, `website`, `main_business`, and `employees`. Earlier plan examples mentioning `listing_date` and `business_scope` were stale and were not part of the shipped backend contract.
-- Aggregate stock-data providers deduplicate price history and financial metrics by natural keys before persistence and include market-qualified source warnings for debugging.
+- AI provider settings come from environment variables or the optional local `backend/.env.local`; tests ignore that local file unless explicitly configured.
+- Stock and holding analysis uses a configured provider and persists the most recent 20 entries by default. Cached reads do not trigger new model requests.
+- Holdings deletion preserves historical advice without allowing stale holding IDs to reuse current-position cache.
+- Public data providers can degrade independently; source timestamps and quote precision must remain traceable.

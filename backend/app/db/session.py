@@ -9,6 +9,8 @@ from app.db.models import (
     Announcement,
     CompanyProfile,
     FinancialMetrics,
+    Holding,
+    InvestmentAdviceCache,
     NewsItem,
     PriceBarDaily,
     PriceHistory,
@@ -25,6 +27,8 @@ _ = (
     PriceHistory,
     FinancialMetrics,
     CompanyProfile,
+    Holding,
+    InvestmentAdviceCache,
     Announcement,
     NewsItem,
 )

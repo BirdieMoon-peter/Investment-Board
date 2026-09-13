@@ -13,6 +13,7 @@ from app.db.repositories.company_profile_repository import CompanyProfileReposit
 from app.db.repositories.financial_metrics_repository import FinancialMetricsRepository
 from app.db.repositories.news_repository import NewsRepository
 from app.db.repositories.price_history_repository import PriceHistoryRepository
+from app.db.repositories.quote_snapshot_repository import QuoteSnapshotRepository
 from app.schemas import StockDetailResponse, StockSyncResponse
 from app.services import StockSyncService
 from app.services.providers import (
@@ -21,18 +22,26 @@ from app.services.providers import (
     AggregateFinancialMetricsProvider,
     AggregateNewsProvider,
     AggregatePriceHistoryProvider,
+    AggregateQuoteSnapshotProvider,
     EastmoneyAnnouncementSource,
     EastmoneyCompanyProfileSource,
     EastmoneyFinancialMetricsSource,
+    EastmoneyIntradayQuoteSnapshotSource,
+    EastmoneyNewsSource,
     EastmoneyPriceHistorySource,
-    IfengNewsSource,
+    EastmoneyQuoteSnapshotSource,
     RawAnnouncementSourceAdapter,
     RawCompanyProfileSourceAdapter,
     RawFinancialMetricsSourceAdapter,
     RawNewsSourceAdapter,
     RawPriceHistorySourceAdapter,
+    RawQuoteSnapshotSourceAdapter,
     SinaAnnouncementSource,
+    SinaFundQuoteSnapshotSource,
+    SinaNewsSource,
 )
+from app.services.providers.netease_price_history import NetEasePriceHistorySource
+from app.services.providers.sina_price_history import SinaPriceHistorySource
 
 router = APIRouter()
 
@@ -53,8 +62,7 @@ class EmptyNewsProvider:
 def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
     return AggregateAnnouncementProvider(
         raw_sources=[
-            # Eastmoney announcement API returns fund/trust announcements, not stock announcements
-            # RawAnnouncementSourceAdapter("eastmoney", EastmoneyAnnouncementSource()),
+            RawAnnouncementSourceAdapter("eastmoney", EastmoneyAnnouncementSource()),
             RawAnnouncementSourceAdapter("sina", SinaAnnouncementSource()),
         ]
     )
@@ -64,8 +72,8 @@ def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
 def get_aggregate_news_provider() -> AggregateNewsProvider:
     return AggregateNewsProvider(
         raw_sources=[
-            # Ifeng news API returns 404 - endpoint may have changed
-            # RawNewsSourceAdapter("ifeng", IfengNewsSource()),
+            RawNewsSourceAdapter("eastmoney", EastmoneyNewsSource()),
+            RawNewsSourceAdapter("sina", SinaNewsSource()),
         ]
     )
 
@@ -74,8 +82,11 @@ def get_aggregate_news_provider() -> AggregateNewsProvider:
 def get_aggregate_price_history_provider() -> AggregatePriceHistoryProvider:
     return AggregatePriceHistoryProvider(
         raw_sources=[
+            RawPriceHistorySourceAdapter("sina", SinaPriceHistorySource()),
             RawPriceHistorySourceAdapter("eastmoney", EastmoneyPriceHistorySource()),
-        ]
+            RawPriceHistorySourceAdapter("netease", NetEasePriceHistorySource()),
+        ],
+        fallback_enabled=False,
     )
 
 
@@ -83,11 +94,30 @@ def get_aggregate_price_history_provider() -> AggregatePriceHistoryProvider:
 def get_aggregate_financial_metrics_provider() -> AggregateFinancialMetricsProvider:
     return AggregateFinancialMetricsProvider(
         raw_sources=[
-            # Eastmoney financial metrics API endpoint has changed and no longer works
-            # RawFinancialMetricsSourceAdapter(
-            #     "eastmoney",
-            #     EastmoneyFinancialMetricsSource(),
-            # ),
+            RawFinancialMetricsSourceAdapter(
+                "eastmoney",
+                EastmoneyFinancialMetricsSource(),
+            ),
+        ]
+    )
+
+
+
+def get_aggregate_quote_snapshot_provider() -> AggregateQuoteSnapshotProvider:
+    return AggregateQuoteSnapshotProvider(
+        raw_sources=[
+            RawQuoteSnapshotSourceAdapter(
+                "eastmoney_intraday",
+                EastmoneyIntradayQuoteSnapshotSource(),
+            ),
+            RawQuoteSnapshotSourceAdapter(
+                "eastmoney",
+                EastmoneyQuoteSnapshotSource(),
+            ),
+            RawQuoteSnapshotSourceAdapter(
+                "sina_fund",
+                SinaFundQuoteSnapshotSource(),
+            ),
         ]
     )
 
@@ -96,8 +126,7 @@ def get_aggregate_financial_metrics_provider() -> AggregateFinancialMetricsProvi
 def get_aggregate_company_profile_provider() -> AggregateCompanyProfileProvider:
     return AggregateCompanyProfileProvider(
         raw_sources=[
-            # Eastmoney company profile API endpoint has changed and no longer works
-            # RawCompanyProfileSourceAdapter("eastmoney", EastmoneyCompanyProfileSource()),
+            RawCompanyProfileSourceAdapter("eastmoney", EastmoneyCompanyProfileSource()),
         ]
     )
 
@@ -115,6 +144,9 @@ def get_stock_sync_service(
     aggregate_financial_metrics_provider: AggregateFinancialMetricsProvider = Depends(
         get_aggregate_financial_metrics_provider
     ),
+    aggregate_quote_snapshot_provider: AggregateQuoteSnapshotProvider = Depends(
+        get_aggregate_quote_snapshot_provider
+    ),
     aggregate_company_profile_provider: AggregateCompanyProfileProvider = Depends(
         get_aggregate_company_profile_provider
     ),
@@ -126,9 +158,11 @@ def get_stock_sync_service(
         news_repository=NewsRepository(session),
         price_history_provider=aggregate_price_history_provider,
         financial_metrics_provider=aggregate_financial_metrics_provider,
+        quote_snapshot_provider=aggregate_quote_snapshot_provider,
         company_profile_provider=aggregate_company_profile_provider,
         price_history_repository=PriceHistoryRepository(session),
         financial_metrics_repository=FinancialMetricsRepository(session),
+        quote_snapshot_repository=QuoteSnapshotRepository(session),
         company_profile_repository=CompanyProfileRepository(session),
     )
 
@@ -161,6 +195,7 @@ def sync_stock(
         security_id,
         stock_code=security.code,
         market=security.market,
+        industry=security.industry,
         synced_at=utc_now(),
     )
     return StockSyncResponse.from_service_result(
@@ -170,6 +205,7 @@ def sync_stock(
         news_items_upserted=result.news_items_upserted,
         price_bars_upserted=result.price_bars_upserted,
         financial_metrics_upserted=result.financial_metrics_upserted,
+        quote_snapshot_updated=result.quote_snapshot_updated,
         company_profile_updated=result.company_profile_updated,
         warnings=result.warnings,
         synced_at=result.synced_at,

@@ -42,6 +42,14 @@ class RawPriceBar:
 
 
 @dataclass(frozen=True)
+class RawQuoteSnapshot:
+    last_price: Decimal
+    change_amount: Decimal
+    change_percent: Decimal
+    snapshot_time: datetime
+
+
+@dataclass(frozen=True)
 class RawFinancialMetrics:
     report_period: str
     revenue: Decimal | None = None
@@ -60,3 +68,27 @@ class RawCompanyProfile:
     website: str | None = None
     main_business: str | None = None
     employees: int | None = None
+
+
+@dataclass(frozen=True)
+class RawMarketIndexSnapshot:
+    key: str
+    name: str
+    market: str | None = None
+    last_value: Decimal | None = None
+    change_amount: Decimal | None = None
+    change_percent: Decimal | None = None
+    snapshot_time: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RawMacroSnapshotItem:
+    key: str
+    title: str
+    category: str
+    value: str | None = None
+    unit: str | None = None
+    change_text: str | None = None
+    published_at: datetime | None = None
+    importance: str = "medium"
+    summary: str | None = None

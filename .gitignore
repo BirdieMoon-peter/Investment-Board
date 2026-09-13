@@ -1,0 +1,74 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python dependencies, caches and packaging output
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+build/
+
+# Frontend dependencies, build output and test reports
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Runtime data, logs and backups
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+*.log.*
+*.pid
+*.bak
+*.backup
+
+# Operating system and editor files
+.DS_Store
+._*
+.AppleDouble/
+.LSOverride
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Private local tooling and verification evidence
+/artifacts/
+/.claude/
+/.codex/
+/.agents/
+/.playwright-mcp/
+/docs/verification/2026-09-12-functional-audit.md
+/docs/verification/2026-09-13-relocation-continuation.md
+/homepage-after-remove.md
+/homepage-macro-carousel.md
+
+# Ad hoc root screenshots; reviewed README images live in docs/images/
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+
+# Private local acceptance plan
+/docs/superpowers/plans/2026-09-12-full-functional-verification.md

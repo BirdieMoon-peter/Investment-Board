@@ -7,21 +7,25 @@
 - [x] Create review gate checklist
 
 ## Phase 1: Application Skeleton
-- [ ] Frontend foundation
-- [ ] Backend foundation
+- [x] Frontend foundation
+- [x] Backend foundation
 
 ## Phase 2: Data Integration
-- [ ] Data-layer foundation
-- [ ] Frontend/backend data contract alignment
+- [x] Data-layer foundation
+- [x] Frontend/backend data contract alignment
 
 ## Phase 3: Automation and Hardening
-- [ ] Scripts and developer automation
-- [ ] Regression and review hygiene improvements
+- [x] Scripts and developer automation
+- [x] Regression and review hygiene improvements
+- [x] Frontend presentation polish and interaction refinement
+- [x] Database read/write efficiency improvements
+- [x] AI advice availability validation and usability improvements
 
 ## Current Target
-- Choose the first technical-layer module from `docs/02-module-registry.md`
-- Move that module to `doing`
-- Record the first concrete implementation step in `memory/progress.md`
+- Package the verified application for reproducible local use: project README, demo screenshots, portable configuration, contributor guide, CI and source-only Git tracking.
+- Frontend/data-layer repairs and scripts isolation/lifecycle verification have passed independent review.
+- Backend regression verification passes; fresh stock/holding AI acceptance remains dependent on valid external provider authentication.
+- Current consolidated evidence: `docs/verification/release-readiness.md`. Historical or synthetic cache results do not prove current live AI availability.
 
 ## Done
 - Workflow scaffold created on 2026-03-10

@@ -94,7 +94,7 @@ def test_create_db_and_tables_creates_stock_detail_tables(tmp_path):
 
 - [ ] **Step 2: Run the schema test to verify it fails before implementation**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_stock_detail_models.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_stock_detail_models.py" -q`
 Expected: FAIL because the detail models do not exist yet
 
 - [ ] **Step 3: Implement `PriceBarDaily`, `Announcement`, and `NewsItem` with minimal indexed fields**
@@ -129,7 +129,7 @@ class NewsItem(SQLModel, table=True):
 
 - [ ] **Step 4: Export the models and re-run the schema test**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_stock_detail_models.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_stock_detail_models.py" -q`
 Expected: PASS
 
 ### Task 2: Implement data-layer repositories for detail queries and aggregation
@@ -167,7 +167,7 @@ def test_stock_detail_repository_returns_null_or_empty_sections_when_data_is_mis
 
 - [ ] **Step 2: Run the repository tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_price_context_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_announcement_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_news_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_stock_detail_repository.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_price_context_repository.py" "backend/tests/db/test_announcement_repository.py" "backend/tests/db/test_news_repository.py" "backend/tests/db/test_stock_detail_repository.py" -q`
 Expected: FAIL with missing repository modules
 
 - [ ] **Step 3: Implement focused repositories plus one aggregate repository**
@@ -217,7 +217,7 @@ def test_get_stock_detail_returns_aggregated_sections(client, session, seeded_se
 
 - [ ] **Step 2: Run the detail API test to verify it fails before implementation**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_stock_detail_api.py" -q`
 Expected: FAIL with missing route or schema errors
 
 - [ ] **Step 3: Implement stock detail response schemas**
@@ -244,7 +244,7 @@ def get_stock_detail(...):
 
 - [ ] **Step 5: Re-run the detail API test**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_stock_detail_api.py" -q`
 Expected: PASS
 
 ## Chunk 3: Frontend Detail Navigation and Page Rendering
@@ -271,7 +271,7 @@ test("opens stock detail page when a watchlist row is clicked", async () => {
 
 - [ ] **Step 2: Run the frontend detail tests to verify they fail**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
 Expected: FAIL with missing detail page or navigation behavior
 
 - [ ] **Step 3: Implement minimal page-level navigation state in `App.tsx`**
@@ -289,7 +289,7 @@ Expected: FAIL with missing detail page or navigation behavior
 
 - [ ] **Step 5: Re-run the frontend detail tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
 Expected: PASS
 
 ### Task 5: Add frontend stock detail API client and render the detail sections
@@ -315,7 +315,7 @@ expect(screen.getByText(/news/i)).toBeInTheDocument()
 
 - [ ] **Step 2: Run the detail page test to verify it fails before implementation**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: FAIL with missing API client or missing rendered sections
 
 - [ ] **Step 3: Implement the detail API client and frontend types**
@@ -339,7 +339,7 @@ export async function fetchStockDetail(securityId: number): Promise<StockDetailR
 
 - [ ] **Step 5: Re-run the detail page tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx`
 Expected: PASS
 
 ## Chunk 4: Cross-Layer Verification and Doc Sync
@@ -358,8 +358,8 @@ Expected: PASS
 - [ ] **Step 1: Run the stock detail automated checks**
 
 Run:
-- `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db/test_stock_detail_models.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_price_context_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_announcement_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_news_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/db/test_stock_detail_repository.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py" -q`
-- `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
+- `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/db/test_stock_detail_models.py" "backend/tests/db/test_price_context_repository.py" "backend/tests/db/test_announcement_repository.py" "backend/tests/db/test_news_repository.py" "backend/tests/db/test_stock_detail_repository.py" "backend/tests/api/test_stock_detail_api.py" -q`
+- `npm test --prefix "frontend" -- src/pages/StockDetailPage.test.tsx src/App.test.tsx`
 
 Expected: all pass
 

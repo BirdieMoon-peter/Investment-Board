@@ -1,6 +1,16 @@
+from dataclasses import dataclass
+
 from sqlmodel import Session, select
 
-from app.db.models import WatchlistItem
+from app.db.models import Security, WatchlistItem
+
+
+@dataclass(frozen=True)
+class WatchlistSecurityRow:
+    security_id: int
+    market: str
+    code: str
+    industry: str | None
 
 
 class WatchlistRepository:
@@ -37,3 +47,20 @@ class WatchlistRepository:
                 select(WatchlistItem.security_id).order_by(WatchlistItem.created_at, WatchlistItem.id)
             ).all()
         )
+
+    def list_security_rows(self) -> list[WatchlistSecurityRow]:
+        statement = (
+            select(Security.id, Security.market, Security.code, Security.industry)
+            .select_from(WatchlistItem)
+            .join(Security, Security.id == WatchlistItem.security_id)
+            .order_by(WatchlistItem.created_at, WatchlistItem.id)
+        )
+        return [
+            WatchlistSecurityRow(
+                security_id=security_id,
+                market=market,
+                code=code,
+                industry=industry,
+            )
+            for security_id, market, code, industry in self.session.exec(statement).all()
+        ]

@@ -113,7 +113,7 @@ def test_eastmoney_security_lookup_source_maps_real_payload_to_security_seed():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_security_lookup.py::test_eastmoney_security_lookup_source_maps_real_payload_to_security_seed" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_security_lookup.py::test_eastmoney_security_lookup_source_maps_real_payload_to_security_seed" -v`
 Expected: FAIL because the adapter file and supporting raw type do not exist yet.
 
 - [ ] **Step 3: Add the minimal raw lookup type and adapter implementation**
@@ -172,7 +172,7 @@ class EastmoneySecurityLookupSource:
 
 - [ ] **Step 4: Run the focused lookup adapter tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_security_lookup.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_security_lookup.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the adapter slice**
@@ -216,7 +216,7 @@ def test_security_lookup_service_creates_missing_security_from_lookup_source(ses
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_security_lookup_service.py::test_security_lookup_service_creates_missing_security_from_lookup_source" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_security_lookup_service.py::test_security_lookup_service_creates_missing_security_from_lookup_source" -v`
 Expected: FAIL because the service does not exist yet.
 
 - [ ] **Step 3: Implement the minimal service and repository helper**
@@ -264,7 +264,7 @@ class SecurityLookupService:
 
 - [ ] **Step 4: Run the focused service tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_security_lookup_service.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_security_lookup_service.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the service slice**
@@ -306,7 +306,7 @@ def test_search_securities_returns_empty_list_and_preserves_custom_add_path(clie
 
 - [ ] **Step 2: Run the focused API tests to verify they fail**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py::test_add_watchlist_item_by_market_code_creates_missing_security_and_returns_it" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py::test_add_watchlist_item_by_market_code_returns_422_for_invalid_market" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_watchlist_mutation_api.py::test_add_watchlist_item_by_market_code_creates_missing_security_and_returns_it" "backend/tests/api/test_watchlist_mutation_api.py::test_add_watchlist_item_by_market_code_returns_422_for_invalid_market" -v`
 Expected: FAIL because the endpoint and request/response schemas do not exist yet.
 
 - [ ] **Step 3: Add the endpoint and schemas with minimal behavior**
@@ -349,7 +349,7 @@ def add_watchlist_item_by_market_code(
 
 - [ ] **Step 4: Run the focused watchlist API tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_watchlist_mutation_api.py" "backend/tests/api/test_search_securities_api.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the custom add API slice**
@@ -394,7 +394,7 @@ def test_ifeng_news_source_maps_html_rows_to_raw_news_items():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_ifeng_news.py::test_ifeng_news_source_maps_html_rows_to_raw_news_items" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_ifeng_news.py::test_ifeng_news_source_maps_html_rows_to_raw_news_items" -v`
 Expected: FAIL because the adapter does not exist yet.
 
 - [ ] **Step 3: Implement the minimal reliable news adapter**
@@ -429,7 +429,7 @@ Keep parsing minimal and explicit. Use a small HTML parser or regex-free DOM-lik
 
 - [ ] **Step 4: Run the focused real news adapter tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_ifeng_news.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_ifeng_news.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the reliable adapter slice**
@@ -457,7 +457,7 @@ def test_get_stock_sync_service_builds_reliable_real_news_provider(session):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py::test_get_stock_sync_service_builds_reliable_real_news_provider" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_stock_sync_api.py::test_get_stock_sync_service_builds_reliable_real_news_provider" -v`
 Expected: FAIL because the sync service still wires `eastmoney` and `sina` for news.
 
 - [ ] **Step 3: Update the aggregate news provider wiring**
@@ -477,7 +477,7 @@ Also update service-level tests so stock metadata and warnings still flow throug
 
 - [ ] **Step 4: Run the focused news sync wiring tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_real_sources.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_stock_sync_api.py" "backend/tests/services/test_real_source_aggregate_providers.py" "backend/tests/services/test_stock_sync_real_sources.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the sync wiring slice**
@@ -515,7 +515,7 @@ def test_get_stock_detail_returns_stock_identity_and_sync_metadata(...):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_list_api.py::test_list_watchlist_items_returns_market_with_each_row" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py::test_get_stock_detail_returns_security_with_price_context_announcements_and_news" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_watchlist_list_api.py::test_list_watchlist_items_returns_market_with_each_row" "backend/tests/api/test_stock_detail_api.py::test_get_stock_detail_returns_security_with_price_context_announcements_and_news" -v`
 Expected: FAIL because watchlist rows do not currently include `market`.
 
 - [ ] **Step 3: Add the minimal repository and schema fields**
@@ -546,7 +546,7 @@ Keep `StockDetailSecurityResponse` aligned with the repository model and add onl
 
 - [ ] **Step 4: Run the focused stock identity API tests**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_list_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_watchlist_list_api.py" "backend/tests/api/test_stock_detail_api.py" -q`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the stock identity contract slice**
@@ -585,7 +585,7 @@ it('offers custom add when search returns no matches and adds by market and code
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run frontend/src/components/SearchBox.test.tsx frontend/src/App.test.tsx`
+Run: `npm test --prefix "frontend" -- --run frontend/src/components/SearchBox.test.tsx frontend/src/App.test.tsx`
 Expected: FAIL because the custom add callback and UI do not exist yet.
 
 - [ ] **Step 3: Add the minimal custom add client and UI flow**
@@ -617,7 +617,7 @@ Render a compact fallback section when `hasSearched && results.length === 0`, wi
 
 - [ ] **Step 4: Run the focused frontend search tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run frontend/src/components/SearchBox.test.tsx frontend/src/App.test.tsx`
+Run: `npm test --prefix "frontend" -- --run frontend/src/components/SearchBox.test.tsx frontend/src/App.test.tsx`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the custom add frontend slice**
@@ -655,7 +655,7 @@ it('renders a stronger stock identity header with market, code, industry, and st
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run frontend/src/components/WatchlistTable.test.tsx frontend/src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- --run frontend/src/components/WatchlistTable.test.tsx frontend/src/pages/StockDetailPage.test.tsx`
 Expected: FAIL because the UI does not yet render the strengthened combined identity presentation.
 
 - [ ] **Step 3: Implement the minimal presentation updates**
@@ -677,7 +677,7 @@ Also adjust `StockDetailPage` copy so it reflects a real tracked stock workspace
 
 - [ ] **Step 4: Run the focused presentation tests**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run frontend/src/components/WatchlistTable.test.tsx frontend/src/pages/StockDetailPage.test.tsx`
+Run: `npm test --prefix "frontend" -- --run frontend/src/components/WatchlistTable.test.tsx frontend/src/pages/StockDetailPage.test.tsx`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the presentation slice**
@@ -699,17 +699,17 @@ git commit -m "feat: improve stock info presentation"
 
 - [ ] **Step 1: Run the full backend verification for this slice**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api/test_search_securities_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_mutation_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_watchlist_list_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_detail_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/api/test_stock_sync_api.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_security_lookup_service.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_security_lookup.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_ifeng_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_stock_sync_real_sources.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/api/test_search_securities_api.py" "backend/tests/api/test_watchlist_mutation_api.py" "backend/tests/api/test_watchlist_list_api.py" "backend/tests/api/test_stock_detail_api.py" "backend/tests/api/test_stock_sync_api.py" "backend/tests/services/test_security_lookup_service.py" "backend/tests/services/test_eastmoney_security_lookup.py" "backend/tests/services/test_ifeng_news.py" "backend/tests/services/test_real_source_aggregate_providers.py" "backend/tests/services/test_stock_sync_real_sources.py" -q`
 Expected: PASS.
 
 - [ ] **Step 2: Run the full frontend verification for this slice**
 
-Run: `npm test --prefix "/Users/peter/Desktop/Investment Board/frontend" -- --run`
+Run: `npm test --prefix "frontend" -- --run`
 Expected: PASS.
 
 - [ ] **Step 3: Run the user-facing local acceptance entrypoint**
 
-Run: `"/Users/peter/Desktop/Investment Board/scripts/run_all.sh" --seed`
+Run: `"scripts/run_all.sh" --seed`
 Expected: backend and frontend start cleanly with the new custom add and real news sync behavior available for manual acceptance.
 
 - [ ] **Step 4: Update stable decisions and progress state**

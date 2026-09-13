@@ -1,2 +1,0 @@
-[console_scripts]
-seed-watchlist-demo = app.db.services.seed_demo_data_cli:main

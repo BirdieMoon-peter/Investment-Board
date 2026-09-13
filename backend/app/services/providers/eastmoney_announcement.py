@@ -63,9 +63,8 @@ class EastmoneyAnnouncementSource:
                             if not isinstance(row, dict):
                                 raise ValueError(f"Eastmoney announcement row {row_index} is not a valid dict")
 
-                            # Skip announcements without stock codes (fund/trust announcements)
                             codes = row.get("codes")
-                            if not isinstance(codes, list) or len(codes) == 0:
+                            if isinstance(codes, list) and len(codes) == 0:
                                 continue
 
                             published_at = _parse_published_at(row, row_index=row_index)

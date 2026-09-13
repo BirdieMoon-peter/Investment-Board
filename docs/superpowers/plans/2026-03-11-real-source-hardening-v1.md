@@ -64,7 +64,7 @@ def test_aggregate_announcement_provider_includes_context_in_warnings():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py::test_aggregate_announcement_provider_includes_context_in_warnings" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_real_source_aggregate_providers.py::test_aggregate_announcement_provider_includes_context_in_warnings" -v`
 Expected: FAIL because current warning message doesn't include stock_code/market context
 
 - [ ] **Step 3: Update _warning_message helper to include context**
@@ -145,7 +145,7 @@ def test_eastmoney_announcement_source_retries_on_timeout():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_retries_on_timeout" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_retries_on_timeout" -v`
 Expected: FAIL because retry logic doesn't exist yet
 
 - [ ] **Step 3: Add retry logic to fetch method**
@@ -295,7 +295,7 @@ def test_eastmoney_announcement_source_tolerates_missing_summary():
 
 - [ ] **Step 2: Run test to verify current behavior**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_tolerates_missing_summary" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_tolerates_missing_summary" -v`
 Expected: Should already PASS (current implementation uses `_optional_str`)
 
 - [ ] **Step 3: Write test for clearer required field errors**
@@ -438,7 +438,7 @@ def test_eastmoney_announcement_source_fetches_multiple_pages():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_fetches_multiple_pages" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_fetches_multiple_pages" -v`
 Expected: FAIL because max_pages parameter doesn't exist yet
 
 - [ ] **Step 3: Add pagination logic to fetch method**
@@ -593,7 +593,7 @@ def test_eastmoney_announcement_source_logs_successful_fetch(caplog):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_logs_successful_fetch" -v`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py::test_eastmoney_announcement_source_logs_successful_fetch" -v`
 Expected: FAIL because logging doesn't exist yet
 
 - [ ] **Step 3: Add logging to Eastmoney announcement fetch**
@@ -677,7 +677,7 @@ Expected: PASS
 
 - [ ] **Step 1: Run the full hardening backend verification suite**
 
-Run: `PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" "/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" -m pytest "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_announcement.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_announcement.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_eastmoney_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_sina_news.py" "/Users/peter/Desktop/Investment Board/backend/tests/services/test_real_source_aggregate_providers.py" -q`
+Run: `PYTHONPATH="backend" "backend/.venv/bin/python" -m pytest "backend/tests/services/test_eastmoney_announcement.py" "backend/tests/services/test_sina_announcement.py" "backend/tests/services/test_eastmoney_news.py" "backend/tests/services/test_sina_news.py" "backend/tests/services/test_real_source_aggregate_providers.py" -q`
 Expected: All tests PASS
 
 - [ ] **Step 2: Record stable hardening decisions**

@@ -1,236 +1,181 @@
 # Investment Board
 
-一个面向本地运行的自选股 MVP 项目，目前已经打通了一个小型端到端链路：
+**把市场概览、自选行情、个股研究与持仓记录，放在同一张本地看板里。**
 
-- **数据层**：SQLModel + SQLite
-- **后端**：FastAPI
-- **前端**：React + Vite + TypeScript
-- **本地运行方式**：seed 好的 SQLite 数据库 + uvicorn + Vite 开发服务器
+*A local investment dashboard for market context, watchlists, and AI-assisted research.*
 
-## 当前 MVP 范围
+Investment Board 面向个人的沪深证券与基金跟踪场景。用一页首页观察市场和自选变化，再进入标的详情查看 K 线、基本面、公告与新闻；需要进一步梳理时，可以结合持仓信息手动生成 AI 分析，并保留结果供后续回看。
 
-当前仓库已经实现的能力：
+[功能](#功能) · [快速开始](#快速开始) · [AI 配置](#ai-配置) · [开发与验证](#开发与验证)
 
-- 按股票代码或名称搜索证券
-- 添加到自选股
-- 从自选股中移除
-- 渲染自选股列表
-- 显示空状态、错误状态、无搜索结果状态、缺失行情状态
-- 提供本地开发和验收用的 demo seed 数据
+## 界面预览
 
-当前 MVP 暂不包含：
+![Investment Board 首页：市场概览、焦点标的、大盘指数与搜索入口](docs/images/dashboard.jpg)
 
-- 个股详情页
-- 分组自选股
-- AI 分析界面
-- 持仓 / 组合管理
-- 新闻 / 公告真实数据面板
-- 部署基础设施
+*首页总览：市场概览、焦点标的与大盘指数，提供证券搜索入口。页面下方还包括宏观信息和自选列表。*
 
-## 项目当前状态
+![Investment Board 标的详情：报价、历史日 K 线与成交量](docs/images/stock-detail.jpg)
 
-当前模块状态如下：
+*个股研究：日 K 线、成交量与历史价格表。详情页还提供基本面、资讯、持仓和分析记录。*
 
-- `data-layer`: done
-- `backend`: done
-- `frontend`: done
-- `scripts`: done
+截图来自独立演示数据库中的实际运行界面。图中行情和日期是演示环境在截图时展示的快照，不代表持续实时更新，也不包含个人真实持仓。
 
-## 仓库结构
+## 功能
 
-```text
-backend/   FastAPI 应用、SQLModel 模型、repository、seed / runtime 辅助代码、API 测试
-frontend/  React + Vite 应用、UI 组件、前端测试
-docs/      workflow、roadmap、module registry、模块文档、plans / specs
-memory/    当前进度与稳定决策记录
-scripts/   本地启动 backend / frontend 和 smoke 检查的脚本
+| 场景 | 已实现能力 |
+| --- | --- |
+| 市场概览 | 大盘指数、宏观指标、焦点标的、自选行情与已有 AI 建议标签 |
+| 自选管理 | 按证券代码或名称搜索、添加与移除自选；支持手动补充沪深证券及基金代码 |
+| 行情同步 | 手动同步全看板或单个标的；可配置自动刷新、自动同步及其间隔 |
+| 标的研究 | 报价、历史日 K 线、成交量、分页价格明细、历史报价上下文、财务指标、公司资料、公告与新闻 |
+| 基金展示 | 保留报价中的小数精度，避免把低价基金统一四舍五入到两位小数 |
+| 持仓记录 | 保存、更新、删除持仓数量、成本、投资期限与备注 |
+| AI 辅助研究 | 手动生成股票或持仓分析，读取已有缓存，回看最近分析记录；默认保留最近 20 条 |
+| 个性化 | 中英文切换、实时/专注模式、紧凑/舒适密度、首页区域开关；设置保存在当前浏览器 |
+
+首页自动刷新与行情同步只读取已有 AI 标签，不会自动发起新的模型生成。股票与持仓分析由详情页的生成操作触发。
+
+## 技术结构
+
+| 层 | 技术与职责 |
+| --- | --- |
+| 前端 | React 19、TypeScript、Vite 7；Lightweight Charts 绘制 K 线与成交量 |
+| 后端 | FastAPI 提供接口，服务层负责行情同步、信息聚合与分析流程 |
+| 存储 | SQLModel + SQLite，保存自选、行情、持仓与 AI 分析记录 |
+| 外部数据 | 通过独立 Provider 接入公开行情、宏观、公司资料与资讯来源 |
+| 模型接入 | 支持 Anthropic-compatible、OpenAI-compatible，以及 DashScope/Kimi 配置 |
+| 验证 | pytest、Vitest、Testing Library，以及隔离数据库的启动与冒烟检查 |
+
+```mermaid
+flowchart LR
+    UI[React / TypeScript 看板] -->|REST API| API[FastAPI]
+    API --> Services[查询、同步与分析服务]
+    Services <--> DB[(SQLite / SQLModel)]
+    Services --> Data[公开行情与资讯 Provider]
+    Services -->|手动请求新分析| AI[配置的 AI Provider]
 ```
 
-## 环境要求
+自选、持仓与分析记录保存在本地 SQLite；界面偏好与短期自选缓存保存在浏览器。新分析会将相关标的和持仓上下文发送到你配置的模型服务。
 
-- **Python 3.12**：用于 backend
-- **Node.js + npm**：用于 frontend
+## 快速开始
 
-## 本地初始化
+需要 **Python 3.12+、Node.js 22.12+、npm 和 Bash**。以下命令在 macOS / Linux 的终端中执行。
 
-### 1. 创建 backend 虚拟环境
-
-在仓库根目录执行：
+### 1. 下载并安装依赖
 
 ```bash
-cd backend
-python3.12 -m venv .venv
-./.venv/bin/python -m pip install -e ".[dev]"
-cd ..
+git clone https://github.com/BirdieMoon-peter/Investment-Board.git
+cd Investment-Board
+
+python3.12 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -e './backend[dev]'
+npm ci --prefix frontend
 ```
 
-### 2. 安装 frontend 依赖
+如果使用更高版本的 Python，将 `python3.12` 替换为对应命令即可。
+
+### 2. 启动看板
 
 ```bash
-npm install --prefix frontend
+./scripts/run_all.sh
 ```
 
-## 初始化 demo 数据
+启动后打开 [本地看板](http://127.0.0.1:5173)，后端接口说明位于 [Swagger UI](http://127.0.0.1:8000/docs)。首次启动会创建项目根目录下的 `investment_board.db`，可从空自选列表开始添加标的。浏览行情、自选和持仓功能无需配置 AI 密钥。
 
-支持两种方式。
+按 `Ctrl+C` 结束本次启动的前后端服务。默认使用 `8000` 和 `5173` 端口，端口占用时启动会失败。也可以分别使用 `./scripts/run_backend.sh` 和 `./scripts/run_frontend.sh`。
 
-### 方式一：使用安装后的 backend 命令入口（推荐）
+### 3. 可选：使用独立演示数据
+
+在首次体验时，可用一个新的临时数据库启动演示，包含 3 个示例证券、历史报价快照和 2 个默认自选：
 
 ```bash
-cd backend
-./.venv/bin/seed-watchlist-demo
-cd ..
+DEMO_DIR="$(mktemp -d)"
+DATABASE_URL="sqlite:///$DEMO_DIR/investment-board-demo.db" ./scripts/run_all.sh --seed
 ```
 
-### 方式二：直接按模块方式执行
+演示报价是固定样例，完整的 K 线、基本面与资讯需要通过在线同步获取。请只对空白或专门的演示数据库使用 `--seed`。已有看板运行时，先停止它再使用默认端口启动演示。
+
+日常运行可通过进程环境变量 `DATABASE_URL` 指定其他数据库路径。脚本会将该值传给后端和演示初始化过程。
+
+## AI 配置
+
+AI 是可选能力，需要一个已认证、模型可用的服务账号。先复制配置模板：
 
 ```bash
-cd backend
-PYTHONPATH="$(pwd)" ./.venv/bin/python -m app.db.services.seed_demo_data_cli
-cd ..
+cp -n backend/.env.example backend/.env.local
 ```
 
-默认会向本地 SQLite 数据库写入 demo 数据：
+编辑 `backend/.env.local`，填写所选服务的地址、模型标识和密钥。例如，使用 OpenAI-compatible 接口时：
 
-```text
-investment_board.db
+```dotenv
+AI_PROVIDER=openai_compatible
+AI_API_URL=https://your-provider.example
+AI_MODEL=your-model-id
+AI_API_KEY=replace-with-your-own-key
 ```
 
-## 本地启动项目
+以上均为占位值。`AI_API_URL` 可以填写服务根地址，应用会补全 `/v1/chat/completions`；也可直接填写完整的该接口地址。Anthropic-compatible、DashScope/Kimi 选项见 [配置模板](backend/.env.example)。修改配置后重启后端。
 
-### 启动 backend
+进程环境变量优先于本地配置文件。密钥仅放在本地配置中，不要提交到版本库。已有缓存可以直接回看；生成新分析还需要外部服务认证、权限和额度正常。应用启动、自动化测试或缓存展示成功，都不代表当前真实模型生成已通过验证。
 
-在仓库根目录执行：
+## 开发与验证
+
+在项目根目录执行：
 
 ```bash
-./scripts/run_backend.sh
-```
+# 后端接口、服务与数据层
+PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests -q
 
-默认监听地址：
+# 前端交互与生产构建
+npm test --prefix frontend -- --run
+npm run build --prefix frontend
 
-```text
-http://127.0.0.1:8000
-```
-
-### 启动 frontend
-
-在另一个终端里、同样在仓库根目录执行：
-
-```bash
-./scripts/run_frontend.sh
-```
-
-默认监听地址：
-
-```text
-http://127.0.0.1:5173
-```
-
-前端开发环境已经配置了 `/api` 代理，会把请求转发到本地 backend。
-
-## 本地 smoke 验证
-
-### 一键 smoke 脚本
-
-```bash
+# 启动脚本与隔离冒烟检查
+PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 ./scripts/smoke_watchlist.sh
 ```
 
-这个脚本会自动完成：
+冒烟检查使用独立临时数据库、日志和随机本地端口，结束时清理本次创建的资源，可以与主服务并行运行。启动等待默认 120 秒；首次依赖加载较慢时，可使用 `SMOKE_STARTUP_TIMEOUT=180 ./scripts/smoke_watchlist.sh` 调整。自动化测试中的模拟 AI 回复用于验证应用流程。
 
-- 创建一个单独的 smoke 数据库
-- seed demo 证券、行情和自选股数据
-- 临时启动 backend
-- 检查关键 watchlist API 是否能正确返回 JSON
+更多开发约定与验证步骤见 [贡献指南](CONTRIBUTING.md)。
 
-### 直接检查接口
+### 主要接口
 
-如果 backend 已经启动，可以直接执行：
+| 功能 | 接口 |
+| --- | --- |
+| 市场概览 | `GET /api/homepage/overview` |
+| 搜索证券 | `GET /api/watchlist/securities/search?query=...` |
+| 自选列表与添加 | `GET /api/watchlist/items`、`POST /api/watchlist/items` |
+| 自选同步 | `POST /api/watchlist/sync` |
+| 标的详情与同步 | `GET /api/stocks/{security_id}`、`POST /api/stocks/{security_id}/sync` |
+| 持仓 | `GET /api/holdings`、`POST /api/holdings`、`PUT /api/holdings/{holding_id}`、`DELETE /api/holdings/{holding_id}` |
+| 股票与持仓分析 | `POST /api/ai/stocks/{security_id}/advice`、`POST /api/ai/holdings/{holding_id}/advice` |
+| 分析历史 | `GET /api/ai/history` |
 
-```bash
-curl -s http://127.0.0.1:8000/api/watchlist/items
-curl -s "http://127.0.0.1:8000/api/watchlist/securities/search?query=Ping"
-```
+完整请求字段、响应与其他接口以运行后的 [API 文档](http://127.0.0.1:8000/docs) 为准。
 
-## 自动化验证命令
-
-### Backend API 测试
-
-```bash
-PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" \
-"/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" \
--m pytest "/Users/peter/Desktop/Investment Board/backend/tests/api" -q
-```
-
-### Backend 数据层测试
-
-```bash
-PYTHONPATH="/Users/peter/Desktop/Investment Board/backend" \
-"/Users/peter/Desktop/Investment Board/backend/.venv/bin/python" \
--m pytest "/Users/peter/Desktop/Investment Board/backend/tests/db" -q
-```
-
-### Frontend 测试
-
-```bash
-npm test --prefix frontend
-```
-
-## 当前 API 列表
-
-### 搜索证券
+### 目录
 
 ```text
-GET /api/watchlist/securities/search?query=<text>
+Investment-Board/
+├── frontend/          # 看板、详情页、界面组件与前端测试
+├── backend/
+│   ├── app/
+│   │   ├── api/       # FastAPI 路由
+│   │   ├── services/  # 同步、分析与外部数据 Provider
+│   │   ├── db/        # 数据模型、仓储与初始化
+│   │   └── schemas/   # 接口数据结构
+│   └── tests/         # 后端测试
+├── scripts/           # 本地启动、冒烟检查与脚本测试
+├── docs/              # 工作流、模块说明与界面截图
+└── memory/            # 项目决策与执行状态
 ```
 
-### 获取自选股列表
+项目范围与模块边界见 [工作流](docs/00-workflow.md)、[路线图](docs/01-roadmap.md) 和 [模块清单](docs/02-module-registry.md)。
 
-```text
-GET /api/watchlist/items
-```
+## 数据与使用边界
 
-### 添加自选股
-
-```text
-POST /api/watchlist/items
-Content-Type: application/json
-{
-  "security_id": 1
-}
-```
-
-### 删除自选股
-
-```text
-DELETE /api/watchlist/items/{security_id}
-```
-
-## 手工验收清单
-
-如果要做一轮快速手工验收，可以按这个顺序：
-
-1. seed demo 数据
-2. 用 `./scripts/run_backend.sh` 启动 backend
-3. 用 `./scripts/run_frontend.sh` 启动 frontend
-4. 打开 `http://127.0.0.1:5173`
-5. 搜索 `Ping`
-6. 把结果添加到自选股
-7. 确认列表刷新
-8. 再移除该条目，确认列表再次刷新
-
-## 项目事实来源
-
-项目 workflow 和实现状态以仓库内的 `docs/` 与 `memory/` 为准，尤其是：
-
-- `docs/00-workflow.md`
-- `docs/01-roadmap.md`
-- `docs/02-module-registry.md`
-- `docs/modules/*.md`
-- `memory/MEMORY.md`
-- `memory/progress.md`
-
-## 说明
-
-- 当前项目主要针对**本地开发与本地验收**，并不是部署版本。
-- 虽然自动化测试和本地 smoke 都已经通过，但用户回来后做一轮浏览器级手工验收仍然很有价值。
+- 公开来源可能延迟、缺失或不可用。部分来源失败时，界面会显示提示，部分数据可能保留旧值；以各项数据日期为准。
+- 无可靠来源时间时不编造“最新”时间。浏览器自选缓存最长保留 30 分钟，缓存日期和在线数据日期可能不同。
+- 当前面向个人本地使用，不包含交易执行、多用户账户、组合优化或生产环境部署方案。
+- AI 内容用于辅助研究，不构成投资建议，也不会自动下单。任何实际交易决策都需要独立核实数据与风险。

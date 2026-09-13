@@ -1,5 +1,8 @@
 from datetime import datetime, timezone
+from html import unescape
+import json
 import logging
+import re
 import time
 
 import httpx
@@ -9,6 +12,7 @@ from app.services.providers.raw_types import RawNewsItem
 
 EASTMONEY_NEWS_ENDPOINT = "https://search-api-web.eastmoney.com/search/jsonp"
 EASTMONEY_NEWS_SOURCE = "Eastmoney"
+_EASTMONEY_NEWS_TYPE = "cmsArticleWebOld"
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +42,35 @@ class EastmoneyNewsSource:
                             response = client.get(
                                 EASTMONEY_NEWS_ENDPOINT,
                                 params={
-                                    "keyword": stock_code,
-                                    "market": market,
-                                    "pageIndex": page,
-                                    "pageSize": 20,
+                                    "cb": "cb",
+                                    "param": json.dumps(
+                                        {
+                                            "uid": "",
+                                            "keyword": stock_code,
+                                            "type": [_EASTMONEY_NEWS_TYPE],
+                                            "client": "web",
+                                            "clientType": "web",
+                                            "clientVersion": "curr",
+                                            "param": {
+                                                _EASTMONEY_NEWS_TYPE: {
+                                                    "searchScope": "default",
+                                                    "sort": "default",
+                                                    "pageIndex": page,
+                                                    "pageSize": 20,
+                                                    "preTag": "",
+                                                    "postTag": "",
+                                                }
+                                            },
+                                        },
+                                        ensure_ascii=False,
+                                        separators=(",", ":"),
+                                    ),
                                 },
                             )
                             response.raise_for_status()
-                            payload = response.json()
+                            payload = _parse_jsonp_payload(response.text)
 
-                        rows = payload.get("data", {}).get("list")
+                        rows = _extract_rows(payload)
                         if not rows:
                             if page == 1:
                                 raise ValueError("Eastmoney news payload is empty")
@@ -57,11 +80,11 @@ class EastmoneyNewsSource:
 
                         for row_index, row in enumerate(rows):
                             item = RawNewsItem(
-                                title=_require_text(row, "title", row_index=row_index),
-                                published_at=_parse_published_at(_require_text(row, "publish_time", row_index=row_index)),
+                                title=_clean_html(_require_text(row, "title", row_index=row_index)),
+                                published_at=_parse_published_at(_require_text(row, "date", row_index=row_index)),
                                 source=EASTMONEY_NEWS_SOURCE,
-                                url=_build_news_url(row.get("info_code")),
-                                summary=_optional_text(row.get("content")),
+                                url=_optional_text(row.get("url")),
+                                summary=_clean_optional_html(row.get("content")),
                             )
                             if since is None or item.published_at >= since:
                                 all_items.append(item)
@@ -117,6 +140,34 @@ class EastmoneyNewsSource:
             raise
 
 
+def _extract_rows(payload: object) -> list[dict[str, object]]:
+    if not isinstance(payload, dict):
+        raise ValueError("Eastmoney news payload is invalid")
+
+    result = payload.get("result")
+    if not isinstance(result, dict):
+        return []
+
+    rows = result.get(_EASTMONEY_NEWS_TYPE)
+    if not isinstance(rows, list):
+        return []
+
+    return [row for row in rows if isinstance(row, dict)]
+
+
+
+def _parse_jsonp_payload(payload: str) -> object:
+    text = payload.strip()
+    if not text:
+        raise ValueError("Eastmoney news payload is empty")
+
+    match = re.fullmatch(r"[^(]+\((.*)\)\s*;?", text, re.DOTALL)
+    if match is None:
+        raise ValueError("Eastmoney news payload is not valid JSONP")
+    return json.loads(match.group(1))
+
+
+
 def _require_text(row: dict[str, object], key: str, *, row_index: int = 0) -> str:
     value = row.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -131,11 +182,20 @@ def _optional_text(value: object) -> str | None:
     return stripped or None
 
 
+
+def _clean_html(value: str) -> str:
+    return unescape(re.sub(r"<[^>]+>", "", value)).strip()
+
+
+
+def _clean_optional_html(value: object) -> str | None:
+    text = _optional_text(value)
+    if text is None:
+        return None
+    cleaned = _clean_html(text)
+    return cleaned or None
+
+
+
 def _parse_published_at(value: str) -> datetime:
     return datetime.strptime(value, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-
-
-def _build_news_url(info_code: object) -> str | None:
-    if not isinstance(info_code, str) or not info_code.strip():
-        return None
-    return f"https://finance.eastmoney.com/a/{info_code.strip()}.html"

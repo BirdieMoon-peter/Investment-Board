@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 
 import httpx
 import pytest
@@ -7,32 +8,20 @@ from app.services.providers.eastmoney_news import EastmoneyNewsSource
 from app.services.providers.raw_types import RawNewsItem
 
 
+def _page_index(request: httpx.Request) -> int:
+    return json.loads(request.url.params.get("param", "{}"))["param"]["cmsArticleWebOld"]["pageIndex"]
+
 
 def test_eastmoney_news_source_maps_json_rows_to_raw_news_items():
     def mock_handler(request):
-        page_index = int(request.url.params.get("pageIndex", "1"))
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={
-                    "data": {
-                        "list": [
-                            {
-                                "title": "Consumer demand stays firm",
-                                "publish_time": "2026-03-11 09:30:00",
-                                "info_code": "202603110001",
-                                "content": "Channel checks stayed constructive.",
-                            }
-                        ]
-                    }
-                },
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"Consumer <em>demand</em> stays firm","date":"2026-03-11 09:30:00","url":"https://finance.eastmoney.com/a/202603110001.html","content":"Channel <em>checks</em> stayed constructive."}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     result = source.fetch("600519", "sh")
 
@@ -47,36 +36,16 @@ def test_eastmoney_news_source_maps_json_rows_to_raw_news_items():
     ]
 
 
-
 def test_eastmoney_news_source_filters_rows_older_than_since():
     def mock_handler(request):
-        page_index = int(request.url.params.get("pageIndex", "1"))
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={
-                    "data": {
-                        "list": [
-                            {
-                                "title": "Pre-open note",
-                                "publish_time": "2026-03-11 08:00:00",
-                                "info_code": "202603110010",
-                            },
-                            {
-                                "title": "Midday note",
-                                "publish_time": "2026-03-11 12:30:00",
-                                "info_code": "202603110011",
-                            },
-                        ]
-                    }
-                },
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"Pre-open note","date":"2026-03-11 08:00:00","url":"https://finance.eastmoney.com/a/202603110010.html"},{"title":"Midday note","date":"2026-03-11 12:30:00","url":"https://finance.eastmoney.com/a/202603110011.html"}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     result = source.fetch(
         "600519",
@@ -87,13 +56,12 @@ def test_eastmoney_news_source_filters_rows_older_than_since():
     assert [item.title for item in result] == ["Midday note"]
 
 
-
 def test_eastmoney_news_source_raises_clear_error_for_empty_payload():
-    transport = httpx.MockTransport(
-        lambda request: httpx.Response(200, json={"data": {"list": []}})
+    source = EastmoneyNewsSource(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
+        )
     )
-
-    source = EastmoneyNewsSource(transport=transport)
 
     with pytest.raises(ValueError, match="Eastmoney news payload is empty"):
         source.fetch("600519", "sh")
@@ -102,10 +70,11 @@ def test_eastmoney_news_source_raises_clear_error_for_empty_payload():
 def test_eastmoney_news_source_degrades_to_empty_results_on_http_400(caplog):
     import logging
 
-    transport = httpx.MockTransport(
-        lambda request: httpx.Response(400, json={"message": "bad request"})
+    source = EastmoneyNewsSource(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(400, json={"message": "bad request"})
+        )
     )
-    source = EastmoneyNewsSource(transport=transport)
 
     with caplog.at_level(logging.WARNING):
         result = source.fetch("600519", "sh")
@@ -122,35 +91,22 @@ def test_eastmoney_news_source_retries_on_timeout():
     def mock_handler(request):
         nonlocal attempt_count
         attempt_count += 1
-        page_index = int(request.url.params.get("pageIndex", "1"))
         if attempt_count == 1:
             raise httpx.TimeoutException("timeout")
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={
-                    "data": {
-                        "list": [
-                            {
-                                "title": "Success after retry",
-                                "publish_time": "2026-03-11 10:00:00",
-                                "info_code": "202603110001",
-                            }
-                        ]
-                    }
-                },
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"Success after retry","date":"2026-03-11 10:00:00","url":"https://finance.eastmoney.com/a/202603110001.html"}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     result = source.fetch("600519", "sh")
 
     assert len(result) == 1
     assert result[0].title == "Success after retry"
-    assert attempt_count == 3  # 1 timeout + 1 retry + 1 page 2 check
+    assert attempt_count == 3
 
 
 def test_eastmoney_news_source_does_not_retry_parse_errors():
@@ -159,12 +115,11 @@ def test_eastmoney_news_source_does_not_retry_parse_errors():
     def mock_handler(request):
         nonlocal attempt_count
         attempt_count += 1
-        return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='not jsonp')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
-    with pytest.raises(ValueError, match="Eastmoney news payload is empty"):
+    with pytest.raises(ValueError, match="valid JSONP"):
         source.fetch("600519", "sh")
 
     assert attempt_count == 1
@@ -172,27 +127,14 @@ def test_eastmoney_news_source_does_not_retry_parse_errors():
 
 def test_eastmoney_news_source_tolerates_missing_summary():
     def mock_handler(request):
-        page_index = int(request.url.params.get("pageIndex", "1"))
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={
-                    "data": {
-                        "list": [
-                            {
-                                "title": "No summary item",
-                                "publish_time": "2026-03-11 10:00:00",
-                                "info_code": "202603110001",
-                            }
-                        ]
-                    }
-                },
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"No summary item","date":"2026-03-11 10:00:00","url":"https://finance.eastmoney.com/a/202603110001.html"}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
     result = source.fetch("600519", "sh")
 
     assert len(result) == 1
@@ -200,23 +142,14 @@ def test_eastmoney_news_source_tolerates_missing_summary():
 
 
 def test_eastmoney_news_source_clear_error_for_missing_title():
-    transport = httpx.MockTransport(
-        lambda request: httpx.Response(
-            200,
-            json={
-                "data": {
-                    "list": [
-                        {
-                            "publish_time": "2026-03-11 10:00:00",
-                            "info_code": "202603110001",
-                        }
-                    ]
-                }
-            },
+    source = EastmoneyNewsSource(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                text='cb({"result":{"cmsArticleWebOld":[{"date":"2026-03-11 10:00:00","url":"https://finance.eastmoney.com/a/202603110001.html"}]}})',
+            )
         )
     )
-
-    source = EastmoneyNewsSource(transport=transport)
 
     with pytest.raises(ValueError, match="row 0.*missing title"):
         source.fetch("600519", "sh")
@@ -228,29 +161,22 @@ def test_eastmoney_news_source_fetches_multiple_pages():
     def mock_handler(request):
         nonlocal page_count
         page_count += 1
-        page_index = int(request.url.params.get("pageIndex", "1"))
-
+        page_index = _page_index(request)
         if page_index == 1:
-            return httpx.Response(
-                200,
-                json={"data": {"list": [
-                    {"title": f"Page 1 item {i}", "publish_time": "2026-03-11 10:00:00", "info_code": f"2026{i}"}
-                    for i in range(20)
-                ]}}
-            )
-        elif page_index == 2:
-            return httpx.Response(
-                200,
-                json={"data": {"list": [
-                    {"title": f"Page 2 item {i}", "publish_time": "2026-03-11 09:00:00", "info_code": f"2026{i+20}"}
-                    for i in range(20)
-                ]}}
-            )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+            items = [
+                {"title": f"Page 1 item {i}", "date": "2026-03-11 10:00:00", "url": f"https://finance.eastmoney.com/a/2026{i}.html"}
+                for i in range(20)
+            ]
+            return httpx.Response(200, text=f'cb({json.dumps({"result": {"cmsArticleWebOld": items}})})')
+        if page_index == 2:
+            items = [
+                {"title": f"Page 2 item {i}", "date": "2026-03-11 09:00:00", "url": f"https://finance.eastmoney.com/a/2026{i+20}.html"}
+                for i in range(20)
+            ]
+            return httpx.Response(200, text=f'cb({json.dumps({"result": {"cmsArticleWebOld": items}})})')
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     result = source.fetch("600519", "sh", max_pages=2)
 
@@ -264,20 +190,14 @@ def test_eastmoney_news_source_stops_at_empty_page():
     def mock_handler(request):
         nonlocal page_count
         page_count += 1
-        page_index = int(request.url.params.get("pageIndex", "1"))
-
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={"data": {"list": [
-                    {"title": "Page 1 item", "publish_time": "2026-03-11 10:00:00", "info_code": "20261"}
-                ]}}
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"Page 1 item","date":"2026-03-11 10:00:00","url":"https://finance.eastmoney.com/a/20261.html"}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     result = source.fetch("600519", "sh", max_pages=5)
 
@@ -289,19 +209,14 @@ def test_eastmoney_news_source_logs_successful_fetch(caplog):
     import logging
 
     def mock_handler(request):
-        page_index = int(request.url.params.get("pageIndex", "1"))
-        if page_index == 1:
+        if _page_index(request) == 1:
             return httpx.Response(
                 200,
-                json={"data": {"list": [
-                    {"title": "Item", "publish_time": "2026-03-11 10:00:00", "info_code": "202603110001"}
-                ]}}
+                text='cb({"result":{"cmsArticleWebOld":[{"title":"Item","date":"2026-03-11 10:00:00","url":"https://finance.eastmoney.com/a/202603110001.html"}]}})',
             )
-        else:
-            return httpx.Response(200, json={"data": {"list": []}})
+        return httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
 
-    transport = httpx.MockTransport(mock_handler)
-    source = EastmoneyNewsSource(transport=transport)
+    source = EastmoneyNewsSource(transport=httpx.MockTransport(mock_handler))
 
     with caplog.at_level(logging.INFO):
         result = source.fetch("600519", "sh")
@@ -314,11 +229,9 @@ def test_eastmoney_news_source_logs_successful_fetch(caplog):
 def test_eastmoney_news_source_logs_failed_fetch(caplog):
     import logging
 
-    transport = httpx.MockTransport(
-        lambda request: httpx.Response(200, json={"unexpected": []})
+    source = EastmoneyNewsSource(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, text='not jsonp'))
     )
-
-    source = EastmoneyNewsSource(transport=transport)
 
     with caplog.at_level(logging.WARNING):
         with pytest.raises(ValueError):

@@ -95,7 +95,7 @@ class RecordingAnnouncementRepository:
     def get_latest_published_at(self, security_id: int):
         return None
 
-    def upsert_many(self, items):
+    def upsert_many(self, items, commit: bool = True):
         return list(items)
 
 
@@ -103,7 +103,7 @@ class RecordingNewsRepository:
     def get_latest_published_at(self, security_id: int):
         return None
 
-    def upsert_many(self, items):
+    def upsert_many(self, items, commit: bool = True):
         return list(items)
 
 
@@ -111,7 +111,7 @@ class RecordingPriceHistoryRepository:
     def __init__(self):
         self.upsert_calls: list[list[PriceHistory]] = []
 
-    def upsert_many(self, items: list[PriceHistory]):
+    def upsert_many(self, items: list[PriceHistory], commit: bool = True):
         self.upsert_calls.append(items)
         return items
 
@@ -120,7 +120,7 @@ class RecordingFinancialMetricsRepository:
     def __init__(self):
         self.upsert_calls: list[list[FinancialMetrics]] = []
 
-    def upsert_many(self, items: list[FinancialMetrics]):
+    def upsert_many(self, items: list[FinancialMetrics], commit: bool = True):
         self.upsert_calls.append(items)
         return items
 
@@ -129,7 +129,7 @@ class RecordingCompanyProfileRepository:
     def __init__(self):
         self.upsert_calls: list[CompanyProfile] = []
 
-    def upsert(self, item: CompanyProfile):
+    def upsert(self, item: CompanyProfile, commit: bool = True):
         self.upsert_calls.append(item)
         return item
 
