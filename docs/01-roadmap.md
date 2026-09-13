@@ -26,7 +26,7 @@
 - [x] Professional workspace implementation: themes, watchlist filters/sorting, guarded settings, grouped stock research and stable initial loading.
 - [x] DeepSeek Flash compatibility: 386 backend tests, independent reviews and seven actual synthetic-only generation/cache/persistence checks.
 - [x] Final frontend quality gate: 204 frontend tests/build, production browser checks and independent specification/quality reviews passed.
-- [ ] Refined README/screenshots publication and exact-commit hosted CI verification are active; repository About and topics are updated.
+- [x] Refined README/screenshots published and rendered on GitHub; repository About/topics updated. Release `6f69211` passed both hosted CI jobs in run34756944059.
 - Data-layer and scripts remain complete; launcher verification includes 15 tests and a cold isolated smoke check.
 - Current evidence: `docs/verification/professional-workspace-redesign.md` and `docs/verification/web-ai-settings.md`. Historical packaging evidence is retained separately in `docs/verification/release-readiness.md`.
 

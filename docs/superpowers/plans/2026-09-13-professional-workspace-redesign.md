@@ -126,7 +126,7 @@ Files: docs/verification/professional-workspace-redesign.md, README.md, docs/ima
 - [x] Run fresh complete frontend tests/build and related backend/scripts checks; independent final specification and quality review. Verify fixes with focused regressions and rerun full checks only when changes justify it.
 - [x] Capture two actual demonstration screenshots (homepage/detail) after visual inspection; refresh existing settings screenshot if now outdated. Update README/provenance and verification docs with accurate feature/information hierarchy, dependency and privacy bounds.
 - [x] Confirm private configuration and watchlist/holdings unchanged, clean up only owned temporary services, keep user main app running. Complete module review state.
-- [ ] Commit reviewed changes, normally push HEAD to authorized origin main without force, verify exact remote SHA and hosted CI. Record completed publication in docs/progress and leave a clean worktree.
+- [x] Commit reviewed changes, normally push HEAD to authorized origin main without force, verify exact remote SHA and hosted CI. Record completed publication in docs/progress and leave a clean worktree.
 
 ## Review checklist
 

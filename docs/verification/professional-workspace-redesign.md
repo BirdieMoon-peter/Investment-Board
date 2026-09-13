@@ -1,7 +1,7 @@
 # Professional workspace redesign verification
 
 Date: 2026-09-13
-Status: implementation, independent reviews and final verification passed; repository publication in progress.
+Status: complete. Implementation, independent reviews, local verification and repository publication passed.
 
 ## Scope and baseline
 
@@ -34,7 +34,7 @@ had white canvases in the dark page. The redesign targets these measured issues.
 | Accessibility | Home/drawer keyboard trapping and focus return; Axe findings below | Passed; reviewed |
 | Lighthouse | Production desktop 100/96/100; mobile 92/96/100; CLS below 0.002 | Passed; lab evidence |
 | Regression/review | 204 frontend tests/build; 386 backend tests; 15 launcher tests and standalone smoke | Independent specification and quality passed |
-| Delivery | README, two current screenshots, authorized normal push and hosted CI | Pending |
+| Delivery | Published README, two main screenshots, About/topics, normal push and exact-commit hosted CI | Passed |
 
 ## Isolation and credentials
 
@@ -212,3 +212,11 @@ backend on 8000 and frontend on 5173 still return HTTP 200.
 Repository About now describes watchlist filtering, charts/fundamentals, holdings,
 web-configured DeepSeek and themes. Existing topics were preserved and `deepseek`
 was added. Visibility remains public and the default branch remains main.
+
+
+## Repository delivery
+
+- Release commit: `6f69211f5c373e83790fbbf42eabcdbc363e2b62`, normally pushed to `origin/main` without force. Remote commit identity was verified.
+- [Hosted CI run 34756944059](https://github.com/BirdieMoon-peter/Investment-Board/actions/runs/34756944059) passed both `Backend and launchers` and `Frontend tests and build`, including all test/build steps for this exact commit.
+- Actual public GitHub rendering was checked in Edge: the README headings render, both main screenshots decode at1440x960, and all four documented advanced sections are present with working disclosure. The additional platform-generated Mermaid control is not a project section.
+- Repository About and nine topics are synchronized. The final documentation-only follow-up records these completed checks; its remote identity and hosted CI are checked separately at delivery.
