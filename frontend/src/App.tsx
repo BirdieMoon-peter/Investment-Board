@@ -475,14 +475,9 @@ function AppBody({
       ? { tone: 'error' as const, message: homepageAdviceError }
       : autoSyncError
         ? { tone: 'warning' as const, message: autoSyncError }
-        : isLoadingWatchlist
-          ? {
-              tone: 'info' as const,
-              message: watchlistInfo || t('homepage.loadingWatchlist'),
-            }
-          : watchlistInfo
-            ? { tone: 'info' as const, message: watchlistInfo }
-            : null
+        : watchlistInfo && watchlistInfo !== t('homepage.loadingWatchlist')
+          ? { tone: 'info' as const, message: watchlistInfo }
+          : null
 
   return (
     <div
@@ -577,8 +572,7 @@ function AppBody({
                     ? t('homepage.refreshing')
                     : t('homepage.standby')
                   : t('homepage.disabled')}
-                {lastRefreshAt && (
-                  <span className="dashboard-header-compact__meta">
+                  <span className="dashboard-header-compact__meta workspace-refresh-time">
                     {t(
                       isWatchlistCached
                         ? 'homepage.cachedWatchlist'
@@ -588,7 +582,6 @@ function AppBody({
                       },
                     )}
                   </span>
-                )}
               </span>
               <span className="dashboard-header-compact__separator" />
               <span className="dashboard-header-compact__item">
@@ -631,6 +624,7 @@ function AppBody({
                 ) : null}
                 <WatchlistWorkspace
                   items={watchlistItems}
+                  loading={isLoadingWatchlist && !hasLoadedWatchlist}
                   view={watchlistView}
                   onViewChange={setWatchlistView}
                   onSearch={() => setIsSearchOpen(true)}
@@ -639,13 +633,18 @@ function AppBody({
                   adviceLabels={homepageAdviceLabels}
                   showAiTags={settings.showAiTags}
                 />
-                {isLoadingWatchlist ? (
+                {isLoadingWatchlist && !hasLoadedWatchlist ? (
                   <Skeleton
                     aria-label={t('homepage.loadingWatchlist')}
                     className="watchlist-skeleton"
                   >
+                    <div className="watchlist-skeleton-header"><SkeletonItem size={12} style={{ width: '70%' }} /></div>
                     {[1, 2, 3, 4, 5].map((id) => (
-                      <SkeletonItem key={id} size={48} />
+                      <div className="watchlist-skeleton-row" key={id}>
+                        <div><SkeletonItem size={16} /><SkeletonItem size={8} style={{ width: '60%' }} /></div>
+                        <SkeletonItem size={16} />
+                        <SkeletonItem size={16} />
+                      </div>
                     ))}
                   </Skeleton>
                 ) : null}
@@ -655,6 +654,7 @@ function AppBody({
                   showSpotlight={settings.showSpotlight}
                   showMacro={settings.showMacroPanel}
                   spotlight={spotlightItem}
+                  spotlightLoading={isLoadingWatchlist && !hasLoadedWatchlist}
                   macro={overviewMacro}
                   loading={isLoadingOverview}
                   error={overviewError}

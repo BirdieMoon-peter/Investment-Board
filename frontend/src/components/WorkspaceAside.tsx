@@ -8,6 +8,7 @@ interface Props {
   showSpotlight: boolean
   showMacro: boolean
   spotlight: WatchlistItem | null
+  spotlightLoading?: boolean
   macro: HomepageMacroItem[]
   loading: boolean
   error: string | null
@@ -17,6 +18,7 @@ export function WorkspaceAside({
   showSpotlight,
   showMacro,
   spotlight,
+  spotlightLoading = false,
   macro,
   loading,
   error,
@@ -34,7 +36,21 @@ export function WorkspaceAside({
             <h2>{t('homepage.boardFocus')}</h2>
             <span className="workspace-muted">{t('homepage.leadMover')}</span>
           </div>
-          {spotlight ? (
+          {spotlightLoading ? (
+            <Skeleton className="workspace-spotlight workspace-spotlight--loading"
+              aria-label={`${t('homepage.spotlight')} ${t('common.loading')}`}>
+              <div className="security-code"><SkeletonItem size={12} style={{ width: '35%' }} /></div>
+              <h3><SkeletonItem size={20} style={{ width: '60%' }} /></h3>
+              <div className="workspace-muted"><SkeletonItem size={12} style={{ width: '40%' }} /></div>
+              <dl>
+                {[1, 2].map((id) => <div key={id}>
+                  <dt><SkeletonItem size={8} style={{ width: '55%' }} /></dt>
+                  <dd><SkeletonItem size={16} style={{ width: '70%' }} /></dd>
+                </div>)}
+              </dl>
+              <SkeletonItem size={32} />
+            </Skeleton>
+          ) : spotlight ? (
             <div className="workspace-spotlight">
               <span className="security-code">
                 {spotlight.market}:{spotlight.code}
@@ -85,8 +101,18 @@ export function WorkspaceAside({
           {error ? (
             <StatusMessage tone="error" message={error} />
           ) : loading ? (
-            <Skeleton aria-label={t('homepage.overviewLoading')}>
-              <SkeletonItem size={64} />
+            <Skeleton className="workspace-macro workspace-macro--loading" aria-label={t('homepage.overviewLoading')}>
+              {/* The overview provides CPI, PPI, manufacturing PMI and M2. */}
+              {Array.from({ length: macro.length || 4 }, (_, index) => <article key={index}>
+                <div className="workspace-muted"><SkeletonItem size={8} style={{ width: '35%' }} /></div>
+                <h3><SkeletonItem size={12} style={{ width: '45%' }} /></h3>
+                <div className="workspace-macro-value">
+                  <SkeletonItem size={20} style={{ width: '30%' }} />
+                  <SkeletonItem size={8} style={{ width: '40%' }} />
+                </div>
+                <p><SkeletonItem size={8} style={{ width: '65%' }} /></p>
+                <div className="workspace-macro-time"><SkeletonItem size={8} style={{ width: '55%' }} /></div>
+              </article>)}
             </Skeleton>
           ) : macro.length === 0 ? (
             <p className="workspace-empty">{t('homepage.noMacroData')}</p>

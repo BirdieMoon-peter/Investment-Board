@@ -26,7 +26,11 @@ export function MarketStrip({
           className="market-strip-skeleton"
         >
           {[1, 2, 3, 4].map((id) => (
-            <SkeletonItem key={id} size={48} />
+            <div className="market-strip-item" key={id}>
+              <div><SkeletonItem size={12} style={{ width: '40%' }} /></div>
+              <div><SkeletonItem size={20} style={{ width: '55%' }} /><SkeletonItem size={12} style={{ width: '25%' }} /></div>
+              <div className="market-strip-placeholder-time"><SkeletonItem size={8} style={{ width: '65%' }} /></div>
+            </div>
           ))}
         </Skeleton>
       ) : indexes.length === 0 ? (

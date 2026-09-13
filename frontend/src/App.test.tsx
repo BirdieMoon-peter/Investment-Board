@@ -374,9 +374,7 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Your watchlist is empty.',
-    )
+    expect(await screen.findByText('Your watchlist is empty.')).toHaveAttribute('role', 'status')
   })
 
   it('loads homepage overview and lets the user hide overview sections from settings', async () => {

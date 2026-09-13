@@ -33,6 +33,7 @@ interface Props {
   onRemove: (id: number) => void | Promise<void>
   adviceLabels?: Record<number, HomepageAdviceLabel>
   showAiTags?: boolean
+  loading?: boolean
 }
 const numericValue = (value: string | null) =>
   value === null || value.trim() === '' || !Number.isFinite(Number(value))
@@ -43,6 +44,7 @@ export function WatchlistWorkspace({
   view,
   onViewChange,
   onSearch,
+  loading = false,
   ...props
 }: Props) {
   const restoreFocusTarget = useRestoreFocusTarget()
@@ -110,8 +112,9 @@ export function WatchlistWorkspace({
       <div className="workspace-section-heading">
         <div>
           <h2 id="watchlist-heading">{t('homepage.watchlist')}</h2>
-          <span className="workspace-muted">
-            {t('workspace.count', {
+          <span className="workspace-muted watchlist-count" role={loading ? 'status' : undefined}
+            aria-label={loading ? t('homepage.loadingWatchlist') : undefined}>
+            {loading ? t('common.loading') : t('workspace.count', {
               filtered: filteredItems.length,
               total: items.length,
             })}
