@@ -4,7 +4,7 @@
 
 **面向沪深证券与基金的本地投资研究工作台**
 
-A local-first investment research workspace for market monitoring, security analysis and configurable AI services.
+A local-first workspace for investment research and AI-assisted analysis.
 
 [![CI](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml/badge.svg)](https://github.com/BirdieMoon-peter/Investment-Board/actions/workflows/ci.yml)
 ![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
