@@ -59,6 +59,9 @@ class FundProfileFetchResult:
     attempts: tuple[SourceAttempt, ...] = ()
     source_key: str = 'eastmoney_fund_profile'
     received_count: int = 0
+    unit: str = 'mixed_profile_fields'
+    frequency: str = 'on_request'
+    price_basis: str = 'unknown'
 
 
 def _validate_identifier(code: str, market: str | None):
@@ -128,7 +131,14 @@ class EastmoneyFundNavSource:
                         raise ValueError('Provider rejected NAV request')
                     if body.get('Success') is False or body.get('Error') or body.get('ErrMsg'):
                         raise ValueError('Provider rejected NAV request')
-                    if not isinstance(rows, list) or len(rows) > self.page_size:
+                    effective_page_size = self.page_size
+                    if 'PageSize' in body:
+                        effective_page_size = _count(body['PageSize'])
+                        if not 1 <= effective_page_size <= self.page_size:
+                            raise ValueError('Invalid provider page size')
+                    if 'PageIndex' in body and _count(body['PageIndex']) != page:
+                        raise ValueError('Unexpected provider page index')
+                    if not isinstance(rows, list) or len(rows) > effective_page_size:
                         raise ValueError('Invalid NAV payload')
                     supplied_total = body.get('TotalCount')
                     if supplied_total is not None:
@@ -158,7 +168,7 @@ class EastmoneyFundNavSource:
                     if total is not None and received >= total:
                         truncated = len(dates) < total
                         break
-                    if len(rows) < self.page_size:
+                    if len(rows) < effective_page_size:
                         truncated = True if total is not None else None
                         break
                     if page == self.max_pages:

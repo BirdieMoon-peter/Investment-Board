@@ -3,6 +3,7 @@ import secrets
 from fastapi import FastAPI
 
 from app.api.ai_settings import protect_ai_settings, router as ai_settings_router
+from app.api.data_center import router as data_center_router
 from app.api.data_sources import router as data_sources_router
 from app.api.holdings import router as holdings_router
 from app.api.homepage import router as homepage_router
@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
     def startup() -> None:
         create_db_and_tables(make_engine(Settings()))
 
+    app.include_router(data_center_router, prefix="/api/data/securities")
     app.include_router(data_sources_router, prefix="/api/data/sources")
     app.include_router(watchlist_router, prefix="/api/watchlist")
     app.include_router(stocks_router, prefix="/api/stocks")

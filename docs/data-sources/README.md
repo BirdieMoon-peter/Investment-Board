@@ -4,15 +4,15 @@ Vendor-owned modules in `backend/app/services/data_sources/` describe native pay
 
 ## Capability and integration boundaries
 
-| Vendor | Managed security adapters in default stock sync | Other implemented parsers | Planned integration |
+| Vendor | Managed security acquisition adapters | Other implemented parsers | Planned integration |
 |---|---|---|---|
-| Eastmoney | Announcements, news, daily prices, intraday/quote snapshots, financial metrics, company profile | Security search/lookup, homepage indices and macro snapshots; isolated fund NAV/profile adapters | Fund NAV/profile managed sync |
+| Eastmoney | Announcements, news, daily prices, intraday/quote snapshots, financial metrics, company profile; explicit ETF/LOF NAV/profile | Security search/lookup, homepage indices and macro snapshots | Fund announcements |
 | Sina | Announcements, news, daily prices, quote snapshot | Homepage indices | None declared |
 | NetEase | Daily price history fallback (after Sina/Eastmoney) | Homepage index parser (not in current default homepage chain) | None declared |
 | Tencent | None | Homepage indices | Managed history unavailable; a standalone kline parsing helper does not implement a fetch endpoint |
 | Ifeng | None | News HTML parser | Stock-news integration; not in the default sync chain |
 
-`managed_security` means the adapter participates in current stock-sync factories. `untracked_homepage/lookup` identifies homepage or identity helpers outside managed acquisition telemetry. `planned` identifies future integration; fund adapters are implemented with isolated HTTP validation but await managed sync wiring, while Ifeng has an existing parser without default integration. Capabilities describe code, not live availability or completeness.
+`managed_security` means the adapter participates in stock-sync factories or the managed ETF/LOF data-center chain. `untracked_homepage/lookup` identifies homepage or identity helpers outside managed acquisition telemetry. `planned` identifies future integration; fund announcements await a verified fund-specific contract, while Ifeng has an existing parser without default integration. Capabilities describe code, not live availability or completeness.
 
 Stock factory order is announcements Eastmoney → Sina; news Eastmoney → Sina; history Sina → Eastmoney → NetEase; quote Eastmoney intraday → Eastmoney snapshot → Sina quote; financial/profile Eastmoney. Each factory builds fresh adapters. Existing dependency function signatures and patchable provider constructors remain compatible. A category/provider pair identifies an endpoint; the same provider key can appear in multiple categories.
 
@@ -28,7 +28,7 @@ Stock factory order is announcements Eastmoney → Sina; news Eastmoney → Sina
 | Company capital | Comma-separated numbers with 万/亿 suffix | ×10000/×100000000 CNY | Bare numeric capital is parsed but its unit remains unverified |
 | Fund NAV adapter | `DWJZ`, `LJJZ` | CNY/fund_unit | Cumulative NAV is the provider cumulative-value series, not reinvested total return |
 
-Fund NAV results contain immutable rows and safe attempt metadata. Received counts measure raw dated records, while unit/cumulative values form up to two normalized observations per record; no database writes happen in these adapters. Missing one kind carries `missing_nav_value`; records with no usable values fail rather than reporting healthy empty data. Pagination is bounded to three pages of100 with explicit truncated or unknown coverage. Duplicate dates are de-duplicated but cannot certify complete distinct-date coverage; conflicting values reject the fetch. Fund assets accept positive finite explicit 元/万/亿 currency amounts only; bare numeric assets remain unknown. Fund publication clocks stay unknown and are never set to acquisition time. Raw NAV results disclose `valuation_basis=official_nav` separately from `price_basis=unknown`; official NAV is not a market-price adjustment enum. Fund announcements are unavailable pending a verified fund-specific contract.
+Fund NAV results contain immutable rows and safe attempt metadata. Received counts measure raw dated records, while unit/cumulative values form up to two normalized observations per record; no database writes happen in these adapters. Missing one kind carries `missing_nav_value`; records with no usable values fail rather than reporting healthy empty data. Pagination is bounded to three requested pages of up to100 rows with explicit truncated or unknown coverage. The vendor can clamp100 to20; a valid PageSize echo controls short-page detection so full native pages continue within the same three-page cap. Optional PageIndex echoes must match the requested page. Duplicate dates are de-duplicated but cannot certify complete distinct-date coverage; conflicting values reject the fetch. Fund assets accept positive finite explicit 元/万/亿 currency amounts only; bare numeric assets remain unknown. Fund publication clocks stay unknown and are never set to acquisition time. Raw NAV results disclose `valuation_basis=official_nav` separately from `price_basis=unknown`; official NAV is not a market-price adjustment enum. Fund announcements are unavailable pending a verified fund-specific contract.
 
 Financial optional fields stay `None` when absent/empty. Malformed required values are rejected by the existing parser or aggregate validation. Prices are checked before persistence. Missing source fields must never become certified zeros. Catalog conversion text describes the parser plus aggregate normalization; it does not execute conversion. Field `normalized_type` distinguishes dates, UTC datetimes, Decimal numbers, integer counts and strings. Unsupported or unknown units stay explicit even if a numeric parser succeeds.
 
@@ -42,7 +42,7 @@ Source time and acquisition time are distinct. Daily bars and NAV use a valuatio
 | `sample_verified` | Limited public samples support the specified field only |
 | `unverified` | Units, source time, optional capability, or planned mapping remain unresolved |
 
-Limited sample evidence: public ETF515980 volumes on 2026-09-29/30 are Sina119913400/110074800 shares versus Eastmoney1199134/1100748 lots, supporting the ×100 volume mapping for those samples. Eastmoney600519 financial samples contain revenue92278072083.21 CNY, parent profit44516880421.86 CNY, EPS35.57 CNY/share and ROE16.75%; lowercase profile `jbzl.zczb` sample `12.50亿` supports suffix conversion only. These samples do not certify an entire source, all instruments, freshness or adjustment coverage. Native NetEase percent scaling remains unknown. Public ETF515980 fund sample on 2026-10-01 reported NAV date2026-09-30 with unit0.9567 and cumulative1.9134; fund profile reported management0.50% and custody0.10% annual fees, assets72.86亿元 as of2026-06-30 and benchmark description中证人工智能产业指数收益率. These limited observations verify the corresponding units/fields only, not current source health or managed integration.
+Limited sample evidence: public ETF515980 volumes on 2026-09-29/30 are Sina119913400/110074800 shares versus Eastmoney1199134/1100748 lots, supporting the ×100 volume mapping for those samples. Eastmoney600519 financial samples contain revenue92278072083.21 CNY, parent profit44516880421.86 CNY, EPS35.57 CNY/share and ROE16.75%; lowercase profile `jbzl.zczb` sample `12.50亿` supports suffix conversion only. These samples do not certify an entire source, all instruments, freshness or adjustment coverage. Native NetEase percent scaling remains unknown. Public ETF515980 fund sample on 2026-10-01 reported NAV date2026-09-30 with unit0.9567 and cumulative1.9134; fund profile reported management0.50% and custody0.10% annual fees, assets72.86亿元 as of2026-06-30 and benchmark description中证人工智能产业指数收益率. These limited observations verify the corresponding units/fields only, not current source health or complete fund coverage.
 
 Runtime acquisition success, empty/failure attempts, timestamps and quality issues are recorded independently by acquisition services. Never infer source health from a registered contract or a historical sample. Untracked homepage/lookup parsers have no managed-security attempt history.
 
@@ -244,12 +244,12 @@ Time: Naive source time assigned UTC by current parser; source timezone unverifi
 
 #### `eastmoney_fund_nav` / `fund_nav`
 
-Endpoint: `https://api.fund.eastmoney.com/f10/lsjz`. Payload: JSON Data.LSJZList array of objects. Frequency: daily. Scope: `planned`.
+Endpoint: `https://api.fund.eastmoney.com/f10/lsjz`. Payload: JSON Data.LSJZList array of objects. Frequency: daily. Scope: `managed_security`.
 
-Time: NAV valuation date only; publication clock unknown. Basis: fund NAV.
+Time: NAV valuation date only; publication clock unknown. Basis: unknown market-price basis; separate official_nav valuation basis.
 
-- Adapter implemented; managed sync integration pending.
-- At most 3 pages of 100 raw NAV date rows; truncated/unknown coverage explicit. Raw received counts differ from normalized unit/cumulative observations and later writes.
+- Managed explicit/corroborated ETF/LOF acquisition; generic 基金 profile resolution does not authorize NAV until positive type evidence.
+- At most 3 requested pages of up to 100 raw NAV date rows; native PageSize can clamp to 20. Validated native size controls short-page detection while the 3-page cap remains fixed; truncated/unknown coverage explicit. Raw received counts differ from normalized unit/cumulative observations and later writes.
 - Conflicting duplicates or any malformed page reject entire fetch; no partial healthy result.
 - Cumulative NAV is provider cumulative-value series, not reinvested total return. Forward-adjusted prices cannot establish premium.
 
@@ -258,16 +258,18 @@ Time: NAV valuation date only; publication clock unknown. Basis: fund NAV.
 | Data.LSJZList[].FSRQ | string; ISO date | nav_date: date; date | strict date.fromisoformat; sort dates | reject absent or malformed | parser_contract |
 | Data.LSJZList[].DWJZ | string / number; CNY/fund_unit | unit_nav: Decimal; CNY/fund_unit | positive finite Decimal; FundNavRow kind unit_nav | None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch | sample_verified |
 | Data.LSJZList[].LJJZ | string / number; CNY/fund_unit | cumulative_nav: Decimal; CNY/fund_unit | positive finite Decimal; FundNavRow kind cumulative_nav | None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch | sample_verified |
+| PageSize | number / string; native page record limit | effective_page_size (validation only): int | positive integral <= requested size; rows <= echo; native short-page detection | requested size if absent; invalid supplied echo rejects whole fetch | parser_contract |
+| PageIndex | number / string; page number | page_index (validation only): int | positive integral equals requested pageIndex | no corroboration if absent; invalid supplied echo rejects whole fetch | parser_contract |
 | TotalCount | number / string; raw NAV date records | total_count: int; raw NAV date records | nonnegative integral count | unknown coverage if absent | parser_contract |
 | absent publication clock | string; unknown | published_at: datetime; unknown | None; acquisition time never substitutes | None if absent | unverified |
 
 #### `eastmoney_fund_profile` / `fund_profile`
 
-Endpoint: `https://fundf10.eastmoney.com/jbgk_{code}.html`. Payload: HTML table label/value cells and recognized fund title. Optional HTML cell and row end tags are supported, including the public profile page’s omitted `</td>` before the next `<th>`. Frequency: on_request. Scope: `planned`.
+Endpoint: `https://fundf10.eastmoney.com/jbgk_{code}.html`. Payload: HTML table label/value cells and recognized fund title. Optional HTML cell and row end tags are supported, including the public profile page’s omitted `</td>` before the next `<th>`. Frequency: on_request. Scope: `managed_security`.
 
 Time: Asset valuation date only if supplied; publication clock unknown. Basis: not_applicable.
 
-- Adapter implemented; managed sync integration pending.
+- Managed explicit/corroborated ETF/LOF acquisition; generic 基金 profile resolution does not authorize NAV until positive type evidence.
 - No invented benchmark code or prefix-based fund classification; identity-only pages with no usable metadata reject fetch.
 - Fund announcements unavailable: stock-company announcements are not a fund-data substitute; no guessed endpoint.
 
@@ -431,3 +433,21 @@ Time: Naive source timezone unverified; parser assigns UTC. Basis: not_applicabl
 | time datetime / text | string; ISO datetime | published_at: datetime; UTC datetime | naive assigned UTC; aware converted UTC | reject absent | unverified |
 | a href | string; text | url: string; text | urljoin Ifeng origin | None if absent | parser_contract |
 | p text | string; text | summary: string; text | join stripped text | None if absent | parser_contract |
+
+## Managed security data center
+
+`GET /api/data/securities/{id}` reads bounded local acquisition/quality evidence without provider calls. `POST /api/data/securities/{id}/sync` accepts strict category subsets and an optional explicit daily-price source. The default history order prefers the dataset's last successful known-basis source, then Eastmoney forward-adjusted prices before unknown-basis fallbacks. Disabled vendors/aliases perform no acquisition and preserve last-good records. An explicit history-source choice requires a matching selectable source-owned adapter; an opaque custom provider returns unavailable without acquisition, while default custom-provider compatibility remains. A failed retry is distinct from retained observation/acquisition freshness.
+
+Fund NAV/profile are managed only for manual ETF/LOF, exact positive security-type labels, or code-corroborated profile subtype evidence. Generic 基金 can resolve through a requested profile; NAV-only requests never hide a profile lookup. Stock/index/unknown classifications never query same-number off-exchange fund data. No code-prefix or display-name inference is used. General news uses the existing actual providers; fund announcements remain unavailable without a verified contract.
+
+NAV values remain exact decimal strings with separate unit/cumulative kinds, real valuation dates, unknown publication clocks, raw-date received counters and kind-observation written counters. Limited/missing coverage carries unresolved quality issues. Metadata preserves omitted provider fields; a new asset amount without a supplied valuation date clears that date rather than reusing an old date. A first benchmark-only manual overlay snapshots the current effective classification, including unknown after an unresolved profile, rather than reviving a historical provider type. Existing explicit manual classification remains unchanged by later benchmark-only edits. Manual type and market-qualified benchmark overlays survive acquisition and apply only to those fields, while fees/assets/manager disclose fund-profile provenance.
+
+Health states distinguish healthy/stale/partial/failed/unknown/not_applicable. Age thresholds are elapsed-time estimates (daily series 7 days, quotes 3, news 30, announcements 90, financial/fund metadata 180, company profile 365); no verified exchange/fund calendar or latest-session guarantee exists. Publication/effective-asof dates are never invented from fetch time.
+
+### Resolved index context
+
+Only an explicit resolved index classification (exact recognized label or manual index override) activates contextual normalization. Eastmoney source-owned contracts declare daily and quote/minute index levels as `index_points`; numeric prices are unchanged. Unsupported or opaque contexts retain unknown units and `unit_unverified` quality evidence. Stock/ETF currency and source ordering remain unchanged. This instrument context is classification evidence, not vendor verification of every field.
+
+Index corporate adjustment remains `unknown` with explicit quality evidence. Index component volume is not certified as per-security share volume: fresh request-local raw adapters suppress equity lot-to-share conversion, preserve native numeric volume and mark its units/comparability unverified. No retained rows are migrated, reverse-scaled or rewritten by merely reading or changing classification; actual requested refreshes still obey existing whole-series integrity guards.
+
+Read-only index views conservatively disclose legacy CNY units/equity adjustment labels as unknown unless new acquisition records carry the source-owned index-point context. These are derived read disclosures, with no persisted issues or database mutations fabricated by GET. Acquisition/observation dates and their disclosed precision remain unchanged.

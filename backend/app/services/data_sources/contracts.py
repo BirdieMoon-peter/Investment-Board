@@ -64,6 +64,7 @@ class SourceModule(JsonContract):
     key: str
     name: str
     endpoints: tuple[EndpointContract, ...]
+    context_units: tuple[tuple[str, str, str, str], ...] = ()
 
     def __post_init__(self):
         object.__setattr__(self, 'endpoints', tuple(self.endpoints))
@@ -72,6 +73,13 @@ class SourceModule(JsonContract):
         pairs = [(item.key, item.category) for item in self.endpoints]
         if len(set(pairs)) != len(pairs):
             raise ValueError('duplicate provider/category contract')
+        object.__setattr__(self, 'context_units', tuple(tuple(item) for item in self.context_units))
+        if any(len(item) != 4 or not all(isinstance(value, str) for value in item) or item[:2] not in pairs for item in self.context_units):
+            raise TypeError('context units require declared provider/category and string context/unit')
+
+    def normalized_context_unit(self, provider_key, category, instrument_type):
+        return next((unit for key, cat, kind, unit in self.context_units
+                     if (key, cat, kind) == (provider_key, category, instrument_type)), None)
 
 
 def field(raw, target, unit='text', normalized=None, conversion='identity', missing='None if absent', verification='parser_contract', raw_type='string', normalized_type=None):

@@ -16,7 +16,7 @@ def test_catalog_is_independent_read_only_and_unknown(client, session):
         assert client.get('/api/data/sources/' + source['vendor_key']).json() == source
         assert source['configurable'] == (source['vendor_key'] in {'eastmoney','sina','netease'})
     eastmoney = next(s for s in sources if s['vendor_key'] == 'eastmoney')
-    assert 'fund_nav' not in eastmoney['managed_categories']
+    assert {'fund_nav','fund_profile'} <= set(eastmoney['managed_categories'])
     assert client.get('/api/data/sources/absent').status_code == 404
 
 

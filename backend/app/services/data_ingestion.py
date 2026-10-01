@@ -12,7 +12,7 @@ from app.db.repositories.data_management_repository import DataManagementReposit
 
 
 class DataIngestionRecorder:
-    OWNED_ISSUES = frozenset({"failed_fetch", "failed_persist", "partial_fetch", "empty", "skipped", "not_applicable", "mixed_source_write_attribution_unknown", "volume_unit_unknown", "amount_unavailable", "price_basis_unknown", "incomplete_price_refresh", "negative_revenue"})
+    OWNED_ISSUES = frozenset({"failed_fetch", "failed_persist", "partial_fetch", "empty", "skipped", "not_applicable", "mixed_source_write_attribution_unknown", "volume_unit_unknown", "amount_unavailable", "price_basis_unknown", "incomplete_price_refresh", "negative_revenue", "missing_nav_value", "duplicate_nav_date", "truncated_nav_coverage", "nav_coverage_unknown", "missing_profile_fields", "fund_classification_unresolved", "unit_unverified", "index_volume_context_unverified", "index_adjustment_context_unverified"})
 
     def __init__(self, repository: DataManagementRepository):
         self.repository = repository
@@ -34,7 +34,7 @@ class DataIngestionRecorder:
             dates, observations = [], []
             for row in persisted:
                 observed = getattr(row, 'snapshot_time', None) or getattr(row, 'published_at', None)
-                day = getattr(row, 'trade_date', None)
+                day = getattr(row, 'trade_date', None) or getattr(row, 'nav_date', None)
                 if day:
                     dates.append(day)
                     observed = datetime.combine(day, time(), tzinfo=UTC)

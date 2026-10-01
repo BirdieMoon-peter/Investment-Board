@@ -18,3 +18,11 @@ def get_endpoint(vendor_key: str, provider_key: str, category: str):
         if (endpoint.key, endpoint.category) == (provider_key, category):
             return endpoint
     raise KeyError((vendor_key, provider_key, category))
+
+
+def normalized_context_unit(provider_key, category, instrument_type):
+    for module in list_source_modules():
+        unit = module.normalized_context_unit(provider_key, category, instrument_type)
+        if unit is not None:
+            return unit
+    return None

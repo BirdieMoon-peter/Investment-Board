@@ -115,15 +115,15 @@ def test_stock_factory_order_freshness_and_constructor_compatibility(monkeypatch
     assert all(a is not b and a.provider is not b.provider for a,b in zip(first,second))
 
 
-def test_planned_nav_and_fees_do_not_advertise_integration():
+def test_managed_nav_and_fees_keep_field_verification_limits():
     nav = get_endpoint('eastmoney', 'eastmoney_fund_nav', 'fund_nav')
     profile = get_endpoint('eastmoney', 'eastmoney_fund_profile', 'fund_profile')
-    assert nav.integration_scope == profile.integration_scope == 'planned'
+    assert nav.integration_scope == profile.integration_scope == 'managed_security'
     assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'unit_nav')[0].normalized_unit == 'CNY/fund_unit'
     assert by_target('eastmoney', 'eastmoney_fund_profile', 'fund_profile', 'management_fee')[0].normalized_unit == 'fraction'
     assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'unit_nav')[0].verification == 'sample_verified'
     assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'published_at')[0].verification == 'unverified'
-    assert all(any('managed sync integration pending' in limitation for limitation in e.limitations) for e in (nav, profile))
+    assert all(any('Managed' in limitation for limitation in e.limitations) for e in (nav, profile))
     assert any('not reinvested total return' in limitation for limitation in nav.limitations)
 
 
@@ -196,3 +196,23 @@ def test_macro_display_types_and_quote_scaling_metadata_are_explicit():
     precision = get_endpoint('eastmoney', 'eastmoney', 'quote_snapshot').fields[2]
     assert precision.normalized_type == 'int'
     assert 'nonpersisted' in precision.target_field
+
+
+def test_nav_native_pagination_echo_contracts_are_validation_only():
+    nav = get_endpoint('eastmoney','eastmoney_fund_nav','fund_nav')
+    fields = {f.raw_field: f for f in nav.fields}
+    assert fields['PageSize'].target_field == 'effective_page_size (validation only)'
+    assert fields['PageIndex'].target_field == 'page_index (validation only)'
+    assert fields['PageSize'].normalized_type == fields['PageIndex'].normalized_type == 'int'
+    assert 'requested' in fields['PageSize'].conversion and 'requested' in fields['PageIndex'].conversion
+
+
+def test_source_owned_index_unit_context_is_immutable_and_unknown_safe():
+    from app.services.data_sources.registry import normalized_context_unit
+    module=get_source_module('eastmoney')
+    assert module.normalized_context_unit('eastmoney','price_history','index')=='index_points'
+    assert normalized_context_unit('eastmoney_intraday','quote_snapshot','index')=='index_points'
+    assert normalized_context_unit('custom','price_history','index') is None
+    assert normalized_context_unit('eastmoney','price_history','stock') is None
+    detached=module.to_dict();detached['context_units'][0][-1]='CNY'
+    assert module.normalized_context_unit('eastmoney','price_history','index')=='index_points'

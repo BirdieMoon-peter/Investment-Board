@@ -156,7 +156,7 @@ def test_lazy_builders_and_contracts_match_parsers():
     assert build_fund_nav_source() is not build_fund_nav_source()
     assert isinstance(build_fund_profile_source(),EastmoneyFundProfileSource)
     endpoints={x.category:x for x in get_module().endpoints if x.category.startswith('fund_')}
-    assert endpoints['fund_nav'].integration_scope=='planned'
+    assert endpoints['fund_nav'].integration_scope=='managed_security'
     assert {f.target_field for f in endpoints['fund_profile'].fields} >= {'fund_assets','assets_as_of','benchmark_name','instrument_type'}
 
 
@@ -289,3 +289,58 @@ def test_explicit_feeder_name_is_not_evidence_for_etf(name):
 def test_feeder_exclusion_preserves_independent_lof_marker():
     result=profile(html(cells('基金全称','某ETF联接基金（LOF）')))
     assert result.item.instrument_type=='lof'
+
+
+@pytest.mark.parametrize('native_size',[2,20])
+def test_vendor_clamped_full_pages_use_native_size_without_expanding_cap(native_size):
+    from datetime import timedelta
+    requests=[]
+    def handler(request):
+        index=int(request.url.params['pageIndex']);requests.append(index)
+        rows=[row((date(2026,9,30)-timedelta(days=(index-1)*native_size+j)).isoformat()) for j in range(native_size)]
+        return httpx.Response(200,json=payload(rows,1629,PageSize=native_size,PageIndex=index))
+    result=nav(handler)
+    assert requests==[1,2,3]
+    assert result.received_count==native_size*3 and len(result.items)==native_size*6
+    assert result.truncated is True and result.attempts[0].state=='succeeded'
+
+
+def test_missing_pagination_echo_preserves_short_page_compatibility():
+    requests=[]
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200,json=payload([row()],20))
+    result=nav(handler)
+    assert len(requests)==1 and result.received_count==1 and result.truncated is True
+    result=nav(lambda request:httpx.Response(200,json={'Data':{'LSJZList':[row()]},'ErrCode':0}))
+    assert result.truncated is None
+
+
+@pytest.mark.parametrize('field,value',[(field,value) for field in ('PageSize','PageIndex') for value in (-1,0,True,False,1.5,'1.5',None,'bad')] + [('PageSize',101),('PageIndex',2)])
+def test_invalid_pagination_echo_rejects_whole_fetch(field,value):
+    result=nav(lambda request:httpx.Response(200,json=payload([row()],10,**{field:value})))
+    assert not result.items and result.attempts[0].state=='failed'
+    assert result.attempts[0].error_code=='invalid_data' and result.received_count==1
+
+
+def test_rows_cannot_exceed_native_page_size():
+    result=nav(lambda request:httpx.Response(200,json=payload([row(),row()],10,PageSize=1,PageIndex=1)))
+    assert not result.items and result.attempts[0].error_code=='invalid_data' and result.received_count==2
+
+
+def test_later_clamped_page_failed_echo_retains_raw_received_count():
+    requests=[]
+    def handler(request):
+        index=int(request.url.params['pageIndex']);requests.append(index)
+        return httpx.Response(200,json=payload([row(f'2026-09-{index*2:02}'),row(f'2026-09-{index*2+1:02}')],10,PageSize=2,PageIndex=1))
+    result=nav(handler)
+    assert requests==[1,2] and result.received_count==4
+    assert not result.items and result.attempts[0].error_code=='invalid_data'
+
+
+def test_echo_must_fit_actual_requested_size_and_is_validation_only():
+    result=nav(lambda request:httpx.Response(200,json=payload([row()],1,PageSize=3,PageIndex=1)),page_size=2)
+    assert not result.items and result.attempts[0].error_code=='invalid_data'
+    result=nav(lambda request:httpx.Response(200,json=payload([row()],1,PageSize='2',PageIndex='1')),page_size=2)
+    assert result.attempts[0].state=='succeeded' and result.truncated is False
+    assert not hasattr(result,'page_index') and not hasattr(result,'effective_page_size')
