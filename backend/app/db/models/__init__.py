@@ -1,3 +1,11 @@
+from app.db.models.data_management import (
+    DataQualityIssue,
+    DataSource,
+    FundNavObservation,
+    IngestionRun,
+    SecurityDataset,
+    SecurityResearchMetadata,
+)
 from app.db.models.announcement import Announcement
 from app.db.models.company_profile import CompanyProfile
 from app.db.models.financial_metrics import FinancialMetrics
@@ -12,6 +20,12 @@ from app.db.models.timestamps import utc_now
 from app.db.models.watchlist_item import WatchlistItem
 
 __all__ = [
+    "DataSource",
+    "SecurityDataset",
+    "IngestionRun",
+    "DataQualityIssue",
+    "SecurityResearchMetadata",
+    "FundNavObservation",
     "Security",
     "WatchlistItem",
     "QuoteSnapshot",
