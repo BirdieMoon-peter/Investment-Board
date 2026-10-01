@@ -46,6 +46,23 @@ Limited sample evidence: public ETF515980 volumes on 2026-09-29/30 are Sina11991
 
 Runtime acquisition success, empty/failure attempts, timestamps and quality issues are recorded independently by acquisition services. Never infer source health from a registered contract or a historical sample. Untracked homepage/lookup parsers have no managed-security attempt history.
 
+## Managed data interfaces
+
+| Interface | Purpose | External acquisition |
+|---|---|---|
+| `GET /api/data/sources` | Independent vendor contracts, effective settings and bounded actual attempt history | None |
+| `GET /api/data/sources/{vendor_key}` | One vendor, including scopes outside managed security acquisition | None |
+| `PUT /api/data/sources/{vendor_key}` | Change the strict boolean `enabled` setting for configurable managed vendors | None |
+| `GET /api/data/securities/{security_id}` | Saved category health, source/units/date precision, metadata and bounded NAV observations | None |
+| `POST /api/data/securities/{security_id}/sync` | Explicit selected-category acquisition; an optional price source applies only to price history | Requested categories only |
+| `PUT /api/data/securities/{security_id}/metadata` | Manual instrument classification and market-qualified benchmark mapping | None |
+
+Category names are `announcements`, `news`, `price_history`, `quote_snapshot`, `financial_metrics`, `company_profile`, `fund_nav` and `fund_profile`. A requested category can succeed, remain partial, be empty, fail, be disabled, or be unavailable/not applicable. Acquisition outcomes and saved dataset health are separate: a completed fetch can still leave unresolved unit or coverage issues. Source settings apply to managed acquisition, including the existing stock/watchlist sync chain; they do not control untracked homepage/search parsers.
+
+Fund classification requires an explicit manual choice, an exact recognized lookup label, or corroborating profile evidence. A generic fund label first needs profile resolution; NAV-only actions do not silently fetch a profile. A successful unresolved profile records a classification issue and prevents implicit ETF/LOF reuse until positive evidence or an explicit manual choice resolves it. Benchmark identifiers must include their market, such as `SH:000300`; a source benchmark description alone is not a connected index dataset.
+
+Manual overlays apply to classification and benchmark fields. Provider-derived manager, fees and dated assets retain their own provenance on subsequent profile updates. Received NAV counts refer to raw dated records; written counts refer to normalized kind observations. Coverage is bounded, and elapsed-time freshness does not claim a verified exchange calendar. Failed or disabled actions preserve prior saved records and last-success evidence.
+
 ## Extension procedure
 
 1. Inspect the actual endpoint response and parser; record raw field paths, accepted types, units, missing rules, date precision and price basis in the owning vendor module.

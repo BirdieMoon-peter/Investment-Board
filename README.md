@@ -2,7 +2,7 @@
 
 # Investment Board
 
-**面向沪深证券与基金的本地投资研究工作台**
+**面向沪深股票与场内 ETF／LOF 的本地投资研究工作台**
 
 A local-first workspace for investment research and AI-assisted analysis.
 
@@ -11,13 +11,13 @@ A local-first workspace for investment research and AI-assisted analysis.
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 
-[界面预览](#界面预览) · [功能模块](#功能模块) · [快速开始](#快速开始) · [AI 配置](#ai-配置) · [开发与验证](#开发与验证)
+[界面预览](#界面预览) · [功能模块](#功能模块) · [数据来源与口径](#数据来源与口径) · [快速开始](#快速开始) · [AI 配置](#ai-配置) · [开发与验证](#开发与验证)
 
 </div>
 
 ## 项目概述
 
-Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深证券与基金的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
+Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深股票与场内 ETF／LOF 的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
 
 系统采用 React 与 FastAPI 前后端分离架构，以 SQLite 保存业务数据。前端围绕自选列表和研究任务组织信息，提供中英文界面、浅色与深色主题及响应式布局；模型服务可通过网页配置，并由用户显式触发分析。
 
@@ -52,6 +52,22 @@ Investment Board 是一个面向个人本地部署的投资研究应用，覆盖
 - **状态保留**：研究分组保留草稿，返回自选恢复上下文；AI 配置草稿切换标签不会丢失，关闭前提示未保存修改。
 - **响应式交互**：桌面以表格和分栏组织信息，移动端以单列和研究分组选择器组织内容；宽数据表在自身区域内滚动。
 - **分析触发机制**：首页刷新和行情同步只读取已有分析标签，不会自动发起新的模型生成。
+
+## 数据来源与口径
+
+数据接入按来源独立组织。每个来源模块声明其接口格式、原始字段类型与单位、标准化换算、日期精度、价格复权口径和缺失值规则，再由同步服务写入本地数据集。字段契约、实际抓取结果与已保存数据的质量分别记录，避免将接口注册或一次请求成功当作数据完整性的证明。
+
+| 来源 | 当前接入范围 |
+| --- | --- |
+| 东方财富 | 证券行情、公告、资讯、财务与公司资料；按标的类型接入 ETF／LOF 资料和单位／累计净值 |
+| 新浪 | 证券公告、资讯、历史行情与报价；首页指数 |
+| 网易 | 历史行情备用来源；部分单位与复权口径仍待核实 |
+| 腾讯 | 首页指数，不参与当前受管标的同步 |
+| 凤凰财经 | 已有资讯解析器，尚未接入默认同步流程 |
+
+来源管理接口支持查询各来源的字段契约与实际抓取记录，以及启停已接入的标的数据源。标的数据接口支持按类别同步、查询覆盖与质量状态，并维护手动分类及带市场前缀的比较基准映射。控制范围明确限定为受管标的同步；首页、证券检索与尚未接入的能力单独标注。失败或空响应保留已有数据和上一次成功获取时间；未知单位、价格口径与覆盖范围保持未知。
+
+例如，东方财富股票／场内基金日线成交量由「手」换算为「股」；指数价格使用点位，指数成交量与复权口径未经核实则保留未知。报价涨跌幅与财务 ROE 保留百分数值，而基金费率采用小数比例。前复权行情不能直接与原始基金净值计算折溢价，累计净值也不等同于红利再投资收益。完整字段与边界见 [数据源契约文档](docs/data-sources/README.md)。
 
 ## 快速开始
 
@@ -171,7 +187,10 @@ flowchart LR
     UI[React 工作台] -->|REST API| API[FastAPI]
     API --> Services[查询 · 同步 · 分析]
     Services <--> DB[(本地 SQLite)]
-    Services --> Data[行情与资讯 Provider]
+    Services --> Sources[独立数据源模块 · 字段与单位契约]
+    Sources --> Data[行情 · 基本面 · 资讯接口]
+    Services --> Quality[抓取记录 · 来源与覆盖 · 数据质量]
+    Quality <--> DB
     Services -->|用户显式生成| AI[配置的模型服务]
 ```
 
@@ -179,7 +198,7 @@ flowchart LR
 | --- | --- |
 | 界面与交互 | React 19、TypeScript、Vite 7、Fluent UI 9、TanStack Table 8 |
 | 图表与字体 | Lightweight Charts；自托管 IBM Plex Sans / Mono |
-| 接口与服务 | FastAPI；独立 Provider 负责外部行情、信息与模型接入 |
+| 接口与服务 | FastAPI；各来源模块声明数据契约，Provider 负责获取与校验，同步服务记录来源和质量 |
 | 持久化 | SQLModel + SQLite，保存自选、行情、持仓和 AI 分析记录 |
 | 验证与维护 | pytest、Vitest、Testing Library；隔离启动/冒烟检查与 GitHub Actions |
 
@@ -191,7 +210,8 @@ flowchart LR
 
 ```bash
 # 后端接口、服务与数据层
-PYTHONPATH=backend backend/.venv/bin/python -m pytest backend/tests -q
+DATABASE_URL=sqlite:// INVESTMENT_BOARD_ENV_FILE=/dev/null PYTHONPATH=backend \
+  backend/.venv/bin/python -m pytest backend/tests -q
 
 # 前端交互与生产构建
 npm test --prefix frontend -- --run
@@ -215,6 +235,7 @@ PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 | 证券搜索 | `GET /api/watchlist/securities/search?query=...` |
 | 自选管理与同步 | `/api/watchlist/items`、`POST /api/watchlist/sync` |
 | 标的详情与同步 | `GET /api/stocks/{security_id}`、`POST /api/stocks/{security_id}/sync` |
+| 数据源契约与启停 | `GET /api/data/sources`、`GET /api/data/sources/{vendor_key}`、`PUT /api/data/sources/{vendor_key}` |
 | 持仓记录 | `/api/holdings`、`/api/holdings/{holding_id}` |
 | 股票 / 持仓分析 | `POST /api/ai/stocks/{security_id}/advice`、`POST /api/ai/holdings/{holding_id}/advice` |
 | 分析历史 | `GET /api/ai/history` |
@@ -233,7 +254,9 @@ Investment-Board/
 │   │   └── schemas/   # 请求与响应结构
 │   └── tests/         # 后端测试
 ├── scripts/           # 启动与隔离冒烟检查
-└── docs/images/       # 实际运行截图与来源说明
+└── docs/
+    ├── data-sources/  # 各来源字段、单位、转换及接入边界
+    └── images/        # 实际运行截图与来源说明
 ```
 
 </details>
