@@ -121,7 +121,9 @@ def test_planned_nav_and_fees_do_not_advertise_integration():
     assert nav.integration_scope == profile.integration_scope == 'planned'
     assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'unit_nav')[0].normalized_unit == 'CNY/fund_unit'
     assert by_target('eastmoney', 'eastmoney_fund_profile', 'fund_profile', 'management_fee')[0].normalized_unit == 'fraction'
-    assert all(f.verification == 'unverified' for e in (nav,profile) for f in e.fields)
+    assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'unit_nav')[0].verification == 'sample_verified'
+    assert by_target('eastmoney', 'eastmoney_fund_nav', 'fund_nav', 'published_at')[0].verification == 'unverified'
+    assert all(any('managed sync integration pending' in limitation for limitation in e.limitations) for e in (nav, profile))
     assert any('not reinvested total return' in limitation for limitation in nav.limitations)
 
 

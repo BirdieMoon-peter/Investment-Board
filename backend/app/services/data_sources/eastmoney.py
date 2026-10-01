@@ -82,16 +82,24 @@ def get_module():
             field('TIME', 'summary'),
         ), time=NAIVE_TIME, scope='untracked_homepage/lookup', limitations=('Latest row per CPI/PPI/PMI/M2; report period is not exact publication clock.',)),
         endpoint('eastmoney_fund_nav', 'fund_nav', 'https://api.fund.eastmoney.com/f10/lsjz', (
-            field('Data.LSJZList[].FSRQ', 'nav_date', 'date', verification='unverified'),
-            field('Data.LSJZList[].DWJZ', 'unit_nav', 'CNY/fund_unit', verification='unverified'),
-            field('Data.LSJZList[].LJJZ', 'cumulative_nav', 'CNY/fund_unit', verification='unverified'),
-        ), frequency='daily', time='NAV valuation date; publication lag unverified', basis='fund NAV', scope='planned', limitations=('No adapter or live integration yet.', 'Cumulative NAV is provider cumulative-value series, not reinvested total return.')),
+            field('Data.LSJZList[].FSRQ', 'nav_date', 'ISO date', 'date', 'strict date.fromisoformat; sort dates', missing='reject absent or malformed'),
+            field('Data.LSJZList[].DWJZ', 'unit_nav', 'CNY/fund_unit', conversion='positive finite Decimal; FundNavRow kind unit_nav', missing='None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch', raw_type='string|number', verification='sample_verified'),
+            field('Data.LSJZList[].LJJZ', 'cumulative_nav', 'CNY/fund_unit', conversion='positive finite Decimal; FundNavRow kind cumulative_nav', missing='None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch', raw_type='string|number', verification='sample_verified'),
+            field('TotalCount', 'total_count', 'raw NAV date records', conversion='nonnegative integral count', missing='unknown coverage if absent', raw_type='number|string', normalized_type='int'),
+            field('absent publication clock', 'published_at', 'unknown', 'unknown', 'None; acquisition time never substitutes', verification='unverified', normalized_type='datetime'),
+        ), payload='JSON Data.LSJZList array of objects', frequency='daily', time='NAV valuation date only; publication clock unknown', basis='fund NAV', scope='planned', limitations=('Adapter implemented; managed sync integration pending.', 'At most 3 pages of 100 raw NAV date rows; truncated/unknown coverage explicit. Raw received counts differ from normalized unit/cumulative observations and later writes.', 'Conflicting duplicates or any malformed page reject entire fetch; no partial healthy result.', 'Cumulative NAV is provider cumulative-value series, not reinvested total return. Forward-adjusted prices cannot establish premium.')),
         endpoint('eastmoney_fund_profile', 'fund_profile', 'https://fundf10.eastmoney.com/jbgk_{code}.html', (
-            *(field(raw, target, verification='unverified') for raw,target in (('基金全称','full_name'),('基金管理人','manager'),('业绩比较基准','benchmark'))),
-            field('管理费率', 'management_fee', 'percentage text', 'fraction', 'planned percent /100', verification='unverified'),
-            field('托管费率', 'custody_fee', 'percentage text', 'fraction', 'planned percent /100', verification='unverified'),
-            field('资产规模', 'assets', 'unverified suffix units', 'CNY', 'planned explicit suffix conversion', verification='unverified'),
-        ), payload='HTML', scope='planned', limitations=('No adapter yet; no invented benchmark code or prefix-based fund classification.',)),
+            field('recognized fund title|基金代码|基金主代码', 'code (validation only)', conversion='corroborate requested six-digit code; scripts excluded', missing='reject absent/mismatch'),
+            field('基金全称', 'full_name', conversion='HTML text/entity normalization', verification='sample_verified'),
+            field('基金全称 explicit ETF/交易型开放式/LOF/上市开放式', 'instrument_type', conversion='explicit full-name marker only; 联接/feeder excludes ETF inference, retain unknown unless independent LOF marker; no numeric prefix inference', missing='unknown if no marker'),
+            field('基金管理人', 'manager', conversion='HTML text/entity normalization; not fund custodian', verification='sample_verified'),
+            field('业绩比较基准', 'benchmark_name', conversion='preserve description; no inferred benchmark code', verification='sample_verified'),
+            field('管理费率', 'management_fee', 'annual percentage text', 'fraction', 'finite percentage /100; 0..1', missing='None/empty/-- absent; malformed rejects fetch', verification='sample_verified'),
+            field('托管费率', 'custody_fee', 'annual percentage text', 'fraction', 'finite percentage /100; 0..1', missing='None/empty/-- absent; malformed rejects fetch', verification='sample_verified'),
+            field('净资产规模|资产规模 explicit 万/亿/元', 'fund_assets', 'CNY suffix text', 'CNY', 'positive finite Decimal times 10000/100000000/1', missing='None if absent or bare unitless number; malformed explicit amount rejects fetch', verification='sample_verified', normalized_type='Decimal'),
+            field('净资产规模|资产规模 截止至|截止日期', 'assets_as_of', 'YYYY年MM月DD日|YYYY-MM-DD', 'date', 'calendar date; no publication time inferred', missing='None if absent; invalid date rejects fetch', verification='sample_verified', normalized_type='date'),
+        ), payload='HTML table label/value cells and recognized fund title', time='Asset valuation date only if supplied; publication clock unknown', scope='planned', limitations=('Adapter implemented; managed sync integration pending.', 'No invented benchmark code or prefix-based fund classification; identity-only pages with no usable metadata reject fetch.', 'Fund announcements unavailable: stock-company announcements are not a fund-data substitute; no guessed endpoint.')),
+
     ))
 
 
@@ -136,3 +144,13 @@ def build_market_index_source():
 def build_macro_source():
     from app.services.providers.eastmoney_homepage_overview import EastmoneyMacroSnapshotSource
     return EastmoneyMacroSnapshotSource()
+
+
+def build_fund_nav_source():
+    from app.services.providers.eastmoney_fund_data import EastmoneyFundNavSource
+    return EastmoneyFundNavSource()
+
+
+def build_fund_profile_source():
+    from app.services.providers.eastmoney_fund_data import EastmoneyFundProfileSource
+    return EastmoneyFundProfileSource()

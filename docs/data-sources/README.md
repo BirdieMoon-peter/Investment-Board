@@ -6,13 +6,13 @@ Vendor-owned modules in `backend/app/services/data_sources/` describe native pay
 
 | Vendor | Managed security adapters in default stock sync | Other implemented parsers | Planned integration |
 |---|---|---|---|
-| Eastmoney | Announcements, news, daily prices, intraday/quote snapshots, financial metrics, company profile | Security search/lookup, homepage indices and macro snapshots | Fund NAV and fund profile |
+| Eastmoney | Announcements, news, daily prices, intraday/quote snapshots, financial metrics, company profile | Security search/lookup, homepage indices and macro snapshots; isolated fund NAV/profile adapters | Fund NAV/profile managed sync |
 | Sina | Announcements, news, daily prices, quote snapshot | Homepage indices | None declared |
 | NetEase | Daily price history fallback (after Sina/Eastmoney) | Homepage index parser (not in current default homepage chain) | None declared |
 | Tencent | None | Homepage indices | Managed history unavailable; a standalone kline parsing helper does not implement a fetch endpoint |
 | Ifeng | None | News HTML parser | Stock-news integration; not in the default sync chain |
 
-`managed_security` means the adapter participates in current stock-sync factories. `untracked_homepage/lookup` identifies homepage or identity helpers outside managed acquisition telemetry. `planned` identifies future integration; fund endpoints have no adapter yet, while Ifeng has an existing parser without default integration. Capabilities describe code, not live availability or completeness.
+`managed_security` means the adapter participates in current stock-sync factories. `untracked_homepage/lookup` identifies homepage or identity helpers outside managed acquisition telemetry. `planned` identifies future integration; fund adapters are implemented with isolated HTTP validation but await managed sync wiring, while Ifeng has an existing parser without default integration. Capabilities describe code, not live availability or completeness.
 
 Stock factory order is announcements Eastmoney → Sina; news Eastmoney → Sina; history Sina → Eastmoney → NetEase; quote Eastmoney intraday → Eastmoney snapshot → Sina quote; financial/profile Eastmoney. Each factory builds fresh adapters. Existing dependency function signatures and patchable provider constructors remain compatible. A category/provider pair identifies an endpoint; the same provider key can appear in multiple categories.
 
@@ -26,7 +26,9 @@ Stock factory order is announcements Eastmoney → Sina; news Eastmoney → Sina
 | Current quote percentage and ROE | Decimal percentage values after quote scaling | `1.23` means `1.23%`; `16.75` ROE means `16.75%` | Do not divide these fields twice; future derived returns and fund fees use fractions |
 | Eastmoney financial profit | `PARENT_NETPROFIT` | `net_profit`: 归母净利润, profit attributable to parent | Does not represent total corporate profit |
 | Company capital | Comma-separated numbers with 万/亿 suffix | ×10000/×100000000 CNY | Bare numeric capital is parsed but its unit remains unverified |
-| Planned NAV | `DWJZ`, `LJJZ` | CNY/fund_unit | Cumulative NAV is the provider cumulative-value series, not reinvested total return |
+| Fund NAV adapter | `DWJZ`, `LJJZ` | CNY/fund_unit | Cumulative NAV is the provider cumulative-value series, not reinvested total return |
+
+Fund NAV results contain immutable rows and safe attempt metadata. Received counts measure raw dated records, while unit/cumulative values form up to two normalized observations per record; no database writes happen in these adapters. Missing one kind carries `missing_nav_value`; records with no usable values fail rather than reporting healthy empty data. Pagination is bounded to three pages of100 with explicit truncated or unknown coverage. Duplicate dates are de-duplicated but cannot certify complete distinct-date coverage; conflicting values reject the fetch. Fund assets accept positive finite explicit 元/万/亿 currency amounts only; bare numeric assets remain unknown. Fund publication clocks stay unknown and are never set to acquisition time. Raw NAV results disclose `valuation_basis=official_nav` separately from `price_basis=unknown`; official NAV is not a market-price adjustment enum. Fund announcements are unavailable pending a verified fund-specific contract.
 
 Financial optional fields stay `None` when absent/empty. Malformed required values are rejected by the existing parser or aggregate validation. Prices are checked before persistence. Missing source fields must never become certified zeros. Catalog conversion text describes the parser plus aggregate normalization; it does not execute conversion. Field `normalized_type` distinguishes dates, UTC datetimes, Decimal numbers, integer counts and strings. Unsupported or unknown units stay explicit even if a numeric parser succeeds.
 
@@ -40,7 +42,7 @@ Source time and acquisition time are distinct. Daily bars and NAV use a valuatio
 | `sample_verified` | Limited public samples support the specified field only |
 | `unverified` | Units, source time, optional capability, or planned mapping remain unresolved |
 
-Limited sample evidence: public ETF515980 volumes on 2026-09-29/30 are Sina119913400/110074800 shares versus Eastmoney1199134/1100748 lots, supporting the ×100 volume mapping for those samples. Eastmoney600519 financial samples contain revenue92278072083.21 CNY, parent profit44516880421.86 CNY, EPS35.57 CNY/share and ROE16.75%; lowercase profile `jbzl.zczb` sample `12.50亿` supports suffix conversion only. These samples do not certify an entire source, all instruments, freshness or adjustment coverage. Native NetEase percent scaling remains unknown.
+Limited sample evidence: public ETF515980 volumes on 2026-09-29/30 are Sina119913400/110074800 shares versus Eastmoney1199134/1100748 lots, supporting the ×100 volume mapping for those samples. Eastmoney600519 financial samples contain revenue92278072083.21 CNY, parent profit44516880421.86 CNY, EPS35.57 CNY/share and ROE16.75%; lowercase profile `jbzl.zczb` sample `12.50亿` supports suffix conversion only. These samples do not certify an entire source, all instruments, freshness or adjustment coverage. Native NetEase percent scaling remains unknown. Public ETF515980 fund sample on 2026-10-01 reported NAV date2026-09-30 with unit0.9567 and cumulative1.9134; fund profile reported management0.50% and custody0.10% annual fees, assets72.86亿元 as of2026-06-30 and benchmark description中证人工智能产业指数收益率. These limited observations verify the corresponding units/fields only, not current source health or managed integration.
 
 Runtime acquisition success, empty/failure attempts, timestamps and quality issues are recorded independently by acquisition services. Never infer source health from a registered contract or a historical sample. Untracked homepage/lookup parsers have no managed-security attempt history.
 
@@ -242,35 +244,44 @@ Time: Naive source time assigned UTC by current parser; source timezone unverifi
 
 #### `eastmoney_fund_nav` / `fund_nav`
 
-Endpoint: `https://api.fund.eastmoney.com/f10/lsjz`. Payload: JSON. Frequency: daily. Scope: `planned`.
+Endpoint: `https://api.fund.eastmoney.com/f10/lsjz`. Payload: JSON Data.LSJZList array of objects. Frequency: daily. Scope: `planned`.
 
-Time: NAV valuation date; publication lag unverified Basis: fund NAV.
+Time: NAV valuation date only; publication clock unknown. Basis: fund NAV.
 
-- No adapter or live integration yet.
-- Cumulative NAV is provider cumulative-value series, not reinvested total return.
+- Adapter implemented; managed sync integration pending.
+- At most 3 pages of 100 raw NAV date rows; truncated/unknown coverage explicit. Raw received counts differ from normalized unit/cumulative observations and later writes.
+- Conflicting duplicates or any malformed page reject entire fetch; no partial healthy result.
+- Cumulative NAV is provider cumulative-value series, not reinvested total return. Forward-adjusted prices cannot establish premium.
 
 | Native field | Native type/unit | Target type/unit | Conversion | Missing rule | Verification |
 |---|---|---|---|---|---|
-| Data.LSJZList[].FSRQ | string; date | nav_date: date; date | identity | None if absent | unverified |
-| Data.LSJZList[].DWJZ | string; CNY/fund_unit | unit_nav: Decimal; CNY/fund_unit | identity | None if absent | unverified |
-| Data.LSJZList[].LJJZ | string; CNY/fund_unit | cumulative_nav: Decimal; CNY/fund_unit | identity | None if absent | unverified |
+| Data.LSJZList[].FSRQ | string; ISO date | nav_date: date; date | strict date.fromisoformat; sort dates | reject absent or malformed | parser_contract |
+| Data.LSJZList[].DWJZ | string / number; CNY/fund_unit | unit_nav: Decimal; CNY/fund_unit | positive finite Decimal; FundNavRow kind unit_nav | None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch | sample_verified |
+| Data.LSJZList[].LJJZ | string / number; CNY/fund_unit | cumulative_nav: Decimal; CNY/fund_unit | positive finite Decimal; FundNavRow kind cumulative_nav | None/empty/-- omitted and missing_nav_value flagged; all unusable rejects fetch | sample_verified |
+| TotalCount | number / string; raw NAV date records | total_count: int; raw NAV date records | nonnegative integral count | unknown coverage if absent | parser_contract |
+| absent publication clock | string; unknown | published_at: datetime; unknown | None; acquisition time never substitutes | None if absent | unverified |
 
 #### `eastmoney_fund_profile` / `fund_profile`
 
-Endpoint: `https://fundf10.eastmoney.com/jbgk_{code}.html`. Payload: HTML. Frequency: on_request. Scope: `planned`.
+Endpoint: `https://fundf10.eastmoney.com/jbgk_{code}.html`. Payload: HTML table label/value cells and recognized fund title. Optional HTML cell and row end tags are supported, including the public profile page’s omitted `</td>` before the next `<th>`. Frequency: on_request. Scope: `planned`.
 
-Time: not supplied Basis: not_applicable.
+Time: Asset valuation date only if supplied; publication clock unknown. Basis: not_applicable.
 
-- No adapter yet; no invented benchmark code or prefix-based fund classification.
+- Adapter implemented; managed sync integration pending.
+- No invented benchmark code or prefix-based fund classification; identity-only pages with no usable metadata reject fetch.
+- Fund announcements unavailable: stock-company announcements are not a fund-data substitute; no guessed endpoint.
 
 | Native field | Native type/unit | Target type/unit | Conversion | Missing rule | Verification |
 |---|---|---|---|---|---|
-| 基金全称 | string; text | full_name: string; text | identity | None if absent | unverified |
-| 基金管理人 | string; text | manager: string; text | identity | None if absent | unverified |
-| 业绩比较基准 | string; text | benchmark: string; text | identity | None if absent | unverified |
-| 管理费率 | string; percentage text | management_fee: Decimal; fraction | planned percent /100 | None if absent | unverified |
-| 托管费率 | string; percentage text | custody_fee: Decimal; fraction | planned percent /100 | None if absent | unverified |
-| 资产规模 | string; unverified suffix units | assets: Decimal; CNY | planned explicit suffix conversion | None if absent | unverified |
+| recognized fund title / 基金代码 / 基金主代码 | string; text | code (validation only): string; text | corroborate requested six-digit code; scripts excluded | reject absent/mismatch | parser_contract |
+| 基金全称 | string; text | full_name: string; text | HTML text/entity normalization | None if absent | sample_verified |
+| 基金全称 explicit ETF/交易型开放式/LOF/上市开放式 | string; text | instrument_type: string; text | explicit full-name marker only; 联接/feeder excludes ETF inference, retain unknown unless independent LOF marker; no numeric prefix inference | unknown if no marker | parser_contract |
+| 基金管理人 | string; text | manager: string; text | HTML text/entity normalization; not fund custodian | None if absent | sample_verified |
+| 业绩比较基准 | string; text | benchmark_name: string; text | preserve description; no inferred benchmark code | None if absent | sample_verified |
+| 管理费率 | string; annual percentage text | management_fee: Decimal; fraction | finite percentage /100; 0..1 | None/empty/-- absent; malformed rejects fetch | sample_verified |
+| 托管费率 | string; annual percentage text | custody_fee: Decimal; fraction | finite percentage /100; 0..1 | None/empty/-- absent; malformed rejects fetch | sample_verified |
+| 净资产规模 / 资产规模 explicit 万/亿/元 | string; CNY suffix text | fund_assets: Decimal; CNY | positive finite Decimal times 10000/100000000/1 | None if absent or bare unitless number; malformed explicit amount rejects fetch | sample_verified |
+| 净资产规模 / 资产规模 截止至 / 截止日期 | string; YYYY年MM月DD日 / YYYY-MM-DD | assets_as_of: date; date | calendar date; no publication time inferred | None if absent; invalid date rejects fetch | sample_verified |
 
 ### Sina
 
