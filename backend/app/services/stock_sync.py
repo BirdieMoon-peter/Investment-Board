@@ -49,6 +49,7 @@ class StockSyncService:
         quote_snapshot_repository: QuoteSnapshotRepository | None = None,
         company_profile_repository: CompanyProfileRepository | None = None,
         ingestion_recorder: Any | None = None,
+        disabled_categories: set[str] | frozenset[str] = frozenset(),
     ):
         self.announcement_provider = announcement_provider
         self.news_provider = news_provider
@@ -63,6 +64,7 @@ class StockSyncService:
         self.quote_snapshot_repository = quote_snapshot_repository
         self.company_profile_repository = company_profile_repository
         self.ingestion_recorder = ingestion_recorder
+        self.disabled_categories = frozenset(disabled_categories)
 
     CATEGORIES = ("announcements", "news", "price_history", "financial_metrics", "quote_snapshot", "company_profile")
 
@@ -89,6 +91,10 @@ class StockSyncService:
             applicable = not (self._is_fund_like(industry) and category in {"announcements", "news", "financial_metrics", "company_profile"})
             if not applicable:
                 outcome = "not_applicable"
+            elif category in self.disabled_categories:
+                outcomes[category], counts[category] = "disabled", 0
+                warnings.append(f"{prefix} disabled: all managed sources are disabled")
+                continue
             elif provider is not None:
                 try:
                     kwargs = dict(stock_code=stock_code, market=market)
@@ -189,7 +195,7 @@ class StockSyncService:
             announcements_upserted=counts.get("announcements", 0), news_items_upserted=counts.get("news", 0),
             price_bars_upserted=counts.get("price_history", 0), financial_metrics_upserted=counts.get("financial_metrics", 0),
             quote_snapshot_updated=bool(counts.get("quote_snapshot")), company_profile_updated=bool(counts.get("company_profile")),
-            warnings=warnings, synced_at=now, category_outcomes=outcomes)
+            warnings=warnings, synced_at=None if outcomes and all(value == "disabled" for value in outcomes.values()) else now, category_outcomes=outcomes)
 
     def _price_integrity(self, security_id, repository, fetch, items):
         basis = getattr(fetch, "price_basis", "unknown")

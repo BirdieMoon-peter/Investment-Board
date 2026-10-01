@@ -10,7 +10,13 @@ from app.main import create_app
 
 
 @pytest.fixture(name="api_app")
-def api_app_fixture(session: Session) -> Any:
+def api_app_fixture(session: Session, engine, monkeypatch) -> Any:
+    import app.main as main_module
+
+    # Route overrides do not cover startup schema creation. Use the same isolated
+    # engine for both, including new apps created by persistence tests. Runtime
+    # smoke tests reload main with their explicit temporary DATABASE_URL.
+    monkeypatch.setattr(main_module, "make_engine", lambda settings: engine)
     app = create_app()
     app.dependency_overrides[get_session] = lambda: session
     return app

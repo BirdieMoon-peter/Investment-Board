@@ -25,11 +25,21 @@ def test_runtime_app_serves_seeded_watchlist_items_from_configured_database(tmp_
 
     reload(dependencies_module)
     reload(main_module)
+    startup_engines = []
+    actual_create_tables = main_module.create_db_and_tables
+
+    def record_startup_engine(startup_engine):
+        startup_engines.append(startup_engine)
+        actual_create_tables(startup_engine)
+
+    monkeypatch.setattr(main_module, "create_db_and_tables", record_startup_engine)
 
     with TestClient(main_module.create_app()) as client:
         watchlist_response = client.get("/api/watchlist/items")
         search_response = client.get("/api/watchlist/securities/search", params={"query": "Ping"})
 
+    assert len(startup_engines) == 1
+    assert str(startup_engines[0].url) == database_url
     assert watchlist_response.status_code == 200
     assert watchlist_response.json() == [
         {

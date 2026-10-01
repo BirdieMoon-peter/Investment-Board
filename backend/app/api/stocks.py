@@ -44,6 +44,9 @@ from app.services.providers.netease_price_history import NetEasePriceHistorySour
 from app.services.providers.sina_price_history import SinaPriceHistorySource
 
 from app.services.data_sources import eastmoney, sina, netease
+from app.services.data_source_management import DataSourceManagementService
+from app.services.data_ingestion import DataIngestionRecorder
+from app.db.repositories.data_management_repository import DataManagementRepository
 
 router = APIRouter()
 
@@ -141,15 +144,31 @@ def get_stock_sync_service(
         get_aggregate_company_profile_provider
     ),
 ) -> StockSyncService:
+    policy = DataSourceManagementService(session)
+    providers = {}
+    disabled_categories = set()
+    for category, provider in (
+        ("announcements", aggregate_announcement_provider),
+        ("news", aggregate_news_provider),
+        ("price_history", aggregate_price_history_provider),
+        ("financial_metrics", aggregate_financial_metrics_provider),
+        ("quote_snapshot", aggregate_quote_snapshot_provider),
+        ("company_profile", aggregate_company_profile_provider),
+    ):
+        providers[category], disabled = policy.apply_policy(provider, category)
+        if disabled:
+            disabled_categories.add(category)
     return StockSyncService(
-        announcement_provider=aggregate_announcement_provider,
-        news_provider=aggregate_news_provider,
+        ingestion_recorder=DataIngestionRecorder(DataManagementRepository(session)),
+        disabled_categories=disabled_categories,
+        announcement_provider=providers["announcements"],
+        news_provider=providers["news"],
         announcement_repository=AnnouncementRepository(session),
         news_repository=NewsRepository(session),
-        price_history_provider=aggregate_price_history_provider,
-        financial_metrics_provider=aggregate_financial_metrics_provider,
-        quote_snapshot_provider=aggregate_quote_snapshot_provider,
-        company_profile_provider=aggregate_company_profile_provider,
+        price_history_provider=providers["price_history"],
+        financial_metrics_provider=providers["financial_metrics"],
+        quote_snapshot_provider=providers["quote_snapshot"],
+        company_profile_provider=providers["company_profile"],
         price_history_repository=PriceHistoryRepository(session),
         financial_metrics_repository=FinancialMetricsRepository(session),
         quote_snapshot_repository=QuoteSnapshotRepository(session),
