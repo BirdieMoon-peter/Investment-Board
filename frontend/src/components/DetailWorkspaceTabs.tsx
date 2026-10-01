@@ -3,19 +3,20 @@ import { Field, Select, Tab, TabList } from '@fluentui/react-components'
 
 import { useI18n } from '../i18n'
 
-export type DetailGroup = 'market' | 'news' | 'holdings'
+export type DetailGroup = 'market' | 'news' | 'holdings' | 'research'
 interface DetailWorkspaceTabsProps {
   active: DetailGroup
   onChange: (value: DetailGroup) => void
   market: ReactNode
   news: ReactNode
   holdings: ReactNode
+  research?: ReactNode
 }
 
 export function DetailWorkspaceTabs({ active, onChange, ...panels }: DetailWorkspaceTabsProps) {
   const { t } = useI18n()
   const id = useId()
-  const groups: DetailGroup[] = ['market', 'news', 'holdings']
+  const groups: DetailGroup[] = ['market', 'news', 'holdings', 'research']
   return (
     <div className="detail-workspace-tabs">
       <TabList className="detail-workspace-tabs__desktop" aria-label={t('detail.researchGroup')}

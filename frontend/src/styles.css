@@ -571,7 +571,7 @@ textarea:not([class*="fui-"])::placeholder {
 
 .dashboard-spotlight__ticker {
   margin: 0;
-  color: var(--accent);
+  color: var(--accent-strong);
   font-weight: 600;
 }
 
@@ -775,7 +775,7 @@ textarea:not([class*="fui-"])::placeholder {
 
 .watchlist-table__ai-tag--neutral {
   border-color: var(--border-strong);
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .watchlist-table__ai-meta,
@@ -967,7 +967,7 @@ button.advice-history-item:not([class*="fui-"]):hover:not(:disabled) {
 }
 
 a:not([class*="fui-"]) {
-  color: var(--accent);
+  color: var(--accent-strong);
   text-decoration: none;
 }
 
@@ -1083,7 +1083,7 @@ a:not([class*="fui-"]):hover {
 .ai-settings__grid--key { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
 .ai-settings label:not([class*="fui-"]) { display: flex; flex-direction: column; gap: 8px; min-width: 0; font-size: 0.85rem; }
 .ai-settings input:not([class*="fui-"]), .ai-settings select:not([class*="fui-"]) { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px 12px; border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-panel); color: var(--text-primary); font: inherit; }
-.ai-settings input:not([class*="fui-"]):focus-visible, .ai-settings select:not([class*="fui-"]):focus-visible, .ai-settings summary:focus-visible, .ai-settings button:not([class*="fui-"]):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.ai-settings input:not([class*="fui-"]):focus-visible, .ai-settings select:not([class*="fui-"]):focus-visible, .ai-settings summary:focus-visible, .ai-settings button:not([class*="fui-"]):focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 3px; }
 .ai-settings input:not([class*="fui-"]):disabled, .ai-settings select:not([class*="fui-"]):disabled, .ai-settings button:not([class*="fui-"]):disabled { opacity: 0.55; cursor: not-allowed; }
 .ai-settings__key-box { margin: 16px 0; padding: 12px; background: var(--bg-panel-soft); border: 1px solid var(--border-soft); border-radius: var(--radius-md); }
 .ai-settings__key-state { margin: 0 0 12px; color: var(--text-secondary); font-size: 0.85rem; }
@@ -1975,7 +1975,7 @@ a:not([class*="fui-"]):hover {
 .detail-workspace .holding-form textarea { min-height: 88px; }
 .detail-workspace .stock-detail-shell__actions { gap: 8px; margin-top: 16px; margin-bottom: 16px; }
 .detail-workspace .advice-history-item { display: flex; justify-content: space-between; padding: 10px 12px; gap: 12px; font-size: 12px; }
-.detail-workspace .advice-history-item[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.detail-workspace .advice-history-item[aria-pressed="true"] { border-color: var(--accent-strong); background: var(--accent-soft); }
 .detail-workspace .advice-card { gap: 16px; background: none; border: 0; border-top: 1px solid var(--border-soft); border-radius: 0; padding: 16px 0 0; }
 .detail-workspace .advice-card h3 { font-size: 14px; }
 .detail-workspace .advice-card__summary, .detail-workspace .advice-card__analysis { line-height: 1.75; white-space: pre-line; overflow-wrap: anywhere; }
@@ -2007,7 +2007,7 @@ a:not([class*="fui-"]):hover {
   .detail-workspace .advice-card__grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .detail-workspace .advice-history-item { flex-wrap: wrap; text-align: left; }
 }
-.stock-detail-table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stock-detail-table-wrap:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
 .workspace-load-failure { padding: 16px; }
 .workspace-load-failure__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -2051,3 +2051,27 @@ a:not([class*="fui-"]):hover {
 .indicator-provenance dd { margin: .25rem 0 .7rem; overflow-wrap: anywhere; }
 .indicator-provenance pre, .indicator-context { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; max-height: 20rem; overflow: auto; }
 .indicator-warnings { font-size: .8rem; padding-left: 1.1rem; overflow-wrap: anywhere; }
+
+/* Research extends the existing Fluent workspace and shared theme tokens. */
+.research-workspace-grid { display: grid; grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.5fr); gap: 24px; }
+.research-questions, .research-results { min-width: 0; }
+.research-editor { display: grid; gap: 12px; margin-block: 20px; }
+.research-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: start; }
+.research-actions > p, .research-actions > label { flex-basis: 100%; }
+.research-report { margin-top: 20px; overflow-wrap: anywhere; }
+.research-saved-question, .research-claim, .research-event, .research-conflict { padding: 16px; margin-block: 16px; border: 1px solid var(--border-soft); border-radius: 8px; }
+.research-summary, .research-report p { white-space: pre-wrap; line-height: 1.65; }
+.research-reference { display: inline-block; margin-inline: 8px; }
+.research-diagnostics { display: flex; gap: 8px 20px; flex-wrap: wrap; font-size: 0.85rem; }
+.research-warning { color: var(--text-secondary); font-weight: 500; }
+.research-evidence { margin-block: 12px; padding: 12px; border: 1px solid var(--border-soft); border-radius: 8px; scroll-margin-top: 20px; }
+.research-evidence:target { outline: 2px solid var(--accent-strong); }
+.research-workspace details > summary { cursor: pointer; padding-block: 8px; }
+.research-workspace details > summary:focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; }
+.research-facts { display: grid; gap: 8px; margin-block: 12px; }
+.research-facts > div { display: grid; grid-template-columns: minmax(100px, 0.5fr) minmax(0, 1fr); gap: 12px; }
+.research-facts dt { color: var(--text-secondary); font-size: 0.85rem; overflow-wrap: anywhere; }
+.research-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.research-trace { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+@media (max-width: 800px) { .research-workspace-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .research-facts > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }

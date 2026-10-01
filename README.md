@@ -17,13 +17,13 @@ A local-first workspace for investment research and AI-assisted analysis.
 
 ## 项目概述
 
-Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深 A 股与场内 ETF／LOF 的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
+Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深 A 股与场内 ETF／LOF 的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录与证据驱动的 AI 研究。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
 
 系统采用 React 与 FastAPI 前后端分离架构，以 SQLite 保存业务数据。前端围绕自选列表和研究任务组织信息，提供中英文界面、浅色与深色主题及响应式布局；模型服务可通过网页配置，并由用户显式触发分析。
 
 ## 界面预览
 
-以下截图摄于 2026-09-13，展示工作台与研究视图；新增数据中心功能详见下方介绍。
+以下截图摄于 2026-09-13，展示工作台与研究视图；新增数据中心、指标和证据研究功能详见下方介绍。
 
 ### 自选与市场概览
 
@@ -48,6 +48,7 @@ Investment Board 是一个面向个人本地部署的投资研究应用，覆盖
 | **标的研究** | 阅读历史日 K 线、成交量、报价快照、财务指标与公司资料；查看带来源、日期和原链接的公告与新闻 |
 | **数据中心** | 按来源查看接口能力、原始格式、字段单位及转换规则；控制受管数据源，查看标的数据质量并按类别重试；维护分类与比较基准，查阅基金资料和净值 |
 | **可复核指标** | 查看价格收益、窗口回撤、波动率、均线与量能，以及财务同比和当前持仓估值；每项结果附带公式、输入口径和缺口说明 |
+| **证据研究** | 保存研究问题与假设，显式生成包含支持证据、反证及数据缺口的报告；保留输入快照和版本，按本地数据变化复查观点并确认事件 |
 | **持仓记录** | 保存、修改或删除数量、成本、投资期限与备注，为持仓视角分析提供上下文 |
 | **AI 辅助分析** | 显式生成股票或持仓分析，阅读结构化要点与长篇分析；直接回看缓存和最近历史，默认展示最近 20 条 |
 | **工作台配置** | 在网页中修改模型服务与密钥、测试连接、恢复环境配置；调整语言、主题、密度和首页区域 |
@@ -76,6 +77,8 @@ Investment Board 是一个面向个人本地部署的投资研究应用，覆盖
 例如，东方财富股票／场内基金日线成交量由「手」换算为「股」；指数价格使用点位，指数成交量与复权口径未经核实则保留未知。报价涨跌幅与财务 ROE 保留百分数值，而基金费率采用小数比例。前复权行情不能直接与原始基金净值计算折溢价，累计净值也不等同于红利再投资收益。完整字段与边界见 [数据源契约文档](docs/data-sources/README.md)。
 
 指标由确定性计算服务生成，AI 不承担金融数值计算。界面可展开查看公式版本、观察窗口、样本数和输入来源；无法满足价格口径、报告期间或基准条件的结果明确显示无法计算。持仓权重只使用已知可估值仓位，缺少有效价格时标记估值不完整，不生成没有交易流水支持的历史组合表现。详见 [指标计算与输入口径](docs/indicators/README.md)。
+
+研究工作区将研究问题、事实、推断与假设分开组织，保存报告生成时的数据、指标和证据。引用存在性、结构化数值核对与可选模型语义复核分别展示；数据变化通过人工触发的本地复查形成事件，不自动改写旧报告或生成新分析。详见 [证据驱动的 AI 研究](docs/research/README.md)。
 
 ## 快速开始
 
@@ -207,7 +210,7 @@ flowchart LR
 | 界面与交互 | React 19、TypeScript、Vite 7、Fluent UI 9、TanStack Table 8 |
 | 图表与字体 | Lightweight Charts；自托管 IBM Plex Sans / Mono |
 | 接口与服务 | FastAPI；各来源模块声明数据契约，Provider 负责获取与校验，同步服务记录来源和质量 |
-| 持久化 | SQLModel + SQLite，保存自选、行情、持仓和 AI 分析记录 |
+| 持久化 | SQLModel + SQLite，保存自选、行情、持仓、研究问题与分析快照 |
 | 验证与维护 | pytest、Vitest、Testing Library；隔离启动/冒烟检查与 GitHub Actions |
 
 自选、持仓和分析记录保存在本地；界面偏好与最长 30 分钟的自选缓存保存在当前浏览器。详情和设置代码按需加载，图表切换主题时保留当前时间范围。
@@ -246,6 +249,8 @@ PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 | 数据源契约与启停 | `GET /api/data/sources`、`GET /api/data/sources/{vendor_key}`、`PUT /api/data/sources/{vendor_key}` |
 | 标的数据状态与采集 | `GET /api/data/securities/{security_id}`、`POST /api/data/securities/{security_id}/sync`、`PUT /api/data/securities/{security_id}/metadata` |
 | 可复核指标 | `GET /api/indicators/securities/{security_id}`、`GET /api/indicators/holdings` |
+| 研究问题与历史 | `/api/research/projects`、`/api/research/projects/{project_id}/runs` |
+| 观点复查与事件 | `POST /api/research/projects/{project_id}/check`、`/api/research/projects/{project_id}/events` |
 | 持仓记录 | `/api/holdings`、`/api/holdings/{holding_id}` |
 | 股票 / 持仓分析 | `POST /api/ai/stocks/{security_id}/advice`、`POST /api/ai/holdings/{holding_id}/advice` |
 | 分析历史 | `GET /api/ai/history` |

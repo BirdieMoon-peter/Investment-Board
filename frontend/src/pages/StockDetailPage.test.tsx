@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { generateHoldingAdvice, generateStockAdvice, fetchInvestmentAdviceHistory } from '../api/investmentAdvice'
 import { fetchHoldings, removeHolding, upsertHolding, updateHolding } from '../api/holdings'
 import { fetchHoldingsIndicators } from '../api/indicators'
+import { fetchResearchProjects, generateResearchRun } from '../api/research'
 import { fetchStockDetail, syncStock } from '../api/stocks'
 import { StockDetailPage } from './StockDetailPage'
 import { I18nProvider } from '../i18n'
@@ -14,6 +15,8 @@ vi.mock('../api/indicators', () => ({
   fetchSecurityIndicators: vi.fn().mockImplementation(async (id: number) => ({security_id:id,instrument_type:'stock',metrics:[],data_context:{}})),
   fetchHoldingsIndicators: vi.fn().mockResolvedValue({positions:[],missing_price_security_ids:[],valuation_complete:true,denominator:'known_valued_positions_only',metrics:[],warnings:[]}),
 }))
+
+vi.mock('../api/research', async () => ({...await vi.importActual('../api/research'),fetchResearchProjects:vi.fn().mockResolvedValue([]),generateResearchRun:vi.fn()}))
 
 vi.mock('../api/stocks', () => ({
   fetchStockDetail: vi.fn(),
@@ -256,9 +259,26 @@ describe('StockDetailPage', () => {
     await renderReadyDetailPage()
     expect(screen.getByRole('tab', { name: 'Market & fundamentals' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tabpanel', { name: 'Market & fundamentals' })).toBeVisible()
-    expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(3)
+    expect(screen.getAllByRole('tabpanel', { hidden: true })).toHaveLength(4)
     expect(screen.queryByRole('button', { name: 'Save holding' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Broker raises target price' })).not.toBeInTheDocument()
+  })
+
+  it('loads research on first activation, retains its draft across groups, and clears it for a new security', async () => {
+    const {rerender} = render(<I18nProvider language="en"><StockDetailPage detail={detailData} viewState="ready" onBack={vi.fn()} /></I18nProvider>)
+    await waitFor(() => expect(fetchHoldingsMock).toHaveBeenCalled())
+    expect(fetchResearchProjects).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('tab', {name:'Evidence research'}))
+    await screen.findByRole('textbox', {name:'Research question'})
+    fireEvent.change(screen.getByRole('textbox', {name:'Research question'}), {target:{value:'Retained research draft'}})
+    fireEvent.click(screen.getByRole('tab', {name:'Market & fundamentals'}))
+    fireEvent.click(screen.getByRole('tab', {name:'Evidence research'}))
+    expect(screen.getByRole('textbox', {name:'Research question'})).toHaveValue('Retained research draft')
+    expect(fetchResearchProjects).toHaveBeenCalledTimes(1)
+    rerender(<I18nProvider language="en"><StockDetailPage detail={{...detailData,security:{...detailData.security,security_id:8,name:'Another security'}}} viewState="ready" onBack={vi.fn()} /></I18nProvider>)
+    await waitFor(() => expect(fetchResearchProjects).toHaveBeenCalledWith(8,expect.any(AbortSignal)))
+    expect(screen.getByRole('textbox', {name:'Research question'})).toHaveValue('')
+    expect(generateResearchRun).not.toHaveBeenCalled()
   })
 
   it('keeps holding drafts and selected history across groups without generating advice', async () => {

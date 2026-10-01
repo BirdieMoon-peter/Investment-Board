@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Field, Input, Select, Textarea } from '@fluentui/react-components'
 import { ArrowLeft, ArrowClockwise } from '@phosphor-icons/react'
 
@@ -15,6 +15,8 @@ import { PriceContextPanel } from '../components/PriceContextPanel'
 import { PriceHistoryChart } from '../components/PriceHistoryChart'
 import { QuoteSummary } from '../components/QuoteSummary'
 import { StatusMessage } from '../components/StatusMessage'
+import { WorkspaceLoadBoundary } from '../components/WorkspaceLoadBoundary'
+const ResearchWorkspacePanel = lazy(() => import('../components/ResearchWorkspacePanel').then(m => ({default:m.ResearchWorkspacePanel})))
 import { SecurityDataStatus } from '../components/SecurityDataStatus'
 import type { SecurityData } from '../types/dataCenter'
 import { SecurityIndicatorsPanel } from '../components/SecurityIndicatorsPanel'
@@ -94,6 +96,8 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
   const [healthData, setHealthData] = useState<SecurityData | null>(null)
   const handleHealthData = useCallback((data: SecurityData) => setHealthData(data), [])
   const [activeGroup, setActiveGroup] = useState<DetailGroup>('market')
+  const [researchOpened, setResearchOpened] = useState(false)
+  const changeGroup = (group: DetailGroup) => { if (group === 'research') setResearchOpened(true); setActiveGroup(group) }
   const [currentDetail, setCurrentDetail] = useState(detail)
   const [isSyncing, setIsSyncing] = useState(false)
   useEffect(() => {
@@ -448,7 +452,8 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
         />
       ) : null}
       {viewState === 'ready' && currentDetail ? (
-        <DetailWorkspaceTabs active={activeGroup} onChange={setActiveGroup}
+        <DetailWorkspaceTabs active={activeGroup} onChange={changeGroup}
+          research={researchOpened ? <WorkspaceLoadBoundary key={currentDetail.security.security_id} fallback={<StatusMessage tone="error" message={t('research.chunkError')} />}><Suspense fallback={<StatusMessage message={t('research.loading')} />}><ResearchWorkspacePanel key={currentDetail.security.security_id} securityId={currentDetail.security.security_id} /></Suspense></WorkspaceLoadBoundary> : null}
           market={<>
             <div className="detail-market-grid">
               <PriceHistoryChart priceHistory={currentDetail.price_history} indexContext={healthData?.security.id === securityId && healthData.metadata.effective_instrument_type === 'index'} />
