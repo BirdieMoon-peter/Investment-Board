@@ -43,6 +43,8 @@ from app.services.providers import (
 from app.services.providers.netease_price_history import NetEasePriceHistorySource
 from app.services.providers.sina_price_history import SinaPriceHistorySource
 
+from app.services.data_sources import eastmoney, sina, netease
+
 router = APIRouter()
 
 
@@ -62,8 +64,8 @@ class EmptyNewsProvider:
 def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
     return AggregateAnnouncementProvider(
         raw_sources=[
-            RawAnnouncementSourceAdapter("eastmoney", EastmoneyAnnouncementSource()),
-            RawAnnouncementSourceAdapter("sina", SinaAnnouncementSource()),
+            eastmoney.build_announcement_adapter(EastmoneyAnnouncementSource),
+            sina.build_announcement_adapter(SinaAnnouncementSource),
         ]
     )
 
@@ -72,8 +74,8 @@ def get_aggregate_announcement_provider() -> AggregateAnnouncementProvider:
 def get_aggregate_news_provider() -> AggregateNewsProvider:
     return AggregateNewsProvider(
         raw_sources=[
-            RawNewsSourceAdapter("eastmoney", EastmoneyNewsSource()),
-            RawNewsSourceAdapter("sina", SinaNewsSource()),
+            eastmoney.build_news_adapter(EastmoneyNewsSource),
+            sina.build_news_adapter(SinaNewsSource),
         ]
     )
 
@@ -82,9 +84,9 @@ def get_aggregate_news_provider() -> AggregateNewsProvider:
 def get_aggregate_price_history_provider() -> AggregatePriceHistoryProvider:
     return AggregatePriceHistoryProvider(
         raw_sources=[
-            RawPriceHistorySourceAdapter("sina", SinaPriceHistorySource()),
-            RawPriceHistorySourceAdapter("eastmoney", EastmoneyPriceHistorySource()),
-            RawPriceHistorySourceAdapter("netease", NetEasePriceHistorySource()),
+            sina.build_price_history_adapter(SinaPriceHistorySource),
+            eastmoney.build_price_history_adapter(EastmoneyPriceHistorySource),
+            netease.build_price_history_adapter(NetEasePriceHistorySource),
         ],
         fallback_enabled=False,
     )
@@ -94,10 +96,7 @@ def get_aggregate_price_history_provider() -> AggregatePriceHistoryProvider:
 def get_aggregate_financial_metrics_provider() -> AggregateFinancialMetricsProvider:
     return AggregateFinancialMetricsProvider(
         raw_sources=[
-            RawFinancialMetricsSourceAdapter(
-                "eastmoney",
-                EastmoneyFinancialMetricsSource(),
-            ),
+            eastmoney.build_financial_adapter(EastmoneyFinancialMetricsSource),
         ]
     )
 
@@ -106,18 +105,9 @@ def get_aggregate_financial_metrics_provider() -> AggregateFinancialMetricsProvi
 def get_aggregate_quote_snapshot_provider() -> AggregateQuoteSnapshotProvider:
     return AggregateQuoteSnapshotProvider(
         raw_sources=[
-            RawQuoteSnapshotSourceAdapter(
-                "eastmoney_intraday",
-                EastmoneyIntradayQuoteSnapshotSource(),
-            ),
-            RawQuoteSnapshotSourceAdapter(
-                "eastmoney",
-                EastmoneyQuoteSnapshotSource(),
-            ),
-            RawQuoteSnapshotSourceAdapter(
-                "sina_fund",
-                SinaFundQuoteSnapshotSource(),
-            ),
+            eastmoney.build_intraday_quote_adapter(EastmoneyIntradayQuoteSnapshotSource),
+            eastmoney.build_quote_adapter(EastmoneyQuoteSnapshotSource),
+            sina.build_quote_adapter(SinaFundQuoteSnapshotSource),
         ]
     )
 
@@ -126,7 +116,7 @@ def get_aggregate_quote_snapshot_provider() -> AggregateQuoteSnapshotProvider:
 def get_aggregate_company_profile_provider() -> AggregateCompanyProfileProvider:
     return AggregateCompanyProfileProvider(
         raw_sources=[
-            RawCompanyProfileSourceAdapter("eastmoney", EastmoneyCompanyProfileSource()),
+            eastmoney.build_company_profile_adapter(EastmoneyCompanyProfileSource),
         ]
     )
 
