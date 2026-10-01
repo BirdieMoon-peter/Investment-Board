@@ -2,7 +2,7 @@
 
 # Investment Board
 
-**面向沪深股票与场内 ETF／LOF 的本地投资研究工作台**
+**面向沪深 A 股与场内 ETF／LOF 的本地投资研究工作台**
 
 A local-first workspace for investment research and AI-assisted analysis.
 
@@ -17,11 +17,13 @@ A local-first workspace for investment research and AI-assisted analysis.
 
 ## 项目概述
 
-Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深股票与场内 ETF／LOF 的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
+Investment Board 是一个面向个人本地部署的投资研究应用，覆盖沪深 A 股与场内 ETF／LOF 的自选跟踪、行情浏览、基本面研究、资讯查阅、持仓记录和 AI 辅助分析。项目将相关数据与分析入口整合到统一工作台，支持从市场观察到单一标的研究的连续工作流程。
 
 系统采用 React 与 FastAPI 前后端分离架构，以 SQLite 保存业务数据。前端围绕自选列表和研究任务组织信息，提供中英文界面、浅色与深色主题及响应式布局；模型服务可通过网页配置，并由用户显式触发分析。
 
 ## 界面预览
+
+以下截图摄于 2026-09-13，展示工作台与研究视图；新增数据中心功能详见下方介绍。
 
 ### 自选与市场概览
 
@@ -43,7 +45,8 @@ Investment Board 是一个面向个人本地部署的投资研究应用，覆盖
 | --- | --- |
 | **自选管理** | 搜索并添加证券或基金，手动补充代码；按名称、最新价或涨跌幅排序，结合关键词与市场筛选；移除前确认具体标的 |
 | **市场概览** | 查看大盘指数、宏观指标和焦点标的；手动同步全看板或单个标的，按需配置自动刷新与同步 |
-| **个股研究** | 阅读历史日 K 线、成交量、报价快照、财务指标与公司资料；查看带来源、日期和原链接的公告与新闻 |
+| **标的研究** | 阅读历史日 K 线、成交量、报价快照、财务指标与公司资料；查看带来源、日期和原链接的公告与新闻 |
+| **数据中心** | 按来源查看接口能力、原始格式、字段单位及转换规则；控制受管数据源，查看标的数据质量并按类别重试；维护分类与比较基准，查阅基金资料和净值 |
 | **持仓记录** | 保存、修改或删除数量、成本、投资期限与备注，为持仓视角分析提供上下文 |
 | **AI 辅助分析** | 显式生成股票或持仓分析，阅读结构化要点与长篇分析；直接回看缓存和最近历史，默认展示最近 20 条 |
 | **工作台配置** | 在网页中修改模型服务与密钥、测试连接、恢复环境配置；调整语言、主题、密度和首页区域 |
@@ -64,6 +67,8 @@ Investment Board 是一个面向个人本地部署的投资研究应用，覆盖
 | 网易 | 历史行情备用来源；部分单位与复权口径仍待核实 |
 | 腾讯 | 首页指数，不参与当前受管标的同步 |
 | 凤凰财经 | 已有资讯解析器，尚未接入默认同步流程 |
+
+网页的 **数据中心** 提供独立来源视图，按需展开接口与字段详情；标的数据视图区分观察日期、获取时间、覆盖范围和质量状态，并支持选择类别及价格来源后更新。查看已保存数据不会触发外部采集或模型生成。
 
 来源管理接口支持查询各来源的字段契约与实际抓取记录，以及启停已接入的标的数据源。标的数据接口支持按类别同步、查询覆盖与质量状态，并维护手动分类及带市场前缀的比较基准映射。控制范围明确限定为受管标的同步；首页、证券检索与尚未接入的能力单独标注。失败或空响应保留已有数据和上一次成功获取时间；未知单位、价格口径与覆盖范围保持未知。
 
@@ -236,6 +241,7 @@ PYTHONPATH=backend backend/.venv/bin/python -m pytest scripts/tests -q
 | 自选管理与同步 | `/api/watchlist/items`、`POST /api/watchlist/sync` |
 | 标的详情与同步 | `GET /api/stocks/{security_id}`、`POST /api/stocks/{security_id}/sync` |
 | 数据源契约与启停 | `GET /api/data/sources`、`GET /api/data/sources/{vendor_key}`、`PUT /api/data/sources/{vendor_key}` |
+| 标的数据状态与采集 | `GET /api/data/securities/{security_id}`、`POST /api/data/securities/{security_id}/sync`、`PUT /api/data/securities/{security_id}/metadata` |
 | 持仓记录 | `/api/holdings`、`/api/holdings/{holding_id}` |
 | 股票 / 持仓分析 | `POST /api/ai/stocks/{security_id}/advice`、`POST /api/ai/holdings/{holding_id}/advice` |
 | 分析历史 | `GET /api/ai/history` |

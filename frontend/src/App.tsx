@@ -22,6 +22,7 @@ import { WorkspaceHeader } from './components/WorkspaceHeader'
 import { MarketStrip } from './components/MarketStrip'
 import { WorkspaceAside } from './components/WorkspaceAside'
 import { SecuritySearchDialog } from './components/SecuritySearchDialog'
+import { DataCenterLoadFallback } from './components/DataCenterLoadFallback'
 import { SettingsLoadFallback } from './components/SettingsLoadFallback'
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary'
 import { StatusMessage } from './components/StatusMessage'
@@ -38,6 +39,7 @@ import type {
 } from './types/watchlist'
 
 const StockDetailPage = lazy(() => import('./pages/StockDetailPage').then((module) => ({ default: module.StockDetailPage })))
+const DataCenterDrawer = lazy(() => import('./components/DataCenterDrawer').then(module => ({ default: module.DataCenterDrawer })))
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then((module) => ({ default: module.SettingsDrawer })))
 
 function ScreenLoadFailure({ onDismiss, dismissLabel }: { onDismiss: () => void; dismissLabel: string }) {
@@ -65,6 +67,8 @@ function AppBody({
   )
   const [selectedDetail, setSelectedDetail] =
     useState<StockDetailPageData | null>(null)
+  const selectedDetailRef = useRef(selectedDetail)
+  selectedDetailRef.current = selectedDetail
   const [detailViewState, setDetailViewState] =
     useState<StockDetailPageViewState>('ready')
   const [isLoadingWatchlist, setIsLoadingWatchlist] = useState(true)
@@ -97,6 +101,25 @@ function AppBody({
   const [homepageAdviceError, setHomepageAdviceError] = useState<string | null>(
     null,
   )
+  const [isDataCenterOpen, setIsDataCenterOpen] = useState(false)
+  const dataCenterReturnFocus = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (isDataCenterOpen || !dataCenterReturnFocus.current) return
+    const target = dataCenterReturnFocus.current
+    dataCenterReturnFocus.current = null
+    // The lazy fallback and loaded drawer have separate Fluent modal instances.
+    // Restore the original launcher only after the entire entrance unmounts.
+    if (target.isConnected && !target.closest('[hidden], [aria-hidden="true"]')) {
+      target.focus({ preventScroll: true })
+    } else document.getElementById('data-center-trigger')?.focus({ preventScroll: true })
+  }, [isDataCenterOpen])
+  const [dataCenterSecurityId, setDataCenterSecurityId] = useState<number | null>(null)
+  const [dataRevision, setDataRevision] = useState(0)
+  const [detailRefreshError, setDetailRefreshError] = useState(false)
+  const detailRefreshController = useRef<AbortController | null>(null)
+  useEffect(() => () => detailRefreshController.current?.abort(), [])
+  const detailSelectionRef = useRef<number | null>(null)
+  const detailRequestVersion = useRef(0)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [watchlistView, setWatchlistView] = useState<WatchlistView>({
@@ -446,15 +469,21 @@ function AppBody({
     securityId: number,
     originId = `watchlist-security-${securityId}`,
   ) {
+    detailRefreshController.current?.abort()
+    setDetailRefreshError(false)
+    detailSelectionRef.current = securityId
+    const requestVersion = ++detailRequestVersion.current
     returnPosition.current = { scrollY: window.scrollY, originId }
     setCurrentPage('detail')
     setDetailViewState('loading')
 
     try {
       const detail = await fetchStockDetail(securityId)
+      if (requestVersion !== detailRequestVersion.current) return
       setSelectedDetail(detail)
       setDetailViewState('ready')
     } catch (error) {
+      if (requestVersion !== detailRequestVersion.current) return
       setSelectedDetail(null)
       setDetailViewState(
         error instanceof Error && error.message === 'not-found'
@@ -464,7 +493,52 @@ function AppBody({
     }
   }
 
+  const handleDataSynced = useCallback(async (securityId: number) => {
+    setDataRevision((v) => v + 1)
+    if (detailSelectionRef.current !== securityId) return
+    detailRefreshController.current?.abort()
+    const controller = new AbortController()
+    detailRefreshController.current = controller
+    setDetailRefreshError(false)
+    const requestVersion = ++detailRequestVersion.current
+    try {
+      const detail = await fetchStockDetail(securityId, controller.signal)
+      if (
+        !controller.signal.aborted &&
+        detailSelectionRef.current === securityId &&
+        requestVersion === detailRequestVersion.current
+      ) {
+        setSelectedDetail(detail)
+        setDetailViewState('ready')
+      }
+    } catch {
+      if (
+        !controller.signal.aborted &&
+        detailSelectionRef.current === securityId &&
+        requestVersion === detailRequestVersion.current
+      ) {
+        setDetailRefreshError(true)
+        if (selectedDetailRef.current?.security.security_id === securityId) {
+          setDetailViewState('ready')
+        } else {
+          setSelectedDetail(null)
+          setDetailViewState('error')
+        }
+      }
+    }
+  }, [])
+  function openDataCenter(securityId: number | null = null, origin?: HTMLElement) {
+    dataCenterReturnFocus.current =
+      origin ??
+      (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+    setDataCenterSecurityId(securityId)
+    setIsDataCenterOpen(true)
+  }
   function handleBackToWatchlist() {
+    detailRefreshController.current?.abort()
+    setDetailRefreshError(false)
+    detailSelectionRef.current = null
+    detailRequestVersion.current += 1
     shouldRestore.current = true
     setCurrentPage('watchlist')
   }
@@ -485,6 +559,7 @@ function AppBody({
     >
       <WorkspaceHeader
         onSettings={() => setIsSettingsOpen(true)}
+        onDataCenter={origin => openDataCenter(null, origin)}
         onSync={
           currentPage === 'watchlist'
             ? () => void syncHomepageBoard()
@@ -501,10 +576,13 @@ function AppBody({
             <span>{t('detail.loading')}</span>
             <Skeleton aria-hidden="true"><SkeletonItem style={{ height: 360 }} /></Skeleton>
           </div>}>
+          {detailRefreshError ? <StatusMessage tone="warning" message={t('dataCenter.detailRefreshError')} /> : null}
           <StockDetailPage
             detail={selectedDetail}
             viewState={detailViewState}
             onBack={handleBackToWatchlist}
+            onDataCenter={openDataCenter}
+            dataRevision={dataRevision}
           />
           </Suspense>
           </WorkspaceLoadBoundary>
@@ -688,6 +766,13 @@ function AppBody({
           onAddCustom={handleAddCustom}
           addedSecurityIds={watchlistItems.map((item) => item.security_id)}
         />
+      ) : null}
+      {isDataCenterOpen ? (
+        <WorkspaceLoadBoundary fallback={<DataCenterLoadFallback failed onClose={() => setIsDataCenterOpen(false)} />}>
+          <Suspense fallback={<DataCenterLoadFallback onClose={() => setIsDataCenterOpen(false)} />}>
+            <DataCenterDrawer items={watchlistItems} initialSecurityId={dataCenterSecurityId} onClose={() => setIsDataCenterOpen(false)} onSynced={handleDataSynced} />
+          </Suspense>
+        </WorkspaceLoadBoundary>
       ) : null}
       {isSettingsOpen ? (
         <WorkspaceLoadBoundary fallback={<SettingsLoadFallback failed onClose={() => setIsSettingsOpen(false)} />}>

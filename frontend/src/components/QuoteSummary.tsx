@@ -3,10 +3,11 @@ import { useI18n } from '../i18n'
 import type { StockDetailPriceBar } from '../types/watchlist'
 
 interface QuoteSummaryProps {
+  indexContext?: boolean
   latestBar: StockDetailPriceBar | null
 }
 
-export function QuoteSummary({ latestBar }: QuoteSummaryProps) {
+export function QuoteSummary({ latestBar, indexContext = false }: QuoteSummaryProps) {
   const { t, formatDateTime } = useI18n()
 
   return (
@@ -15,11 +16,11 @@ export function QuoteSummary({ latestBar }: QuoteSummaryProps) {
       {latestBar ? (
         <dl className="stock-detail-grid">
           <div>
-            <dt>{t('detail.lastPrice')}</dt>
+            <dt>{indexContext ? t('dataCenter.indexValue') : t('detail.lastPrice')}</dt>
             <dd>{latestBar.last_price}</dd>
           </div>
           <div>
-            <dt>{t('detail.changeAmount')}</dt>
+            <dt>{indexContext ? t('dataCenter.indexChange') : t('detail.changeAmount')}</dt>
             <dd className={Number(latestBar.change_amount) >= 0 ? 'quote-positive' : 'quote-negative'}>{signedQuote(latestBar.change_amount)}</dd>
           </div>
           <div>

@@ -9,10 +9,11 @@ import { CandlestickChart } from './CandlestickChart'
 const PAGE_SIZE = 10
 
 interface PriceHistoryChartProps {
+  indexContext?: boolean
   priceHistory: StockDetailPriceHistoryBar[]
 }
 
-export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ priceHistory, indexContext = false }: PriceHistoryChartProps) {
   const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const dataId = useId()
@@ -31,6 +32,7 @@ export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
   return (
     <section className="stock-detail-section" aria-label={t('detail.priceHistorySection')}>
       <h2>{t('detail.priceHistory')}</h2>
+      {indexContext ? <p className="workspace-muted">{t('dataCenter.indexDisclosure')}</p> : null}
       {priceHistory.length === 0 ? (
         <p>{t('detail.noPriceHistory')}</p>
       ) : (
@@ -46,10 +48,10 @@ export function PriceHistoryChart({ priceHistory }: PriceHistoryChartProps) {
               <thead>
                 <tr>
                   <th scope="col">{t('detail.tradeDate')}</th>
-                  <th scope="col">{t('detail.open')}</th>
-                  <th scope="col">{t('detail.high')}</th>
-                  <th scope="col">{t('detail.low')}</th>
-                  <th scope="col">{t('detail.close')}</th>
+                  <th scope="col">{indexContext ? t('dataCenter.indexOpen') : t('detail.open')}</th>
+                  <th scope="col">{indexContext ? t('dataCenter.indexHigh') : t('detail.high')}</th>
+                  <th scope="col">{indexContext ? t('dataCenter.indexLow') : t('detail.low')}</th>
+                  <th scope="col">{indexContext ? t('dataCenter.indexClose') : t('detail.close')}</th>
                   <th scope="col">{t('detail.volume')}</th>
                   <th scope="col">{t('detail.amount')}</th>
                 </tr>

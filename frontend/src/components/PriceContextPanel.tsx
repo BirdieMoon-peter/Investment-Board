@@ -3,10 +3,11 @@ import { useI18n } from '../i18n'
 import type { StockDetailPriceBar } from '../types/watchlist'
 
 interface PriceContextPanelProps {
+  indexContext?: boolean
   priceContext: StockDetailPriceBar[]
 }
 
-export function PriceContextPanel({ priceContext }: PriceContextPanelProps) {
+export function PriceContextPanel({ priceContext, indexContext = false }: PriceContextPanelProps) {
   const { t, formatDateTime } = useI18n()
 
   return (
@@ -20,8 +21,8 @@ export function PriceContextPanel({ priceContext }: PriceContextPanelProps) {
             <thead>
               <tr>
                 <th scope="col">{t('detail.snapshotTime')}</th>
-                <th scope="col">{t('detail.lastPrice')}</th>
-                <th scope="col">{t('detail.changeAmount')}</th>
+                <th scope="col">{indexContext ? t('dataCenter.indexValue') : t('detail.lastPrice')}</th>
+                <th scope="col">{indexContext ? t('dataCenter.indexChange') : t('detail.changeAmount')}</th>
                 <th scope="col">{t('detail.changePercent')}</th>
               </tr>
             </thead>

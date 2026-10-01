@@ -3,17 +3,19 @@ import {
   Select,
   useRestoreFocusTarget,
 } from '@fluentui/react-components'
-import { ArrowsClockwise, GearSix } from '@phosphor-icons/react'
+import { ArrowsClockwise, Database, GearSix } from '@phosphor-icons/react'
 import { useI18n } from '../i18n'
 import { useAppTheme, type ThemePreference } from '../theme'
 interface Props {
   onSettings: () => void
+  onDataCenter?: (origin: HTMLElement) => void
   onSync?: () => void
   syncing?: boolean
   syncDisabled?: boolean
 }
 export function WorkspaceHeader({
   onSettings,
+  onDataCenter,
   onSync,
   syncing,
   syncDisabled,
@@ -49,12 +51,17 @@ export function WorkspaceHeader({
               icon={<ArrowsClockwise />}
               disabled={syncDisabled || syncing}
               onClick={onSync}
+              aria-label={t(syncing ? 'homepage.syncing' : 'homepage.syncNow')}
             >
-              <span>
+              <span className="workspace-header-sync-label">
                 {t(syncing ? 'homepage.syncing' : 'homepage.syncNow')}
               </span>
             </Button>
           ) : null}
+          {onDataCenter ? <Button id="data-center-trigger" {...restoreFocusTarget} icon={<Database />}
+            aria-label={t('dataCenter.title')} onClick={event => onDataCenter(event.currentTarget)}>
+            <span className="workspace-data-center-label">{t('dataCenter.title')}</span>
+          </Button> : null}
           <Button
             {...restoreFocusTarget}
             icon={<GearSix />}

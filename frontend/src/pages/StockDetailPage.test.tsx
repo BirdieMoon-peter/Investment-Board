@@ -464,10 +464,10 @@ describe('StockDetailPage', () => {
     expect(screen.getByText('Syncing latest information…')).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(syncStockMock).toHaveBeenCalledWith(7)
+      expect(syncStockMock).toHaveBeenCalledWith(7, expect.any(AbortSignal))
     })
     await waitFor(() => {
-      expect(fetchStockDetailMock).toHaveBeenCalledWith(7)
+      expect(fetchStockDetailMock).toHaveBeenCalledWith(7, syncStockMock.mock.calls[0][1])
     })
 
     expect(await screen.findByRole('status')).toHaveTextContent(

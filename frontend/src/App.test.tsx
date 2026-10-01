@@ -8,6 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
+import { jsonResponse, securityFixture } from './test/dataCenterFixtures'
 
 describe('App', () => {
   afterEach(() => {
@@ -199,7 +200,7 @@ describe('App', () => {
         json: async () => ({ items: [] }),
       })
 
-    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('fetch', vi.fn((url: string, options?: RequestInit) => url.startsWith('/api/data/securities/') ? Promise.resolve(jsonResponse(securityFixture(7))) : options === undefined ? fetchMock(url) : fetchMock(url, options)))
 
     render(<App />)
 

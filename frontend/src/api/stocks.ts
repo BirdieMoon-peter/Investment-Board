@@ -12,8 +12,14 @@ export interface StockSyncResponse {
   synced_at: string
 }
 
-export async function fetchStockDetail(securityId: number): Promise<StockDetailPageData> {
-  const response = await fetch(`/api/stocks/${securityId}`)
+export async function fetchStockDetail(
+  securityId: number,
+  signal?: AbortSignal,
+): Promise<StockDetailPageData> {
+  const response = await fetch(
+    `/api/stocks/${securityId}`,
+    ...(signal ? [{ signal }] : []),
+  )
 
   if (response.status === 404) {
     throw new Error('not-found')
@@ -26,9 +32,13 @@ export async function fetchStockDetail(securityId: number): Promise<StockDetailP
   return (await response.json()) as StockDetailPageData
 }
 
-export async function syncStock(securityId: number): Promise<StockSyncResponse> {
+export async function syncStock(
+  securityId: number,
+  signal?: AbortSignal,
+): Promise<StockSyncResponse> {
   const response = await fetch(`/api/stocks/${securityId}/sync`, {
     method: 'POST',
+    ...(signal ? { signal } : {}),
   })
 
   if (response.status === 404) {

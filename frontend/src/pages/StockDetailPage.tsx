@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Field, Input, Select, Textarea } from '@fluentui/react-components'
 import { ArrowLeft, ArrowClockwise } from '@phosphor-icons/react'
 
@@ -15,6 +15,8 @@ import { PriceContextPanel } from '../components/PriceContextPanel'
 import { PriceHistoryChart } from '../components/PriceHistoryChart'
 import { QuoteSummary } from '../components/QuoteSummary'
 import { StatusMessage } from '../components/StatusMessage'
+import { SecurityDataStatus } from '../components/SecurityDataStatus'
+import type { SecurityData } from '../types/dataCenter'
 import { StockHeader } from '../components/StockHeader'
 import { getLatestPriceContextBar, sortPriceContext } from '../priceContext'
 import type { HoldingTargetHorizon, HoldingResponse } from '../types/holdings'
@@ -28,6 +30,8 @@ interface StockDetailPageProps {
   detail: StockDetailPageData | null
   viewState: StockDetailPageViewState
   onBack: () => void
+  onDataCenter?: (securityId: number, origin?: HTMLElement) => void
+  dataRevision?: number
 }
 
 interface HoldingFormState {
@@ -76,11 +80,27 @@ function getAdviceTone(
   return 'neutral'
 }
 
-export function StockDetailPage({ detail, viewState, onBack }: StockDetailPageProps) {
+export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataRevision }: StockDetailPageProps) {
   const { t, formatDateTime } = useI18n()
+  const [legacyHealthRevision, setLegacyHealthRevision] = useState(0)
+  const legacySyncController = useRef<AbortController | null>(null)
+  const selectedSecurityRef = useRef(detail?.security.security_id ?? null)
+  selectedSecurityRef.current = detail?.security.security_id ?? null
+  const authoritativeDetailRef = useRef(detail)
+  authoritativeDetailRef.current = detail
+  const [healthData, setHealthData] = useState<SecurityData | null>(null)
+  const handleHealthData = useCallback((data: SecurityData) => setHealthData(data), [])
   const [activeGroup, setActiveGroup] = useState<DetailGroup>('market')
   const [currentDetail, setCurrentDetail] = useState(detail)
   const [isSyncing, setIsSyncing] = useState(false)
+  useEffect(() => {
+    // A newer parent snapshot owns the detail, even for the same security.
+    setIsSyncing(false)
+    setSyncMessage(null)
+    setSyncWarningMessage(null)
+    setSyncError(null)
+    return () => legacySyncController.current?.abort()
+  }, [detail])
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [syncWarningMessage, setSyncWarningMessage] = useState<string | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
@@ -204,14 +224,27 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
       return
     }
 
+    const id = securityId
+    const authoritativeDetail = detail
+    const controller = new AbortController()
+    legacySyncController.current = controller
+    const ownsSelection = () =>
+      !controller.signal.aborted &&
+      selectedSecurityRef.current === id &&
+      authoritativeDetailRef.current === authoritativeDetail
     setIsSyncing(true)
     setSyncMessage(t('detail.syncInProgress'))
     setSyncWarningMessage(null)
     setSyncError(null)
 
     try {
-      const result = await syncStock(securityId)
-      const refreshedDetail = await fetchStockDetail(securityId)
+      const result = await syncStock(id, controller.signal)
+      if (!ownsSelection() || result.security_id !== id) return
+      // A completed attempt can change saved health even if acquisition failed
+      // or the following detail GET fails. This refresh makes no external calls.
+      setLegacyHealthRevision((revision) => revision + 1)
+      const refreshedDetail = await fetchStockDetail(id, controller.signal)
+      if (!ownsSelection()) return
       setCurrentDetail(refreshedDetail)
       const warningCount = result.warnings.length
       const companyProfileState = result.company_profile_updated
@@ -238,11 +271,12 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
         warningCount > 0 ? t('detail.warnings', { warnings: result.warnings.join('; ') }) : null,
       )
     } catch (error) {
+      if (!ownsSelection()) return
       setSyncMessage(null)
       setSyncWarningMessage(null)
       setSyncError(error instanceof Error ? error.message : t('detail.loadError'))
     } finally {
-      setIsSyncing(false)
+      if (ownsSelection()) setIsSyncing(false)
     }
   }
 
@@ -398,14 +432,22 @@ export function StockDetailPage({ detail, viewState, onBack }: StockDetailPagePr
         <StatusMessage tone="warning" message={syncWarningMessage} />
       ) : null}
 
+      {viewState === 'ready' && securityId !== null && onDataCenter ? (
+        <SecurityDataStatus
+          securityId={securityId}
+          revision={(dataRevision ?? 0) + legacyHealthRevision}
+          onOpen={origin => onDataCenter(securityId, origin)}
+          onData={handleHealthData}
+        />
+      ) : null}
       {viewState === 'ready' && currentDetail ? (
         <DetailWorkspaceTabs active={activeGroup} onChange={setActiveGroup}
           market={<>
             <div className="detail-market-grid">
-              <PriceHistoryChart priceHistory={currentDetail.price_history} />
+              <PriceHistoryChart priceHistory={currentDetail.price_history} indexContext={healthData?.security.id === securityId && healthData.metadata.effective_instrument_type === 'index'} />
               <aside className="detail-quote-aside">
-                <QuoteSummary latestBar={latestPriceContextBar} />
-                <PriceContextPanel priceContext={sortedPriceContext} />
+                <QuoteSummary latestBar={latestPriceContextBar} indexContext={healthData?.security.id === securityId && healthData.metadata.effective_instrument_type === 'index'} />
+                <PriceContextPanel priceContext={sortedPriceContext} indexContext={healthData?.security.id === securityId && healthData.metadata.effective_instrument_type === 'index'} />
               </aside>
             </div>
             <div className="detail-fundamentals-grid">
