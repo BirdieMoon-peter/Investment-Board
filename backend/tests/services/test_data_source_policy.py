@@ -60,10 +60,10 @@ def test_empty_aggregate_cannot_create_fake_success(session,seeded_security):
 
 
 def test_disabled_preserves_existing_dataset_freshness_and_runs(session,seeded_security):
-    from datetime import datetime
+    from datetime import UTC, datetime
     from app.db.models.data_management import DataQualityIssue
     disable(session,'eastmoney','sina','netease')
-    dataset=SecurityDataset(security_id=seeded_security.id,category='announcements',fetched_at=datetime(2025,1,1))
+    dataset=SecurityDataset(security_id=seeded_security.id,category='announcements',fetched_at=datetime(2025,1,1,tzinfo=UTC))
     session.add(dataset); session.commit()
     issue=DataQualityIssue(dataset_id=dataset.id,code='failed_fetch',severity='warning',message='old evidence')
     session.add(issue); session.commit()
@@ -75,6 +75,6 @@ def test_disabled_preserves_existing_dataset_freshness_and_runs(session,seeded_s
     result=service.sync_security(seeded_security.id,stock_code=seeded_security.code,market=seeded_security.market,categories=['announcements'])
     session.refresh(dataset); session.refresh(issue); session.refresh(source)
     assert result.category_outcomes=={'announcements':'disabled'}
-    assert dataset.fetched_at==datetime(2025,1,1) and issue.resolved_at is None
+    assert dataset.fetched_at.replace(tzinfo=UTC)==datetime(2025,1,1,tzinfo=UTC) and issue.resolved_at is None
     assert source.enabled is False
     assert [r.id for r in session.exec(select(IngestionRun)).all()]==[run.id]

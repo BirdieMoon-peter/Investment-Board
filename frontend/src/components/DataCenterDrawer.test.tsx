@@ -171,10 +171,15 @@ describe('source-first data center', () => {
     )
     render(<Harness />)
     await screen.findByText('CNY / — (not supplied or unverified)')
+    const savedTimestamp = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).format(new Date(data.categories.price_history.fetched_at!))
+    expect(screen.getByText(savedTimestamp)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Retry · Price history' }))
     await screen.findByRole('alert')
     expect(screen.queryByText(/secret/)).not.toBeInTheDocument()
-    expect(screen.getByText('09/01/2026, 08:00:00')).toBeInTheDocument()
+    expect(screen.getByText(savedTimestamp)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry · Price history' })).toBeEnabled()
     expect(synced).not.toHaveBeenCalled()
   })

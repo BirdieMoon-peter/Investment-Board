@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from sqlmodel import select
 import pytest
 from app.db.models.data_management import DataSource, SecurityDataset, IngestionRun
@@ -48,7 +48,7 @@ def test_runtime_alias_empty_and_internal_exclusion(client, session, seeded_secu
     for key in ['eastmoney_intraday','aggregate:quote_snapshot']:
         source = DataSource(source_key=key,name=key); session.add(source); session.commit()
         for i in range(25):
-            session.add(IngestionRun(dataset_id=dataset.id,source_id=source.id,status='succeeded',started_at=datetime(2026,1,1),finished_at=datetime(2026,1,1),records_received=0))
+            session.add(IngestionRun(dataset_id=dataset.id,source_id=source.id,status='succeeded',started_at=datetime(2026,1,1,tzinfo=UTC),finished_at=datetime(2026,1,1,tzinfo=UTC),records_received=0))
         session.commit()
     data = client.get('/api/data/sources/eastmoney?limit=3').json()
     attempts = data['runtime']['recent_attempts']
@@ -107,10 +107,10 @@ def test_write_failure_is_controlled_and_atomic(client,session,monkeypatch):
 def test_old_success_independent_of_recent_limit(client,session,seeded_security):
     source=DataSource(source_key='sina_fund',name='sina'); session.add(source); session.commit()
     dataset=SecurityDataset(security_id=seeded_security.id,category='quote_snapshot'); session.add(dataset); session.commit()
-    first=IngestionRun(dataset_id=dataset.id,source_id=source.id,status='succeeded',started_at=datetime(2025,1,1),records_received=2,records_written=1)
+    first=IngestionRun(dataset_id=dataset.id,source_id=source.id,status='succeeded',started_at=datetime(2025,1,1,tzinfo=UTC),records_received=2,records_written=1)
     session.add(first); session.commit()
     for i in range(22):
-        session.add(IngestionRun(dataset_id=dataset.id,source_id=source.id,status='failed',started_at=datetime(2026,1,1),error_message='network_error'))
+        session.add(IngestionRun(dataset_id=dataset.id,source_id=source.id,status='failed',started_at=datetime(2026,1,1,tzinfo=UTC),error_message='network_error'))
     session.commit()
     result=client.get('/api/data/sources/sina').json()['runtime']
     assert len(result['recent_attempts'])==20

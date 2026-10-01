@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -110,7 +110,7 @@ def test_invalid_runs_rejected(repo, dataset, field, value):
 
 
 def test_runs_issues_ordering_safe_errors_and_no_false_freshness(repo, dataset):
-    stamp = datetime(2026, 1, 1)
+    stamp = datetime(2026, 1, 1, tzinfo=UTC)
     for status in ("failed", "partial"):
         repo.record_run(IngestionRun(dataset_id=dataset.id, source_id=dataset.source_id, status=status, started_at=stamp, error_message='Bearer sk-secret password=hidden {"raw_response": "secret"}'))
     runs = repo.list_runs(dataset.id)
