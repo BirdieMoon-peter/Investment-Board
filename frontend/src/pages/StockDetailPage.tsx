@@ -17,6 +17,8 @@ import { QuoteSummary } from '../components/QuoteSummary'
 import { StatusMessage } from '../components/StatusMessage'
 import { SecurityDataStatus } from '../components/SecurityDataStatus'
 import type { SecurityData } from '../types/dataCenter'
+import { SecurityIndicatorsPanel } from '../components/SecurityIndicatorsPanel'
+import { HoldingsIndicatorsPanel } from '../components/HoldingsIndicatorsPanel'
 import { StockHeader } from '../components/StockHeader'
 import { getLatestPriceContextBar, sortPriceContext } from '../priceContext'
 import type { HoldingTargetHorizon, HoldingResponse } from '../types/holdings'
@@ -82,6 +84,7 @@ function getAdviceTone(
 
 export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataRevision }: StockDetailPageProps) {
   const { t, formatDateTime } = useI18n()
+  const [holdingMetricsRevision, setHoldingMetricsRevision] = useState(0)
   const [legacyHealthRevision, setLegacyHealthRevision] = useState(0)
   const legacySyncController = useRef<AbortController | null>(null)
   const selectedSecurityRef = useRef(detail?.security.security_id ?? null)
@@ -134,6 +137,8 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
   const currentSecurity = currentDetail?.security ?? detail?.security ?? null
   const securityName = currentSecurity?.name ?? t('detail.unknownSecurity')
   const securityId = currentSecurity?.security_id ?? null
+  const indicatorRevision = useMemo(() => ({detail, currentDetail, dataRevision, legacyHealthRevision}), [detail, currentDetail, dataRevision, legacyHealthRevision])
+  const portfolioIndicatorRevision = useMemo(() => ({indicatorRevision, holdingMetricsRevision}), [indicatorRevision, holdingMetricsRevision])
   const currentHolding = useMemo(
     () => holdings.find((holding) => holding.security_id === securityId) ?? null,
     [holdings, securityId],
@@ -318,6 +323,7 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
         await upsertHolding(payload)
       }
 
+      setHoldingMetricsRevision(v => v + 1)
       await refreshHoldings()
       setHoldingMessage(
         currentHolding ? t('detail.holdingUpdated') : t('detail.holdingSaved'),
@@ -341,6 +347,7 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
 
     try {
       await removeHolding(currentHolding.holding_id)
+      setHoldingMetricsRevision(v => v + 1)
       await refreshHoldings()
       setHoldingMessage(t('detail.holdingRemoved'))
     } catch (error) {
@@ -450,6 +457,7 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
                 <PriceContextPanel priceContext={sortedPriceContext} indexContext={healthData?.security.id === securityId && healthData.metadata.effective_instrument_type === 'index'} />
               </aside>
             </div>
+            <SecurityIndicatorsPanel securityId={currentDetail.security.security_id} revision={indicatorRevision} />
             <div className="detail-fundamentals-grid">
               <FinancialMetricsPanel financialMetrics={currentDetail.financial_metrics} />
               <CompanyProfilePanel companyProfile={currentDetail.company_profile} />
@@ -461,6 +469,7 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
           </div>}
           holdings={<div className="detail-holdings-grid">
           <div className="detail-holding-column">
+            <HoldingsIndicatorsPanel securityId={currentDetail.security.security_id} revision={portfolioIndicatorRevision} names={Object.fromEntries(holdings.map(h => [h.security_id, h.security.name]))} />
             <section className="stock-detail-section" aria-label={t('detail.holdingsSection')}>
               <div className="dashboard-panel__header">
                 <div>

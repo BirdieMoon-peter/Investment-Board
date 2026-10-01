@@ -10,6 +10,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { jsonResponse, securityFixture } from './test/dataCenterFixtures'
 
+vi.mock('./api/indicators', () => ({
+  fetchSecurityIndicators: vi.fn().mockImplementation(async (id: number) => ({security_id:id,instrument_type:'stock',metrics:[],data_context:{}})),
+  fetchHoldingsIndicators: vi.fn().mockResolvedValue({positions:[],missing_price_security_ids:[],valuation_complete:true,denominator:'known_valued_positions_only',metrics:[],warnings:[]}),
+}))
+
 describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals()

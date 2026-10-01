@@ -56,6 +56,8 @@ function setup(
       return Promise.resolve(
         jsonResponse({ indexes: [], macro: [], updated_at: null, warnings: [] }),
       )
+    if (url.startsWith('/api/indicators/securities/')) return Promise.resolve(jsonResponse({security_id:Number(url.split('/').pop()),instrument_type:'stock',metrics:[],data_context:{}}))
+    if (url === '/api/indicators/holdings') return Promise.resolve(jsonResponse({positions:[],missing_price_security_ids:[],valuation_complete:true,denominator:'known_valued_positions_only',metrics:[],warnings:[]}))
     if (url === '/api/holdings') return Promise.resolve(jsonResponse([]))
     if (url === '/api/ai/history') return Promise.resolve(jsonResponse({ items: [] }))
     if (url === '/api/data/sources')

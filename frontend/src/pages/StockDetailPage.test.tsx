@@ -3,11 +3,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { generateHoldingAdvice, generateStockAdvice, fetchInvestmentAdviceHistory } from '../api/investmentAdvice'
 import { fetchHoldings, removeHolding, upsertHolding, updateHolding } from '../api/holdings'
+import { fetchHoldingsIndicators } from '../api/indicators'
 import { fetchStockDetail, syncStock } from '../api/stocks'
 import { StockDetailPage } from './StockDetailPage'
 import { I18nProvider } from '../i18n'
 import type { InvestmentAdviceResponse } from '../types/investmentAdvice'
 import type { StockDetailPageData, StockDetailPriceBar } from '../types/watchlist'
+
+vi.mock('../api/indicators', () => ({
+  fetchSecurityIndicators: vi.fn().mockImplementation(async (id: number) => ({security_id:id,instrument_type:'stock',metrics:[],data_context:{}})),
+  fetchHoldingsIndicators: vi.fn().mockResolvedValue({positions:[],missing_price_security_ids:[],valuation_complete:true,denominator:'known_valued_positions_only',metrics:[],warnings:[]}),
+}))
 
 vi.mock('../api/stocks', () => ({
   fetchStockDetail: vi.fn(),
@@ -216,6 +222,7 @@ const freshStockAdviceData: InvestmentAdviceResponse = {
 
 describe('StockDetailPage', () => {
   beforeEach(() => {
+    vi.mocked(fetchHoldingsIndicators).mockClear()
     fetchStockDetailMock.mockReset()
     syncStockMock.mockReset()
     fetchHoldingsMock.mockReset()
@@ -628,6 +635,22 @@ describe('StockDetailPage', () => {
     expect(screen.queryByText('Loading advice history…')).not.toBeInTheDocument()
   })
 
+  it.each(['update', 'remove'] as const)('refreshes saved portfolio metrics after a successful %s without generating advice', async action => {
+    fetchHoldingsMock.mockResolvedValueOnce([holdingData]).mockResolvedValueOnce(action === 'remove' ? [] : [holdingData])
+    updateHoldingMock.mockResolvedValue(holdingData)
+    removeHoldingMock.mockResolvedValue({removed:true,holding_id:holdingData.holding_id})
+    await renderReadyDetailPage()
+    openHoldingsGroup()
+    await screen.findByRole('button', {name:'Update holding'})
+    await waitFor(() => expect(screen.getByLabelText('Quantity')).toHaveValue(holdingData.quantity))
+    fireEvent.click(screen.getByRole('button', {name:action === 'update' ? 'Update holding' : 'Remove holding'}))
+    await waitFor(() => expect(fetchHoldingsIndicators).toHaveBeenCalledTimes(2))
+    expect(generateStockAdviceMock).not.toHaveBeenCalled()
+    expect(generateHoldingAdviceMock).not.toHaveBeenCalled()
+    expect(syncStockMock).not.toHaveBeenCalled()
+    expect(screen.getByRole('tab',{name:/Holdings & AI|持仓与 AI/})).toHaveAttribute('aria-selected','true')
+  })
+
   it('saves a new holding and refreshes the holding summary', async () => {
     fetchHoldingsMock
       .mockResolvedValueOnce([])
@@ -668,6 +691,7 @@ describe('StockDetailPage', () => {
       })
     })
     expect(await screen.findByText('Holding saved.')).toBeInTheDocument()
+    await waitFor(() => expect(fetchHoldingsIndicators).toHaveBeenCalledTimes(2))
     expect(screen.getByText('80.0000')).toBeInTheDocument()
   })
 
@@ -685,6 +709,10 @@ describe('StockDetailPage', () => {
     render(<I18nProvider language={language}><StockDetailPage detail={detailData} viewState="ready" onBack={vi.fn()} /></I18nProvider>)
     openHoldingsGroup()
     await waitFor(() => { expect(screen.queryByText(/Loading holdings|正在加载持仓/)).not.toBeInTheDocument() })
+    if (existing) {
+      // Wait for the saved holding to populate the form before testing edits.
+      await waitFor(() => expect(screen.getByLabelText(language === 'en' ? 'Quantity' : '持仓数量')).toHaveValue(holdingData.quantity))
+    }
     fireEvent.change(screen.getByLabelText(language === 'en' ? 'Quantity' : '持仓数量'), {
       target: { value: field === 'quantity' ? invalidValue : '1.25' },
     })

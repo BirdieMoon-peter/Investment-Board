@@ -2040,3 +2040,14 @@ a:not([class*="fui-"]):hover {
   .workspace-data-center-label, .workspace-header-sync-label { display: none; }
   .workspace-header-actions > button { min-width: 32px; }
 }
+
+.indicator-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem 1.5rem; }
+.indicator-result { min-width: 0; padding-block: .75rem; border-bottom: 1px solid var(--border-soft); }
+.indicator-result__heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; align-items: baseline; }
+.indicator-result__heading h3 { margin: 0; font-size: .9rem; }
+.indicator-result__heading strong { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.indicator-result details { font-size: .82rem; }
+.indicator-result summary { cursor: pointer; }
+.indicator-provenance dd { margin: .25rem 0 .7rem; overflow-wrap: anywhere; }
+.indicator-provenance pre, .indicator-context { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; max-height: 20rem; overflow: auto; }
+.indicator-warnings { font-size: .8rem; padding-left: 1.1rem; overflow-wrap: anywhere; }
