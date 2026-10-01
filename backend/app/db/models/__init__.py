@@ -39,3 +39,6 @@ __all__ = [
     "NewsItem",
     "utc_now",
 ]
+
+from app.db.models.research import ResearchProject, ResearchRun, ResearchReviewEvent
+__all__ += ['ResearchProject', 'ResearchRun', 'ResearchReviewEvent']
