@@ -56,18 +56,17 @@ def test_eastmoney_news_source_filters_rows_older_than_since():
     assert [item.title for item in result] == ["Midday note"]
 
 
-def test_eastmoney_news_source_raises_clear_error_for_empty_payload():
+def test_eastmoney_news_source_returns_valid_empty_article_list():
     source = EastmoneyNewsSource(
         transport=httpx.MockTransport(
             lambda request: httpx.Response(200, text='cb({"result":{"cmsArticleWebOld":[]}})')
         )
     )
 
-    with pytest.raises(ValueError, match="Eastmoney news payload is empty"):
-        source.fetch("600519", "sh")
+    assert source.fetch("600519", "sh") == []
 
 
-def test_eastmoney_news_source_degrades_to_empty_results_on_http_400(caplog):
+def test_eastmoney_news_source_raises_for_failed_http_400(caplog):
     import logging
 
     source = EastmoneyNewsSource(
@@ -76,13 +75,10 @@ def test_eastmoney_news_source_degrades_to_empty_results_on_http_400(caplog):
         )
     )
 
-    with caplog.at_level(logging.WARNING):
-        result = source.fetch("600519", "sh")
+    with caplog.at_level(logging.WARNING), pytest.raises(httpx.HTTPStatusError):
+        source.fetch("600519", "sh")
 
-    assert result == []
-    assert any("degraded" in record.message.lower() for record in caplog.records)
-    assert any("400" in record.message for record in caplog.records)
-    assert not any("Provider fetch failed" in record.message for record in caplog.records)
+    assert any("Provider fetch failed" in record.message for record in caplog.records)
 
 
 def test_eastmoney_news_source_retries_on_timeout():

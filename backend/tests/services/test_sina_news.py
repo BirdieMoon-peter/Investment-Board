@@ -107,7 +107,7 @@ def test_sina_news_source_raises_clear_error_for_invalid_rows():
         source.fetch("000001", "sz")
 
 
-def test_sina_news_source_degrades_to_empty_results_on_http_404(caplog):
+def test_sina_news_source_raises_for_failed_http_404(caplog):
     import logging
 
     transport = httpx.MockTransport(
@@ -115,13 +115,10 @@ def test_sina_news_source_degrades_to_empty_results_on_http_404(caplog):
     )
     source = SinaNewsSource(transport=transport)
 
-    with caplog.at_level(logging.WARNING):
-        result = source.fetch("000001", "sz")
+    with caplog.at_level(logging.WARNING), pytest.raises(httpx.HTTPStatusError):
+        source.fetch("000001", "sz")
 
-    assert result == []
-    assert any("degraded" in record.message.lower() for record in caplog.records)
-    assert any("404" in record.message for record in caplog.records)
-    assert not any("Provider fetch failed" in record.message for record in caplog.records)
+    assert any("Provider fetch failed" in record.message for record in caplog.records)
 
 
 def test_sina_news_source_retries_on_timeout():

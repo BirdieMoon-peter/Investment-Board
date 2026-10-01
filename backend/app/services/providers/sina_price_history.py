@@ -6,6 +6,7 @@ from decimal import Decimal
 import httpx
 
 from app.services.providers.http_client import retry_request
+from app.services.providers.fetch_provenance import RejectedSourceData
 from app.services.providers.raw_types import RawPriceBar
 
 _SINA_KLINE_URL = (
@@ -22,6 +23,10 @@ class SinaPriceHistorySource:
 
     Supports up to ~5000 bars (full history for most A-shares, ETFs, LOFs).
     """
+
+    price_basis = "unknown"
+    volume_unit = "shares"
+    amount_available = False
 
     def __init__(self, *, transport: httpx.BaseTransport | None = None):
         self._transport = transport
@@ -71,16 +76,17 @@ class SinaPriceHistorySource:
         try:
             rows = json.loads(text)
         except json.JSONDecodeError:
-            return []
+            raise RejectedSourceData(0) from None
 
         if not isinstance(rows, list):
-            return []
+            raise RejectedSourceData(0)
 
         results: list[RawPriceBar] = []
         for row in rows:
             bar = _parse_row(row)
-            if bar is not None:
-                results.append(bar)
+            if bar is None:
+                raise RejectedSourceData(len(rows))
+            results.append(bar)
 
         return results[:limit]
 
@@ -92,7 +98,7 @@ def _parse_row(row: dict) -> RawPriceBar | None:
              "close":"6.080","volume":"276349299"}
     """
     try:
-        if not isinstance(row, dict):
+        if not isinstance(row, dict) or any(row.get(key) in (None, "") for key in ("day", "open", "high", "low", "close", "volume")):
             return None
 
         day_str = row.get("day")

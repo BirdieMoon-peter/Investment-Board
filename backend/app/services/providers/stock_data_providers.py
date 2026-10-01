@@ -1,10 +1,11 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Protocol
 
 from app.db.models import CompanyProfile, FinancialMetrics, PriceHistory, QuoteSnapshot
+from app.services.providers.fetch_provenance import SourceAttempt, safe_error_code
 from app.services.providers.raw_types import RawCompanyProfile, RawFinancialMetrics, RawPriceBar, RawQuoteSnapshot
 
 
@@ -48,6 +49,9 @@ class RawCompanyProfileSource(Protocol):
 class RawPriceHistorySourceAdapter:
     name: str
     provider: RawPriceHistorySource
+    price_basis: str = "unknown"
+    volume_unit: str | None = None
+    amount_available: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -72,24 +76,53 @@ class RawCompanyProfileSourceAdapter:
 class PriceHistoryFetchResult:
     items: list[PriceHistory]
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
+    volume_unit: str | None = None
+    amount_available: bool | None = None
 
 
 @dataclass(frozen=True)
 class FinancialMetricsFetchResult:
     items: list[FinancialMetrics]
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
+    volume_unit: str | None = None
+    amount_available: bool | None = None
+    quality_issues: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
 class QuoteSnapshotFetchResult:
     item: QuoteSnapshot | None
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
+    volume_unit: str | None = None
+    amount_available: bool | None = None
 
 
 @dataclass(frozen=True)
 class CompanyProfileFetchResult:
     item: CompanyProfile | None
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
+    volume_unit: str | None = None
+    amount_available: bool | None = None
 
 
 class AggregatePriceHistoryProvider:
@@ -112,20 +145,36 @@ class AggregatePriceHistoryProvider:
     ) -> PriceHistoryFetchResult:
         items: list[PriceHistory] = []
         warnings: list[str] = []
-
+        attempts = []
+        selected = None
+        basis, volume_unit, amount_available = "unknown", None, None
         for source in self.raw_sources:
+            received = 0
+            started = datetime.now(UTC)
             try:
-                raw_items = source.provider.fetch(stock_code, market, limit=limit)
+                raw_items = list(source.provider.fetch(stock_code, market, limit=limit))
+                received = len(raw_items)
                 new_items = [_price_history_from_raw(security_id, item) for item in raw_items]
+                _validate_price_history(new_items)
+                unit = source.volume_unit or getattr(source.provider, "volume_unit", None)
+                if unit == "lots":
+                    for item in new_items:
+                        item.volume *= 100
+                    unit = "shares"
+                attempts.append(SourceAttempt(source.name, "succeeded" if new_items else "empty", len(new_items), started_at=started, finished_at=datetime.now(UTC)))
                 if new_items:
-                    items.extend(new_items)
-                    break  # first successful source is enough
+                    items = new_items
+                    selected = source.name
+                    basis = source.price_basis if source.price_basis != "unknown" else getattr(source.provider, "price_basis", "unknown")
+                    volume_unit = unit
+                    amount_available = source.amount_available if source.amount_available is not None else getattr(source.provider, "amount_available", None)
+                    break
             except Exception as exc:
-                warnings.append(
-                    _warning_message(source.name, exc, stock_code=stock_code, market=market)
-                )
-
-        return PriceHistoryFetchResult(items=_deduplicate_price_history(items), warnings=warnings)
+                attempts.append(SourceAttempt(source.name, "failed", count=getattr(exc, "received_count", received), error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
+                warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
+        return PriceHistoryFetchResult(_deduplicate_price_history(items), warnings,
+            attempts=tuple(attempts), source_key=selected, price_basis=basis,
+            unit="CNY", frequency="daily", volume_unit=volume_unit, amount_available=amount_available)
 
 
 class AggregateFinancialMetricsProvider:
@@ -146,20 +195,24 @@ class AggregateFinancialMetricsProvider:
     ) -> FinancialMetricsFetchResult:
         items: list[FinancialMetrics] = []
         warnings: list[str] = []
-
+        attempts = []
         for source in self.raw_sources:
+            received = 0
+            started = datetime.now(UTC)
             try:
-                raw_items = source.provider.fetch(stock_code, market, limit=limit)
-                items.extend(_financial_metrics_from_raw(security_id, item) for item in raw_items)
+                raw_items = list(source.provider.fetch(stock_code, market, limit=limit))
+                received = len(raw_items)
+                new_items = [_financial_metrics_from_raw(security_id, item) for item in raw_items]
+                _validate_financial_metrics(new_items)
+                items.extend(new_items)
+                attempts.append(SourceAttempt(source.name, "succeeded" if new_items else "empty", len(new_items), started_at=started, finished_at=datetime.now(UTC)))
             except Exception as exc:
-                warnings.append(
-                    _warning_message(source.name, exc, stock_code=stock_code, market=market)
-                )
-
-        return FinancialMetricsFetchResult(
-            items=_deduplicate_financial_metrics(items),
-            warnings=warnings,
-        )
+                attempts.append(SourceAttempt(source.name, "failed", count=getattr(exc, "received_count", received), error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
+                warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
+        successful = [x.source_key for x in attempts if x.state == "succeeded"]
+        return FinancialMetricsFetchResult(_deduplicate_financial_metrics(items), warnings,
+            attempts=tuple(attempts), source_key=successful[0] if len(successful) == 1 else None,
+            frequency="quarterly", quality_issues=("negative_revenue",) if any(item.revenue is not None and item.revenue < 0 for item in items) else ())
 
 
 class AggregateQuoteSnapshotProvider:
@@ -179,20 +232,31 @@ class AggregateQuoteSnapshotProvider:
     ) -> QuoteSnapshotFetchResult:
         item: QuoteSnapshot | None = None
         warnings: list[str] = []
+        attempts = []
+        selected = None
 
         for source in self.raw_sources:
+            received = 0
+            started = datetime.now(UTC)
             try:
                 raw_item = source.provider.fetch(stock_code, market)
+                received = int(raw_item is not None)
+                if raw_item is None:
+                    attempts.append(SourceAttempt(source.name, "empty", started_at=started, finished_at=datetime.now(UTC)))
+                    continue
                 candidate = _quote_snapshot_from_raw(security_id, raw_item)
                 _validate_quote_snapshot(candidate)
+                attempts.append(SourceAttempt(source.name, "succeeded", 1, observed_at=candidate.snapshot_time, started_at=started, finished_at=datetime.now(UTC)))
                 if item is None:
                     item = candidate
+                    selected = source.name
             except Exception as exc:
+                attempts.append(SourceAttempt(source.name, "failed", count=getattr(exc, "received_count", received), error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                 warnings.append(
                     _warning_message(source.name, exc, stock_code=stock_code, market=market)
                 )
 
-        return QuoteSnapshotFetchResult(item=item, warnings=warnings)
+        return QuoteSnapshotFetchResult(item=item, warnings=warnings, attempts=tuple(attempts), source_key=selected, unit="CNY", frequency="intraday")
 
 
 class AggregateCompanyProfileProvider:
@@ -212,18 +276,30 @@ class AggregateCompanyProfileProvider:
     ) -> CompanyProfileFetchResult:
         item: CompanyProfile | None = None
         warnings: list[str] = []
+        attempts = []
+        selected = None
 
         for source in self.raw_sources:
+            received = 0
+            started = datetime.now(UTC)
             try:
                 raw_item = source.provider.fetch(stock_code, market)
+                received = int(raw_item is not None)
+                if raw_item is None or all(getattr(raw_item, field) is None for field in raw_item.__dataclass_fields__):
+                    attempts.append(SourceAttempt(source.name, "empty", started_at=started, finished_at=datetime.now(UTC)))
+                    continue
+                candidate = _company_profile_from_raw(security_id, raw_item)
+                attempts.append(SourceAttempt(source.name, "succeeded", 1, started_at=started, finished_at=datetime.now(UTC)))
                 if item is None:
-                    item = _company_profile_from_raw(security_id, raw_item)
+                    item = candidate
+                    selected = source.name
             except Exception as exc:
+                attempts.append(SourceAttempt(source.name, "failed", count=getattr(exc, "received_count", received), error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                 warnings.append(
                     _warning_message(source.name, exc, stock_code=stock_code, market=market)
                 )
 
-        return CompanyProfileFetchResult(item=item, warnings=warnings)
+        return CompanyProfileFetchResult(item=item, warnings=warnings, attempts=tuple(attempts), source_key=selected)
 
 
 def _warning_message(
@@ -233,8 +309,7 @@ def _warning_message(
     stock_code: str,
     market: str,
 ) -> str:
-    exc_msg = str(exc) or "unknown error"
-    return f"{source_name} failed (stock={market}:{stock_code}): {type(exc).__name__}: {exc_msg}"
+    return f"{source_name} failed (stock={market}:{stock_code}): {safe_error_code(exc)}"
 
 
 def _price_history_from_raw(security_id: int, item: RawPriceBar) -> PriceHistory:
@@ -274,7 +349,7 @@ def _quote_snapshot_from_raw(security_id: int, item: RawQuoteSnapshot) -> QuoteS
 
 
 def _validate_quote_snapshot(item: QuoteSnapshot) -> None:
-    if item.last_price <= 0:
+    if any(not Decimal(str(value)).is_finite() for value in (item.last_price, item.change_amount, item.change_percent)) or item.last_price <= 0:
         raise ValueError("quote snapshot last price must be positive")
 
     snapshot_time = item.snapshot_time
@@ -333,3 +408,31 @@ def _deduplicate_financial_metrics(items: list[FinancialMetrics]) -> list[Financ
         key=lambda item: (item.report_period, item.id or 0),
         reverse=True,
     )
+
+
+def _validate_price_history(items: list[PriceHistory]) -> None:
+    by_date = {}
+    dates = [item.trade_date for item in items]
+    if dates != sorted(dates) and dates != sorted(dates, reverse=True):
+        raise ValueError("Unordered price history")
+    for item in items:
+        prices = [item.open_price, item.high_price, item.low_price, item.close_price]
+        if not isinstance(item.trade_date, date) or item.trade_date > datetime.now(UTC).date():
+            raise ValueError("Invalid trade date")
+        if any(not Decimal(str(value)).is_finite() or value <= 0 for value in prices):
+            raise ValueError("Invalid price")
+        if item.low_price > min(item.open_price, item.close_price) or item.high_price < max(item.open_price, item.close_price) or item.low_price > item.high_price:
+            raise ValueError("Invalid OHLC")
+        if any(not Decimal(str(value)).is_finite() or value < 0 for value in (item.volume, item.amount)):
+            raise ValueError("Invalid volume or amount")
+        values = tuple(prices + [item.volume, item.amount])
+        if item.trade_date in by_date and by_date[item.trade_date] != values:
+            raise ValueError("Conflicting duplicate trade date")
+        by_date[item.trade_date] = values
+
+
+def _validate_financial_metrics(items: list[FinancialMetrics]) -> None:
+    for item in items:
+        values = (item.revenue, item.net_profit, item.eps, item.roe, item.debt_to_asset_ratio)
+        if not item.report_period or any(v is not None and not Decimal(str(v)).is_finite() for v in values):
+            raise ValueError("Invalid financial metrics")

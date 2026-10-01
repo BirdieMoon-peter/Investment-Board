@@ -83,20 +83,6 @@ class SinaNewsSource:
 
             return all_items
 
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code < 500:
-                elapsed = time.time() - start_time
-                logger.warning(
-                    "Provider fetch degraded to empty results: source=%s stock=%s:%s elapsed=%.2fs status=%d error=%s",
-                    self.__class__.__name__,
-                    market,
-                    stock_code,
-                    elapsed,
-                    exc.response.status_code,
-                    exc,
-                )
-                return []
-            raise
         except Exception as exc:
             elapsed = time.time() - start_time
             logger.warning(

@@ -6,6 +6,7 @@ from decimal import Decimal
 import httpx
 
 from app.services.providers.http_client import retry_request
+from app.services.providers.fetch_provenance import RejectedSourceData
 from app.services.providers.raw_types import RawPriceBar
 
 _NETEASE_HISTORY_URL = "https://api.money.126.net/data/history/"
@@ -15,6 +16,10 @@ _MARKET_MAP = {"SZ": "0", "SH": "01"}
 
 
 class NetEasePriceHistorySource:
+    price_basis = "unknown"
+    volume_unit = None
+    amount_available = None
+
     def __init__(self, *, transport: httpx.BaseTransport | None = None):
         self._transport = transport
 
@@ -56,17 +61,20 @@ class NetEasePriceHistorySource:
 
                 payload = response.json()
                 if not isinstance(payload, dict) or "data" not in payload:
-                    break
+                    raise RejectedSourceData(len(results))
 
                 data = payload["data"]
-                if not isinstance(data, list) or not data:
+                if not isinstance(data, list):
+                    raise RejectedSourceData(len(results))
+                if not data:
                     break
 
                 page_items = []
                 for row in data:
                     bar = _parse_row(symbol, row)
-                    if bar is not None:
-                        page_items.append(bar)
+                    if bar is None:
+                        raise RejectedSourceData(len(results) + len(data))
+                    page_items.append(bar)
 
                 if not page_items:
                     break
@@ -87,7 +95,7 @@ def _parse_row(symbol: str, row: list) -> RawPriceBar | None:
     [date, open, high, low, close, volume, amount, change_pct]
     """
     try:
-        if not isinstance(row, list) or len(row) < 5:
+        if not isinstance(row, list) or len(row) < 7 or any(value in (None, "") for value in row[:7]):
             return None
 
         trade_date = date.fromisoformat(str(row[0]).replace("/", "-"))

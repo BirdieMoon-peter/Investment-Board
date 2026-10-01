@@ -2,6 +2,10 @@ from contextlib import nullcontext
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from app.services.providers.fetch_provenance import SourceAttempt, safe_error_code
+from app.services.providers.stock_data_providers import _validate_price_history, _validate_quote_snapshot, _validate_financial_metrics
+from app.db.models import PriceHistory, FinancialMetrics, QuoteSnapshot, CompanyProfile
+from app.db.models.data_management import DataSource
 
 from app.db.models.timestamps import utc_now
 from app.db.repositories.announcement_repository import AnnouncementRepository
@@ -25,6 +29,7 @@ class StockSyncResult:
     company_profile_updated: bool = False
     warnings: list[str] = field(default_factory=list)
     synced_at: datetime | None = None
+    category_outcomes: dict[str, str] = field(default_factory=dict)
 
 
 class StockSyncService:
@@ -43,6 +48,7 @@ class StockSyncService:
         financial_metrics_repository: FinancialMetricsRepository | None = None,
         quote_snapshot_repository: QuoteSnapshotRepository | None = None,
         company_profile_repository: CompanyProfileRepository | None = None,
+        ingestion_recorder: Any | None = None,
     ):
         self.announcement_provider = announcement_provider
         self.news_provider = news_provider
@@ -56,139 +62,160 @@ class StockSyncService:
         self.financial_metrics_repository = financial_metrics_repository
         self.quote_snapshot_repository = quote_snapshot_repository
         self.company_profile_repository = company_profile_repository
+        self.ingestion_recorder = ingestion_recorder
+
+    CATEGORIES = ("announcements", "news", "price_history", "financial_metrics", "quote_snapshot", "company_profile")
 
     def sync_security(
-        self,
-        security_id: int,
-        *,
-        stock_code: str,
-        market: str,
-        industry: str | None = None,
-        synced_at: datetime | None = None,
+        self, security_id: int, *, stock_code: str, market: str,
+        industry: str | None = None, synced_at: datetime | None = None,
+        categories: list[str] | tuple[str, ...] | None = None,
     ) -> StockSyncResult:
-        warnings: list[str] = []
-        is_fund_like = self._is_fund_like(industry)
+        if categories is not None and (isinstance(categories, (str, bytes)) or any(c not in self.CATEGORIES for c in categories)):
+            raise ValueError("Invalid sync category")
+        requested = self.CATEGORIES if categories is None else tuple(dict.fromkeys(categories))
+        warnings, outcomes, counts = [], {}, {}
+        now = synced_at or utc_now()
+        touched_sessions = []
+        for category in requested:
+            prefix = {"announcements": "announcement", "news": "news", "price_history": "price history", "financial_metrics": "financial metrics", "quote_snapshot": "quote snapshot", "company_profile": "company profile"}[category]
+            attribute = {"announcements": "announcement", "news": "news"}.get(category, category)
+            provider = getattr(self, attribute + "_provider")
+            repository = getattr(self, attribute + "_repository")
+            fetch, persisted, issues, basis, error = None, [], [], None, None
+            outcome = "skipped"
+            started = utc_now()
+            finished = started
+            applicable = not (self._is_fund_like(industry) and category in {"announcements", "news", "financial_metrics", "company_profile"})
+            if not applicable:
+                outcome = "not_applicable"
+            elif provider is not None:
+                try:
+                    kwargs = dict(stock_code=stock_code, market=market)
+                    if category in {"announcements", "news"}:
+                        kwargs["since"] = self._normalize_since_utc(repository.get_latest_published_at(security_id))
+                    fetch = provider.fetch_for_security(security_id, **kwargs)
+                    finished = utc_now()
+                    warnings.extend(getattr(fetch, "warnings", []))
+                    issues.extend(getattr(fetch, "quality_issues", ()))
+                    if category in {"quote_snapshot", "company_profile"}:
+                        item = getattr(fetch, "item", fetch)
+                        items = [item] if item is not None else []
+                    else:
+                        items = list(getattr(fetch, "items", fetch))
+                    attempts = tuple(getattr(fetch, "attempts", ()))
+                    outcome = "empty" if not items else "succeeded"
+                    if not items and any(a.state == "failed" for a in attempts):
+                        outcome, error = "failed_fetch", "provider_unavailable"
+                    elif items and any(a.state == "failed" for a in attempts):
+                        outcome = "partial"
+                except Exception as exc:
+                    finished = utc_now()
+                    outcome, error = "failed_fetch", safe_error_code(exc)
+                    warnings.append(f"{prefix} fetch failed: {error}")
+                    items = []
+            else:
+                items = []
+            if outcome in {"succeeded", "partial"}:
+                try:
+                    for row in items:
+                        if hasattr(row, "security_id") and row.security_id != security_id:
+                            raise ValueError("Security mismatch")
+                    if category == "price_history" and items and isinstance(items[0], PriceHistory):
+                        _validate_price_history(items)
+                    elif category == "quote_snapshot" and isinstance(items[0], QuoteSnapshot):
+                        _validate_quote_snapshot(items[0])
+                    elif category == "financial_metrics" and isinstance(items[0], FinancialMetrics):
+                        _validate_financial_metrics(items)
+                        if any(item.revenue is not None and item.revenue < 0 for item in items):
+                            issues.append("negative_revenue")
+                    elif category == "company_profile" and isinstance(items[0], CompanyProfile):
+                        fields = ("full_name", "english_name", "registered_capital", "establishment_date", "website", "main_business", "employees")
+                        if all(getattr(items[0], field) is None for field in fields):
+                            raise ValueError("Empty company profile")
+                except Exception:
+                    outcome, error = "failed_fetch", "invalid_data"
+                    warnings.append(f"{prefix} fetch failed: invalid_data")
+            if outcome in {"succeeded", "partial"}:
+                session = getattr(repository, "session", None)
+                if session is not None and session not in touched_sessions:
+                    touched_sessions.append(session)
+                try:
+                    if repository is None:
+                        raise ValueError("Missing persistence repository")
+                    if category == "price_history" and items and isinstance(items[0], PriceHistory):
+                        items = list({i.trade_date: i for i in items}.values())
+                        basis, price_issues = self._price_integrity(security_id, repository, fetch, items)
+                        issues.extend(price_issues)
+                        if "incomplete_price_refresh" in issues:
+                            raise ValueError("Incomplete price refresh")
+                    if session is not None:
+                        connection = session.connection()
+                        if connection.dialect.name == "sqlite" and not connection.connection.driver_connection.in_transaction:
+                            connection.exec_driver_sql("BEGIN")
+                    with session.begin_nested() if session is not None else nullcontext():
+                        if category == "company_profile":
+                            row = repository.upsert(items[0], commit=False)
+                            persisted = [row] if row is not None else []
+                        else:
+                            persisted = list(repository.upsert_many(items, commit=False))
+                        if len(persisted) != len(items):
+                            raise ValueError("Incomplete persistence")
+                        if self.ingestion_recorder is not None:
+                            self.ingestion_recorder.record(security_id, category, outcome=outcome,
+                                fetch=fetch, persisted=persisted, fetched_at=finished, price_basis=basis, issues=tuple(issues), started_at=started, finished_at=finished)
+                except Exception as exc:
+                    persisted = []
+                    outcome, error = "failed_persist", safe_error_code(exc)
+                    warnings.append(f"{prefix} persistence failed: {error}")
+            if self.ingestion_recorder is not None and not persisted:
+                self.ingestion_recorder.record(security_id, category, outcome=outcome,
+                    fetch=fetch, fetched_at=finished, issues=tuple(issues), error_code=error, started_at=started, finished_at=finished)
+            outcomes[category], counts[category] = outcome, len(persisted)
+        if self.ingestion_recorder is not None:
+            recorder_session = self.ingestion_recorder.repository.session
+            if recorder_session not in touched_sessions:
+                touched_sessions.append(recorder_session)
+        for session in touched_sessions:
+            try:
+                session.commit()
+            except Exception as exc:
+                session.rollback()
+                warnings.append(f"sync persistence failed: {safe_error_code(exc)}")
+                for category in requested:
+                    if counts.get(category):
+                        counts[category], outcomes[category] = 0, "failed_persist"
+        return StockSyncResult(synced=True,
+            announcements_upserted=counts.get("announcements", 0), news_items_upserted=counts.get("news", 0),
+            price_bars_upserted=counts.get("price_history", 0), financial_metrics_upserted=counts.get("financial_metrics", 0),
+            quote_snapshot_updated=bool(counts.get("quote_snapshot")), company_profile_updated=bool(counts.get("company_profile")),
+            warnings=warnings, synced_at=now, category_outcomes=outcomes)
 
-        latest_announcement_at = self._normalize_since_utc(
-            self.announcement_repository.get_latest_published_at(security_id)
-        )
-        latest_news_at = self._normalize_since_utc(self.news_repository.get_latest_published_at(security_id))
-
-        announcement_fetch = self._normalize_fetch_result(
-            self.announcement_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-                since=latest_announcement_at,
-            )
-        ) if not is_fund_like else {"items": [], "warnings": []}
-        news_fetch = self._normalize_fetch_result(
-            self.news_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-                since=latest_news_at,
-            )
-        ) if not is_fund_like else {"items": [], "warnings": []}
-        warnings.extend(announcement_fetch["warnings"])
-        warnings.extend(news_fetch["warnings"])
-
-        persisted_announcements = self._persist_many(
-            repository=self.announcement_repository,
-            items=announcement_fetch["items"],
-            warning_prefix="announcement persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-        persisted_news_items = self._persist_many(
-            repository=self.news_repository,
-            items=news_fetch["items"],
-            warning_prefix="news persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-
-        price_history_fetch = self._normalize_fetch_result(
-            self.price_history_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-            )
-        ) if self.price_history_provider is not None else {"items": [], "warnings": []}
-        financial_metrics_fetch = self._normalize_fetch_result(
-            self.financial_metrics_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-            )
-        ) if self.financial_metrics_provider is not None and not is_fund_like else {"items": [], "warnings": []}
-        quote_snapshot_fetch = self._normalize_single_fetch_result(
-            self.quote_snapshot_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-            )
-        ) if self.quote_snapshot_provider is not None else {"item": None, "warnings": []}
-        company_profile_fetch = self._normalize_single_fetch_result(
-            self.company_profile_provider.fetch_for_security(
-                security_id,
-                stock_code=stock_code,
-                market=market,
-            )
-        ) if self.company_profile_provider is not None and not is_fund_like else {"item": None, "warnings": []}
-        warnings.extend(price_history_fetch["warnings"])
-        warnings.extend(financial_metrics_fetch["warnings"])
-        warnings.extend(quote_snapshot_fetch["warnings"])
-        warnings.extend(company_profile_fetch["warnings"])
-
-        persisted_price_history = self._persist_many(
-            repository=self.price_history_repository,
-            items=price_history_fetch["items"],
-            warning_prefix="price history persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-        persisted_financial_metrics = self._persist_many(
-            repository=self.financial_metrics_repository,
-            items=financial_metrics_fetch["items"],
-            warning_prefix="financial metrics persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-        persisted_quote_snapshot = self._persist_many(
-            repository=self.quote_snapshot_repository,
-            items=[quote_snapshot_fetch["item"]] if quote_snapshot_fetch["item"] is not None else [],
-            warning_prefix="quote snapshot persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-        persisted_company_profile = self._persist_one(
-            repository=self.company_profile_repository,
-            item=company_profile_fetch["item"],
-            warning_prefix="company profile persistence failed",
-            warnings=warnings,
-            commit=False,
-        )
-        self._commit_repositories(
-            self.announcement_repository,
-            self.news_repository,
-            self.price_history_repository,
-            self.financial_metrics_repository,
-            self.quote_snapshot_repository,
-            self.company_profile_repository,
-        )
-
-        return StockSyncResult(
-            synced=True,
-            announcements_upserted=len(persisted_announcements),
-            news_items_upserted=len(persisted_news_items),
-            price_bars_upserted=len(persisted_price_history),
-            financial_metrics_upserted=len(persisted_financial_metrics),
-            quote_snapshot_updated=len(persisted_quote_snapshot) > 0,
-            company_profile_updated=persisted_company_profile is not None,
-            warnings=warnings,
-            synced_at=synced_at or utc_now(),
-        )
+    def _price_integrity(self, security_id, repository, fetch, items):
+        basis = getattr(fetch, "price_basis", "unknown")
+        issues = []
+        if getattr(fetch, "volume_unit", None) != "shares":
+            issues.append("volume_unit_unknown")
+        if getattr(fetch, "amount_available", None) is False:
+            issues.append("amount_unavailable")
+        reader = getattr(repository, "list_recent_by_security_id", None)
+        existing = reader(security_id, limit=1000000) if reader else []
+        old_dataset = self.ingestion_recorder.repository.get_dataset(security_id, "price_history") if self.ingestion_recorder else None
+        old_basis = old_dataset.price_basis if old_dataset else "unknown"
+        new_dates = {i.trade_date for i in items}
+        covers_existing = all(i.trade_date in new_dates for i in existing)
+        if not covers_existing:
+            # Corporate actions can revise every historical forward-adjusted value.
+            # Subsets cannot certify untouched old rows, even from the same source.
+            selected = getattr(fetch, "source_key", None)
+            old_source = self.ingestion_recorder.repository.session.get(DataSource, old_dataset.source_id) if self.ingestion_recorder and old_dataset and old_dataset.source_id else None
+            source_changed = selected is not None and (old_source is None or old_source.source_key != selected)
+            if old_basis != "unknown" or basis != "unknown" or source_changed:
+                issues.append("incomplete_price_refresh")
+            basis = "unknown"
+        if basis == "unknown":
+            issues.append("price_basis_unknown")
+        return basis, issues
 
     @staticmethod
     def _normalize_since_utc(value: datetime | None) -> datetime | None:
@@ -197,74 +224,6 @@ class StockSyncService:
         if value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value.astimezone(UTC)
-
-    @staticmethod
-    def _normalize_fetch_result(fetch_result: Any) -> dict[str, list[Any]]:
-        items = getattr(fetch_result, "items", fetch_result)
-        warnings = getattr(fetch_result, "warnings", [])
-        return {
-            "items": list(items),
-            "warnings": list(warnings),
-        }
-
-    @staticmethod
-    def _normalize_single_fetch_result(fetch_result: Any) -> dict[str, Any]:
-        item = getattr(fetch_result, "item", fetch_result)
-        warnings = getattr(fetch_result, "warnings", [])
-        return {
-            "item": item,
-            "warnings": list(warnings),
-        }
-
-    @staticmethod
-    def _persist_many(
-        *,
-        repository: Any | None,
-        items: list[Any],
-        warning_prefix: str,
-        warnings: list[str],
-        commit: bool,
-    ) -> list[Any]:
-        if repository is None or not items:
-            return []
-
-        session = getattr(repository, "session", None)
-        transaction = session.begin_nested() if session is not None and not commit else nullcontext()
-        try:
-            with transaction:
-                return list(repository.upsert_many(items, commit=commit))
-        except Exception as exc:
-            warnings.append(f"{warning_prefix}: {type(exc).__name__}: {exc}")
-            return []
-
-    @staticmethod
-    def _persist_one(
-        *,
-        repository: Any | None,
-        item: Any,
-        warning_prefix: str,
-        warnings: list[str],
-        commit: bool,
-    ) -> Any | None:
-        if repository is None or item is None:
-            return None
-
-        session = getattr(repository, "session", None)
-        transaction = session.begin_nested() if session is not None and not commit else nullcontext()
-        try:
-            with transaction:
-                return repository.upsert(item, commit=commit)
-        except Exception as exc:
-            warnings.append(f"{warning_prefix}: {type(exc).__name__}: {exc}")
-            return None
-
-    @staticmethod
-    def _commit_repositories(*repositories: Any | None) -> None:
-        for repository in repositories:
-            session = getattr(repository, "session", None)
-            if session is not None:
-                session.commit()
-                return
 
     @staticmethod
     def _is_fund_like(industry: str | None) -> bool:

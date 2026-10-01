@@ -4,12 +4,17 @@ from decimal import Decimal
 import httpx
 
 from app.services.providers.http_client import build_provider_client, retry_request
+from app.services.providers.fetch_provenance import RejectedSourceData
 from app.services.providers.raw_types import RawPriceBar
 
 _EASTMONEY_PRICE_HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 
 
 class EastmoneyPriceHistorySource:
+    price_basis = "forward_adjusted"
+    volume_unit = "lots"
+    amount_available = True
+
     def __init__(self, *, transport: httpx.BaseTransport | None = None):
         self._transport = transport
 
@@ -46,7 +51,10 @@ class EastmoneyPriceHistorySource:
         if not isinstance(rows, list):
             raise ValueError("Eastmoney price history payload missing data.klines")
 
-        return [_parse_kline(row) for row in rows]
+        try:
+            return [_parse_kline(row) for row in rows]
+        except (ValueError, TypeError, ArithmeticError):
+            raise RejectedSourceData(len(rows)) from None
 
 
 

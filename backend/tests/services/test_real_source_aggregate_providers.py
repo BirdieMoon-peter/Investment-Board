@@ -233,7 +233,7 @@ def test_aggregate_news_provider_collects_source_errors_as_warnings():
     assert result.items[0].security_id == security_id
     assert result.items[0].title == "Midday recap"
     assert len(result.warnings) == 1
-    assert "wire failed (stock=sz:000001): RuntimeError: upstream news source unavailable" == result.warnings[0]
+    assert "wire failed (stock=sz:000001): ingestion_error" == result.warnings[0]
 
 
 def test_provider_modules_export_real_source_primitives():
@@ -335,4 +335,4 @@ def test_aggregate_announcement_provider_includes_context_in_warnings():
     assert len(result.warnings) == 1
     assert "test-source" in result.warnings[0]
     assert "sh:600519" in result.warnings[0]
-    assert "ValueError" in result.warnings[0]
+    assert "invalid_data" in result.warnings[0]

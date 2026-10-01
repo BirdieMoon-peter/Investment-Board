@@ -72,8 +72,6 @@ class EastmoneyNewsSource:
 
                         rows = _extract_rows(payload)
                         if not rows:
-                            if page == 1:
-                                raise ValueError("Eastmoney news payload is empty")
                             break
 
                         raw_count += len(rows)
@@ -113,20 +111,6 @@ class EastmoneyNewsSource:
 
             return all_items
 
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code < 500:
-                elapsed = time.time() - start_time
-                logger.warning(
-                    "Provider fetch degraded to empty results: source=%s stock=%s:%s elapsed=%.2fs status=%d error=%s",
-                    self.__class__.__name__,
-                    market,
-                    stock_code,
-                    elapsed,
-                    exc.response.status_code,
-                    exc,
-                )
-                return []
-            raise
         except Exception as exc:
             elapsed = time.time() - start_time
             logger.warning(
@@ -146,13 +130,15 @@ def _extract_rows(payload: object) -> list[dict[str, object]]:
 
     result = payload.get("result")
     if not isinstance(result, dict):
-        return []
+        raise ValueError("Eastmoney news payload missing result")
 
     rows = result.get(_EASTMONEY_NEWS_TYPE)
     if not isinstance(rows, list):
-        return []
+        raise ValueError("Eastmoney news payload missing article rows")
 
-    return [row for row in rows if isinstance(row, dict)]
+    if any(not isinstance(row, dict) for row in rows):
+        raise ValueError("Eastmoney news payload invalid article row")
+    return rows
 
 
 

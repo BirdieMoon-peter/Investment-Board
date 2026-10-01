@@ -80,8 +80,8 @@ def test_aggregate_price_history_provider_returns_empty_when_all_sources_fail():
 
     assert result.items == []
     assert result.warnings == [
-        "eastmoney failed (stock=SZ:000001): RuntimeError: upstream price history unavailable",
-        "backup failed (stock=SZ:000001): RuntimeError: upstream price history unavailable",
+        "eastmoney failed (stock=SZ:000001): ingestion_error",
+        "backup failed (stock=SZ:000001): ingestion_error",
     ]
 
 
@@ -239,7 +239,7 @@ def test_aggregate_price_history_provider_falls_through_to_backup_when_primary_f
     assert [item.trade_date for item in result.items] == [date(2026, 3, 10), date(2026, 3, 9)]
     assert result.items[0].close_price == Decimal("10.7000")
     assert result.warnings == [
-        "primary failed (stock=SZ:000001): RuntimeError: upstream price history unavailable"
+        "primary failed (stock=SZ:000001): ingestion_error"
     ]
 
 
@@ -318,7 +318,7 @@ def test_aggregate_financial_metrics_provider_keeps_partial_success_and_warnings
     assert len(result.items) == 1
     assert result.items[0].report_period == "2025Q4"
     assert result.warnings == [
-        "backup failed (stock=SZ:000001): RuntimeError: upstream financial metrics unavailable"
+        "backup failed (stock=SZ:000001): ingestion_error"
     ]
 
 
@@ -420,7 +420,7 @@ def test_aggregate_quote_snapshot_provider_uses_fallback_when_primary_snapshot_i
     assert result.item.last_price == Decimal("110.04")
     assert result.item.snapshot_time == datetime(2026, 3, 23, 10, 7, tzinfo=timezone.utc)
     assert result.warnings == [
-        "primary failed (stock=SZ:002594): ValueError: quote snapshot time is invalid"
+        "primary failed (stock=SZ:002594): invalid_data"
     ]
 
 
@@ -437,8 +437,8 @@ def test_aggregate_quote_snapshot_provider_returns_warning_when_all_sources_fail
 
     assert result.item is None
     assert result.warnings == [
-        "primary failed (stock=SZ:002594): RuntimeError: upstream quote snapshot unavailable",
-        "fallback failed (stock=SZ:002594): RuntimeError: upstream quote snapshot unavailable",
+        "primary failed (stock=SZ:002594): ingestion_error",
+        "fallback failed (stock=SZ:002594): ingestion_error",
     ]
 
 
@@ -511,7 +511,7 @@ def test_aggregate_company_profile_provider_keeps_first_success_and_collects_lat
     assert result.item.full_name == "平安银行股份有限公司"
     assert result.item.employees == 35000
     assert result.warnings == [
-        "backup failed (stock=SZ:000001): ValueError: upstream company profile unavailable"
+        "backup failed (stock=SZ:000001): invalid_data"
     ]
 
 
@@ -527,5 +527,5 @@ def test_aggregate_company_profile_provider_keeps_first_success_and_collects_lat
 
     assert result.item is None
     assert result.warnings == [
-        "eastmoney failed (stock=SZ:000001): ValueError: upstream company profile unavailable"
+        "eastmoney failed (stock=SZ:000001): invalid_data"
     ]

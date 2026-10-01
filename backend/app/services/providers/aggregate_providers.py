@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.db.models import Announcement, NewsItem
 from app.services.providers.announcement_provider import (
@@ -13,6 +13,7 @@ from app.services.providers.news_provider import (
     NewsSourceAdapter,
     RawNewsSourceAdapter,
 )
+from app.services.providers.fetch_provenance import SourceAttempt, safe_error_code
 from app.services.providers.raw_types import RawAnnouncement, RawNewsItem
 
 
@@ -20,12 +21,22 @@ from app.services.providers.raw_types import RawAnnouncement, RawNewsItem
 class AnnouncementFetchResult:
     items: list[Announcement]
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
 
 
 @dataclass(frozen=True)
 class NewsFetchResult:
     items: list[NewsItem]
     warnings: list[str]
+    attempts: tuple[SourceAttempt, ...] = ()
+    source_key: str | None = None
+    price_basis: str = "unknown"
+    unit: str | None = None
+    frequency: str | None = None
 
 
 class AggregateAnnouncementProvider:
@@ -48,11 +59,16 @@ class AggregateAnnouncementProvider:
     ) -> AnnouncementFetchResult:
         items: list[Announcement] = []
         warnings: list[str] = []
+        attempts = []
 
         for source in self.sources:
+            started = datetime.now(UTC)
             try:
-                items.extend(source.provider.fetch_for_security(security_id, since=since))
+                fetched = list(source.provider.fetch_for_security(security_id, since=since))
+                items.extend(fetched)
+                attempts.append(SourceAttempt(source.name, "succeeded" if fetched else "empty", len(fetched), started_at=started, finished_at=datetime.now(UTC)))
             except Exception as exc:
+                attempts.append(SourceAttempt(source.name, "failed", error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                 warnings.append(_warning_message(source.name, exc))
 
         if self.raw_sources:
@@ -63,18 +79,19 @@ class AggregateAnnouncementProvider:
                 warnings.append(f"raw announcement sources skipped: missing {missing}")
             else:
                 for source in self.raw_sources:
+                    started = datetime.now(UTC)
                     try:
-                        raw_items = source.provider.fetch(stock_code, market, since=since)
-                        items.extend(
-                            _announcement_from_raw(security_id, raw_item)
-                            for raw_item in raw_items
-                        )
+                        raw_items = list(source.provider.fetch(stock_code, market, since=since))
+                        fetched = [_announcement_from_raw(security_id, raw_item) for raw_item in raw_items]
+                        items.extend(fetched)
+                        attempts.append(SourceAttempt(source.name, "succeeded" if fetched else "empty", len(fetched), started_at=started, finished_at=datetime.now(UTC)))
                     except Exception as exc:
+                        attempts.append(SourceAttempt(source.name, "failed", error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                         warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
 
         return AnnouncementFetchResult(
             items=_deduplicate_announcements(items),
-            warnings=warnings,
+            warnings=warnings, attempts=tuple(attempts), source_key=_single_source(attempts),
         )
 
 
@@ -98,11 +115,16 @@ class AggregateNewsProvider:
     ) -> NewsFetchResult:
         items: list[NewsItem] = []
         warnings: list[str] = []
+        attempts = []
 
         for source in self.sources:
+            started = datetime.now(UTC)
             try:
-                items.extend(source.provider.fetch_for_security(security_id, since=since))
+                fetched = list(source.provider.fetch_for_security(security_id, since=since))
+                items.extend(fetched)
+                attempts.append(SourceAttempt(source.name, "succeeded" if fetched else "empty", len(fetched), started_at=started, finished_at=datetime.now(UTC)))
             except Exception as exc:
+                attempts.append(SourceAttempt(source.name, "failed", error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                 warnings.append(_warning_message(source.name, exc))
 
         if self.raw_sources:
@@ -113,13 +135,17 @@ class AggregateNewsProvider:
                 warnings.append(f"raw news sources skipped: missing {missing}")
             else:
                 for source in self.raw_sources:
+                    started = datetime.now(UTC)
                     try:
-                        raw_items = source.provider.fetch(stock_code, market, since=since)
-                        items.extend(_news_from_raw(security_id, raw_item) for raw_item in raw_items)
+                        raw_items = list(source.provider.fetch(stock_code, market, since=since))
+                        fetched = [_news_from_raw(security_id, raw_item) for raw_item in raw_items]
+                        items.extend(fetched)
+                        attempts.append(SourceAttempt(source.name, "succeeded" if fetched else "empty", len(fetched), started_at=started, finished_at=datetime.now(UTC)))
                     except Exception as exc:
+                        attempts.append(SourceAttempt(source.name, "failed", error_code=safe_error_code(exc), started_at=started, finished_at=datetime.now(UTC)))
                         warnings.append(_warning_message(source.name, exc, stock_code=stock_code, market=market))
 
-        return NewsFetchResult(items=_deduplicate_news(items), warnings=warnings)
+        return NewsFetchResult(items=_deduplicate_news(items), warnings=warnings, attempts=tuple(attempts), source_key=_single_source(attempts))
 
 
 class AnnouncementItemsProvider:
@@ -150,9 +176,7 @@ def _warning_message(
     market: str | None = None,
 ) -> str:
     context = f" (stock={market}:{stock_code})" if stock_code and market else ""
-    exc_type = type(exc).__name__
-    exc_msg = str(exc) or "unknown error"
-    return f"{source_name} failed{context}: {exc_type}: {exc_msg}"
+    return f"{source_name} failed{context}: {safe_error_code(exc)}"
 
 
 def _announcement_from_raw(security_id: int, item: RawAnnouncement) -> Announcement:
@@ -205,3 +229,8 @@ def _deduplicate_news(items: list[NewsItem]) -> list[NewsItem]:
         key=lambda item: (item.published_at, item.title, item.source or ""),
         reverse=True,
     )
+
+
+def _single_source(attempts):
+    keys = {a.source_key for a in attempts if a.state == "succeeded"}
+    return next(iter(keys)) if len(keys) == 1 else None
