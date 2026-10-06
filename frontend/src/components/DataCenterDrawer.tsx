@@ -38,10 +38,12 @@ import { useDataCenterFormat } from './dataCenterFormatting'
 import { AcquisitionAttempts } from './AcquisitionAttempts'
 import { SourceVendorDetails } from './SourceVendorDetails'
 import { SecurityMetadataPanel } from './SecurityMetadataPanel'
+import { useQuantText } from './quantFormatting'
 import { StatusMessage } from './StatusMessage'
 interface Props {
   items: WatchlistItem[]
   initialSecurityId?: number | null
+  onStrategy?: () => void
   onClose: () => void
   onSynced: (securityId: number) => void
 }
@@ -52,8 +54,9 @@ function draftFor(data: SecurityData): MetadataDraft {
     benchmark_name: data.metadata.benchmark_name,
   }
 }
-export function DataCenterDrawer({ items, initialSecurityId, onClose, onSynced }: Props) {
+export function DataCenterDrawer({ items, initialSecurityId, onClose, onSynced, onStrategy }: Props) {
   const { t, label, date } = useDataCenterFormat()
+  const q = useQuantText()
   const [tab, setTab] = useState<'sources' | 'datasets'>(
     initialSecurityId ? 'datasets' : 'sources',
   )
@@ -232,6 +235,7 @@ export function DataCenterDrawer({ items, initialSecurityId, onClose, onSynced }
           </TabList>
         </DrawerHeader>
         <DrawerBody aria-busy={busy || sourceLoading || dataLoading}>
+          {onStrategy ? <section className="data-center-section"><h3>{q('量化原始快照', 'Quant raw snapshots')}</h3><p>{q('策略原始 CNY 行情与本页复权价格、基金净值分别保存。采集或导入均需显式操作；已有数据不会自动改写冻结实验。', 'Strategy raw CNY prices are stored separately from adjusted prices and fund NAV here. Acquisition and import are explicit; saved data cannot rewrite frozen experiments.')}</p><Button onClick={onStrategy}>{q('打开策略数据准备', 'Open strategy data preparation')}</Button></section> : null}
           {busy ? <StatusMessage message={t('dataCenter.busy')} /> : null}
           {mutationError ? (
             <StatusMessage tone="error" message={t('dataCenter.error')} />

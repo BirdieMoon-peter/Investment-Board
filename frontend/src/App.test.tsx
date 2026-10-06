@@ -1,3 +1,4 @@
+vi.mock('./api/quant', () => ({fetchQuantSummary: vi.fn().mockResolvedValue({accounts:0,awaiting_future_data:0,active_accounts:0,latest_account_session:null,failed_runs:0,window:'latest_100_saved_objects',mode:'paper_only'})}))
 import {
   fireEvent,
   render,
@@ -592,7 +593,7 @@ describe('App', () => {
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(
-      screen.getByRole('table', { name: /watchlist holdings/i }),
+      await screen.findByRole('table', { name: /watchlist holdings/i }),
     ).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledTimes(4)
   })

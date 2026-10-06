@@ -1,3 +1,4 @@
+vi.mock('./api/quant', () => ({fetchQuantSummary: vi.fn().mockResolvedValue({accounts:0,awaiting_future_data:0,active_accounts:0,latest_account_session:null,failed_runs:0,window:'latest_100_saved_objects',mode:'paper_only'})}))
 import { StrictMode } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'

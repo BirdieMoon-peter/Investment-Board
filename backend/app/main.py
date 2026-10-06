@@ -7,6 +7,7 @@ from app.api.data_center import router as data_center_router
 from app.api.data_sources import router as data_sources_router
 from app.api.indicators import router as indicators_router
 from app.api.research import router as research_router
+from app.api.quant import router as quant_router
 from app.api.holdings import router as holdings_router
 from app.api.homepage import router as homepage_router
 from app.api.investment_advice import router as investment_advice_router
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(holdings_router, prefix="/api/holdings")
     app.include_router(indicators_router, prefix="/api/indicators")
     app.include_router(research_router, prefix="/api/research")
+    app.include_router(quant_router, prefix="/api/quant")
     app.include_router(investment_advice_router, prefix="/api/ai")
     app.include_router(ai_settings_router, prefix="/api/ai")
     return app

@@ -234,7 +234,7 @@ class RawSource:
 
 
 def price_sources(override_dependency):
-    bar=RawPriceBar(date.today(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
+    bar=RawPriceBar(datetime.now(UTC).date(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
     raw={key:RawSource([bar]) for key in ('sina','eastmoney','netease')}
     provider=AggregatePriceHistoryProvider(raw_sources=[RawPriceHistorySourceAdapter(key,raw[key],price_basis='forward_adjusted' if key=='eastmoney' else 'unadjusted',volume_unit='shares',amount_available=True) for key in raw],fallback_enabled=False)
     override_dependency(get_aggregate_price_history_provider,lambda:provider)
@@ -546,7 +546,7 @@ def test_stock_and_etf_currency_basis_semantics_unchanged(client,session,overrid
 
 def test_index_unsupported_source_units_unknown_with_explicit_issue(client,session,override_dependency):
     row=security(session,'指数');sources(override_dependency)
-    bar=RawPriceBar(date.today(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
+    bar=RawPriceBar(datetime.now(UTC).date(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
     raw=RawSource([bar])
     override_dependency(get_aggregate_price_history_provider,lambda:AggregatePriceHistoryProvider(raw_sources=[RawPriceHistorySourceAdapter('custom_unknown',raw,price_basis='forward_adjusted',volume_unit='shares')]))
     result=client.post(f'/api/data/securities/{row.id}/sync',json={'categories':['price_history']}).json()['data']['categories']['price_history']
@@ -557,7 +557,7 @@ def test_index_unsupported_source_units_unknown_with_explicit_issue(client,sessi
 def test_index_native_volume_is_not_coerced_as_equity_lots(client,session,override_dependency):
     from app.db.models import PriceHistory
     row=security(session,'指数');sources(override_dependency)
-    bar=RawPriceBar(date.today(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
+    bar=RawPriceBar(datetime.now(UTC).date(),*(Decimal(v) for v in ['10','12','8','11','100','1000']))
     raw=RawSource([bar])
     provider=AggregatePriceHistoryProvider(raw_sources=[RawPriceHistorySourceAdapter('eastmoney',raw,price_basis='forward_adjusted',volume_unit='lots')])
     override_dependency(get_aggregate_price_history_provider,lambda:provider)

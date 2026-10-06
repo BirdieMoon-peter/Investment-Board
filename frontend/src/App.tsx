@@ -25,6 +25,7 @@ import { SecuritySearchDialog } from './components/SecuritySearchDialog'
 import { DataCenterLoadFallback } from './components/DataCenterLoadFallback'
 import { SettingsLoadFallback } from './components/SettingsLoadFallback'
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary'
+import { QuantSummary } from './components/QuantSummary'
 import { StatusMessage } from './components/StatusMessage'
 import {
   WatchlistWorkspace,
@@ -38,6 +39,7 @@ import type {
   WatchlistItem,
 } from './types/watchlist'
 
+const StrategyWorkspace = lazy(() => import('./pages/StrategyWorkspace').then(module => ({default:module.StrategyWorkspace})))
 const StockDetailPage = lazy(() => import('./pages/StockDetailPage').then((module) => ({ default: module.StockDetailPage })))
 const DataCenterDrawer = lazy(() => import('./components/DataCenterDrawer').then(module => ({ default: module.DataCenterDrawer })))
 const SettingsDrawer = lazy(() => import('./components/SettingsDrawer').then((module) => ({ default: module.SettingsDrawer })))
@@ -61,6 +63,22 @@ function AppBody({
   onSettingsChange: (settings: HomepageSettings) => void
 }) {
   const { t, formatDateTime, language } = useI18n()
+  const [strategyOpen, setStrategyOpen] = useState(false)
+  const [strategyMounted, setStrategyMounted] = useState(false)
+  const [strategySecurityId, setStrategySecurityId] = useState<number | null>(null)
+  const [quantRevision, setQuantRevision] = useState(0)
+  const strategyReturnFocus = useRef<HTMLElement | null>(null)
+  function openStrategy(securityId: number | null = null) {
+    strategyReturnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setStrategySecurityId(securityId); setStrategyMounted(true); setStrategyOpen(true)
+  }
+  function closeStrategy() { setStrategyOpen(false) }
+  useEffect(() => {
+    if (strategyOpen || !strategyReturnFocus.current) return
+    const target = strategyReturnFocus.current; strategyReturnFocus.current = null
+    if (target.isConnected && !target.closest('[hidden], [inert]')) target.focus({preventScroll:true})
+    else document.getElementById('strategy-workspace-trigger')?.focus({preventScroll:true})
+  }, [strategyOpen])
   const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>([])
   const [currentPage, setCurrentPage] = useState<'watchlist' | 'detail'>(
     'watchlist',
@@ -559,6 +577,7 @@ function AppBody({
     >
       <WorkspaceHeader
         onSettings={() => setIsSettingsOpen(true)}
+        onStrategy={() => openStrategy()}
         onDataCenter={origin => openDataCenter(null, origin)}
         onSync={
           currentPage === 'watchlist'
@@ -569,6 +588,7 @@ function AppBody({
         syncDisabled={watchlistItems.length === 0}
       />
       <main className="workspace-content">
+        <div hidden={strategyOpen} inert={strategyOpen}>
         {currentPage === 'detail' ? (
           <WorkspaceLoadBoundary fallback={<ScreenLoadFailure onDismiss={handleBackToWatchlist} dismissLabel={t('detail.backToWatchlist')} />}>
           <Suspense fallback={<div role="status" className="detail-loading" aria-label={t('detail.loading')}>
@@ -582,6 +602,7 @@ function AppBody({
             viewState={detailViewState}
             onBack={handleBackToWatchlist}
             onDataCenter={openDataCenter}
+            onStrategy={securityId => openStrategy(securityId)}
             dataRevision={dataRevision}
           />
           </Suspense>
@@ -591,6 +612,7 @@ function AppBody({
             className={`dashboard-shell dashboard-shell--${settings.density} dashboard-shell--${language}`}
             aria-label="Watchlist page shell"
           >
+            <QuantSummary revision={quantRevision} onOpen={() => openStrategy()} />
             {settings.showMarketIndexes ? (
               <MarketStrip
                 indexes={overviewIndexes}
@@ -755,6 +777,8 @@ function AppBody({
             ) : null}
           </section>
         )}
+        </div>
+        {strategyMounted ? <div hidden={!strategyOpen} inert={!strategyOpen}><WorkspaceLoadBoundary fallback={<ScreenLoadFailure onDismiss={closeStrategy} dismissLabel={language === 'zh' ? '返回投资看板' : 'Back to investment board'} />}><Suspense fallback={<div role="status"><Button onClick={closeStrategy}>{language === 'zh' ? '返回投资看板' : 'Back to investment board'}</Button>{language === 'zh' ? '读取策略工作台…' : 'Loading strategy workspace…'}</div>}><StrategyWorkspace securityId={strategySecurityId} visible={strategyOpen} onBack={closeStrategy} onChanged={() => setQuantRevision(v => v+1)} /></Suspense></WorkspaceLoadBoundary></div> : null}
         <footer className="workspace-footer">
           {t('workspace.disclaimer')}
         </footer>
@@ -770,7 +794,7 @@ function AppBody({
       {isDataCenterOpen ? (
         <WorkspaceLoadBoundary fallback={<DataCenterLoadFallback failed onClose={() => setIsDataCenterOpen(false)} />}>
           <Suspense fallback={<DataCenterLoadFallback onClose={() => setIsDataCenterOpen(false)} />}>
-            <DataCenterDrawer items={watchlistItems} initialSecurityId={dataCenterSecurityId} onClose={() => setIsDataCenterOpen(false)} onSynced={handleDataSynced} />
+            <DataCenterDrawer items={watchlistItems} initialSecurityId={dataCenterSecurityId} onClose={() => setIsDataCenterOpen(false)} onSynced={handleDataSynced} onStrategy={() => { setIsDataCenterOpen(false); openStrategy(dataCenterSecurityId) }} />
           </Suspense>
         </WorkspaceLoadBoundary>
       ) : null}

@@ -2075,3 +2075,9 @@ a:not([class*="fui-"]):hover {
 .research-trace { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
 @media (max-width: 800px) { .research-workspace-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 420px) { .research-facts > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* Quant entry uses the existing compact header at narrow widths. */
+@media (max-width:760px) { .workspace-strategy-label { display:none; } }
+
+.quant-home-summary { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:14px 0; }
+.quant-home-summary p { margin:0; color:var(--text-secondary); font-size:12px; }

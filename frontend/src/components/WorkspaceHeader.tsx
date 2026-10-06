@@ -3,10 +3,11 @@ import {
   Select,
   useRestoreFocusTarget,
 } from '@fluentui/react-components'
-import { ArrowsClockwise, Database, GearSix } from '@phosphor-icons/react'
+import { ArrowsClockwise, Database, GearSix, ChartLine } from '@phosphor-icons/react'
 import { useI18n } from '../i18n'
 import { useAppTheme, type ThemePreference } from '../theme'
 interface Props {
+  onStrategy?: () => void
   onSettings: () => void
   onDataCenter?: (origin: HTMLElement) => void
   onSync?: () => void
@@ -15,13 +16,14 @@ interface Props {
 }
 export function WorkspaceHeader({
   onSettings,
+  onStrategy,
   onDataCenter,
   onSync,
   syncing,
   syncDisabled,
 }: Props) {
   const restoreFocusTarget = useRestoreFocusTarget()
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { preference, setPreference } = useAppTheme()
   return (
     <header className="workspace-header">
@@ -46,6 +48,7 @@ export function WorkspaceHeader({
             <option value="light">{t('workspace.themeLight')}</option>
             <option value="dark">{t('workspace.themeDark')}</option>
           </Select>
+          {onStrategy ? <Button id="strategy-workspace-trigger" icon={<ChartLine />} onClick={onStrategy} aria-label={language === 'zh' ? '策略工作台' : 'Strategy workspace'}><span className="workspace-strategy-label">{language === 'zh' ? '策略工作台' : 'Strategy workspace'}</span></Button> : null}
           {onSync ? (
             <Button
               icon={<ArrowsClockwise />}

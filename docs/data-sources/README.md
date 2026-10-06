@@ -63,6 +63,12 @@ Fund classification requires an explicit manual choice, an exact recognized look
 
 Manual overlays apply to classification and benchmark fields. Provider-derived manager, fees and dated assets retain their own provenance on subsequent profile updates. Received NAV counts refer to raw dated records; written counts refer to normalized kind observations. Coverage is bounded, and elapsed-time freshness does not claim a verified exchange calendar. Failed or disabled actions preserve prior saved records and last-success evidence.
 
+## Quantitative raw snapshots
+
+The strategy workspace has an independent bounded Eastmoney raw daily adapter in `services/quant/acquisition.py`. Its native request uses `klt=101,fqt=0`, validates `data.klines` CSV OHLC and normalizes lots ×100 to shares with Decimal strings. The complete quant contract is returned by `GET /api/quant/templates`; it does not replace the managed-security `fqt=1` contract above. Explicit acquisition honors the source center Eastmoney enable/disable switch and saves immutable quant datasets, without writing legacy history or implying that the original managed-health category was refreshed.
+
+Snapshots include observed/user-declared calendars, instrument-rule assumptions and corporate-action coverage. A successful raw request does not verify historical universe membership, publication vintages, dividends or exchange-rule schedules. Failed acquisition returns a controlled error and leaves saved datasets intact; validated JSON import remains available. See [strategy research and simulated tracking](../quant/README.md) and [quant API and import fields](../quant-api.md).
+
 ## Extension procedure
 
 1. Inspect the actual endpoint response and parser; record raw field paths, accepted types, units, missing rules, date precision and price basis in the owning vendor module.

@@ -42,3 +42,5 @@ __all__ = [
 
 from app.db.models.research import ResearchProject, ResearchRun, ResearchReviewEvent
 __all__ += ['ResearchProject', 'ResearchRun', 'ResearchReviewEvent']
+from app.db.models.quant import QuantDataset, QuantStrategy, QuantRun, QuantAccount, QuantStep, QuantAnnotation
+__all__ += ['QuantDataset', 'QuantStrategy', 'QuantRun', 'QuantAccount', 'QuantStep', 'QuantAnnotation']

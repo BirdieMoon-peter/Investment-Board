@@ -33,6 +33,7 @@ import type {
 interface StockDetailPageProps {
   detail: StockDetailPageData | null
   viewState: StockDetailPageViewState
+  onStrategy?: (securityId: number) => void
   onBack: () => void
   onDataCenter?: (securityId: number, origin?: HTMLElement) => void
   dataRevision?: number
@@ -84,8 +85,8 @@ function getAdviceTone(
   return 'neutral'
 }
 
-export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataRevision }: StockDetailPageProps) {
-  const { t, formatDateTime } = useI18n()
+export function StockDetailPage({ detail, viewState, onBack, onDataCenter, onStrategy, dataRevision }: StockDetailPageProps) {
+  const { t, formatDateTime, language } = useI18n()
   const [holdingMetricsRevision, setHoldingMetricsRevision] = useState(0)
   const [legacyHealthRevision, setLegacyHealthRevision] = useState(0)
   const legacySyncController = useRef<AbortController | null>(null)
@@ -423,6 +424,7 @@ export function StockDetailPage({ detail, viewState, onBack, onDataCenter, dataR
         </Button>
         {currentSecurity ? <StockHeader security={currentSecurity} latestBar={latestPriceContextBar} />
           : <h1>{t('detail.title')}</h1>}
+        {securityId !== null && onStrategy ? <Button onClick={() => onStrategy(securityId)}>{language === 'zh' ? '相关策略与实验' : 'Related strategies and experiments'}</Button> : null}
         {securityId !== null ? (
           <Button appearance="primary" icon={<ArrowClockwise />} onClick={() => void handleSync()} disabled={isSyncing}>
             {isSyncing ? t('detail.syncingLatest') : t('detail.syncLatest')}
